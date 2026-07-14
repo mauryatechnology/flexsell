@@ -65,7 +65,7 @@ export function TrendingProducts({ initialProducts }: TrendingProductsProps) {
             <div className="aspect-square relative bg-secondary overflow-hidden rounded-t-lg">
               <Link href={`/products/${product.slug}`}>
                 <img
-                  src={imgUrl}
+                  src={imgUrl || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
                   alt={product.title}
                   className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
                 />

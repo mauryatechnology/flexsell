@@ -26,6 +26,12 @@ export function Header({ categories }: HeaderProps) {
   
   const topLevel = categories.filter(c => !c.parentId);
 
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -49,8 +55,8 @@ export function Header({ categories }: HeaderProps) {
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMobileMenuOpen(true)}>
             <Menu className="h-6 w-6 text-foreground" />
           </Button>
-          <Link href="/" className="font-bold text-2xl text-primary tracking-tight">
-            FLEX<span className="text-foreground">SELL</span>
+          <Link href="/" className="flex items-center">
+            <img src="/Flexsell%20Logo.png" alt="Flexsell Logo" className="h-8 md:h-10 w-auto object-contain" />
           </Link>
         </div>
 
@@ -84,7 +90,7 @@ export function Header({ categories }: HeaderProps) {
           <Link href="/wishlist">
             <Button variant="ghost" size="icon" className="relative">
               <Heart className="h-5 w-5 text-foreground" />
-              {wishlistItemsCount > 0 && (
+              {isMounted && wishlistItemsCount > 0 && (
                 <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground font-bold">
                   {wishlistItemsCount}
                 </span>
@@ -94,7 +100,7 @@ export function Header({ categories }: HeaderProps) {
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5 text-foreground" />
-              {cartItemsCount > 0 && (
+              {isMounted && cartItemsCount > 0 && (
                 <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground font-bold">
                   {cartItemsCount}
                 </span>
@@ -110,8 +116,8 @@ export function Header({ categories }: HeaderProps) {
       {/* Mobile Nav Drawer */}
       <Drawer isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} side="left">
         <div className="flex flex-col h-full space-y-6 pt-4">
-          <Link href="/" className="font-bold text-2xl text-primary tracking-tight" onClick={() => setIsMobileMenuOpen(false)}>
-            FLEX<span className="text-foreground">SELL</span>
+          <Link href="/" className="flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
+            <img src="/Flexsell%20Logo.png" alt="Flexsell Logo" className="h-8 w-auto object-contain" />
           </Link>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

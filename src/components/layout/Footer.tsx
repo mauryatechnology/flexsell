@@ -9,8 +9,8 @@ export function Footer() {
     <footer className="bg-card border-t pt-16 pb-8">
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
         <div className="space-y-4">
-          <Link href="/" className="font-bold text-2xl text-primary tracking-tight">
-            FLEX<span className="text-foreground">SELL</span>
+          <Link href="/" className="flex items-center">
+            <img src="/Flexsell%20Logo.png" alt="Flexsell Logo" className="h-8 md:h-10 w-auto object-contain" />
           </Link>
           <p className="text-muted-foreground text-sm">
             {footerData.description}
