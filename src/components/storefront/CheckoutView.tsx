@@ -10,14 +10,49 @@ import { useCartStore } from "@/stores/cartStore";
 import { useOrderStore } from "@/stores/orderStore";
 import { formatPrice } from "@/lib/utils";
 
+const INDIAN_STATES = [
+  "Madhya Pradesh",
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Delhi",
+  "Union Territory"
+];
+
 export function CheckoutView() {
   const router = useRouter();
-  const { items, getCartSubtotal, clearCart } = useCartStore();
+  const { items, buyerState, setBuyerState, clearCart } = useCartStore();
   const { createOrder } = useOrderStore();
 
-  const subtotal = getCartSubtotal();
-  const tax = subtotal * 0.18; // 18% GST
-  const total = subtotal + tax;
+  const taxDetails = React.useMemo(() => {
+    return useCartStore.getState().getTaxDetails();
+  }, [items, buyerState]);
+
+  const { isIntrastate, baseSubtotal, totalCgst, totalSgst, totalIgst, grandTotal, hsnBreakdown } = taxDetails;
 
   // Form states
   const [email, setEmail] = React.useState("");
@@ -27,9 +62,15 @@ export function CheckoutView() {
   const [address, setAddress] = React.useState("");
   const [apartment, setApartment] = React.useState("");
   const [city, setCity] = React.useState("");
-  const [state, setState] = React.useState("");
+  const [state, setState] = React.useState(buyerState);
   const [pinCode, setPinCode] = React.useState("");
   const [phone, setPhone] = React.useState("");
+
+  // Sync state dropdown with store POS
+  const handleStateChange = (val: string) => {
+    setState(val);
+    setBuyerState(val);
+  };
 
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +93,8 @@ export function CheckoutView() {
       phone
     };
 
-    // Create B2B order
-    const orderId = createOrder(items, total, shippingAddress);
+    // Create B2B order using the dynamic grandTotal
+    const orderId = createOrder(items, grandTotal, shippingAddress);
 
     // Clear shopping cart
     clearCart();
@@ -140,12 +181,15 @@ export function CheckoutView() {
                   onChange={(e) => setCity(e.target.value)}
                   required
                 />
-                <Input 
-                  placeholder="State" 
+                <select
+                  className="h-10 px-3 rounded-md border border-border bg-background text-sm font-semibold text-foreground focus:ring-2 focus:ring-primary w-full"
                   value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  required
-                />
+                  onChange={(e) => handleStateChange(e.target.value)}
+                >
+                  {INDIAN_STATES.map((st) => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
                 <Input 
                   placeholder="PIN Code" 
                   value={pinCode}
@@ -201,22 +245,57 @@ export function CheckoutView() {
 
               <div className="space-y-3 text-sm text-foreground">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>{formatPrice(subtotal)}</span>
+                  <span className="text-muted-foreground">Base Subtotal</span>
+                  <span>{formatPrice(baseSubtotal)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Estimated GST (18%)</span>
-                  <span>{formatPrice(tax)}</span>
-                </div>
+
+                {isIntrastate ? (
+                  <>
+                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                      <span>CGST (Central GST)</span>
+                      <span>{formatPrice(totalCgst)}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                      <span>SGST (State GST)</span>
+                      <span>{formatPrice(totalSgst)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between text-blue-600 dark:text-blue-400">
+                    <span>IGST (Integrated GST)</span>
+                    <span>{formatPrice(totalIgst)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
                   <span className="text-success font-medium">Free Shipping</span>
                 </div>
               </div>
 
+              {/* Dynamic HSN Slabs Summary List */}
+              {Object.keys(hsnBreakdown).length > 0 && (
+                <div className="border-t pt-4 space-y-2">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">HSN Tax Slab Breakdown</span>
+                  <div className="space-y-2.5 max-h-32 overflow-y-auto pr-1">
+                    {Object.values(hsnBreakdown).map((slab) => (
+                      <div key={slab.hsnCode} className="text-xs flex justify-between items-start border-b border-border/40 pb-2">
+                        <div>
+                          <span className="font-bold text-foreground block">HSN {slab.hsnCode}</span>
+                          <span className="text-muted-foreground text-[10px]">
+                            Rate: {slab.gstRate}% | Base: {formatPrice(slab.baseAmount)}
+                          </span>
+                        </div>
+                        <span className="font-semibold text-foreground">{formatPrice(slab.totalTax)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-between font-bold text-lg border-t pt-4 text-foreground">
                 <span>Total to Pay</span>
-                <span>{formatPrice(total)}</span>
+                <span>{formatPrice(grandTotal)}</span>
               </div>
 
               <Button type="submit" size="lg" className="w-full text-base bg-foreground text-background hover:bg-foreground/90">

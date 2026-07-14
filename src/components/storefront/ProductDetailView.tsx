@@ -2,26 +2,21 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Product } from "@/types";
 import { Button } from "@/components/ui/Button";
-import { PriceDisplay } from "@/components/ui/PriceDisplay";
 import { Badge } from "@/components/ui/Badge";
-import { Barcode } from "@/components/ui/Barcode";
 import { useProductStore } from "@/stores/productStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { useCartStore } from "@/stores/cartStore";
+import { useToastStore } from "@/stores/toastStore";
 import { 
   ShieldCheck, 
   Truck, 
   ArrowLeft, 
   Heart, 
-  Share2, 
   ShoppingCart, 
   Minus, 
   Plus, 
-  Check, 
-  Box,
   Scale,
   Maximize2
 } from "lucide-react";
@@ -36,6 +31,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
   const { products, initializeProducts } = useProductStore();
   const { toggleWishlist, isInWishlist } = useWishlistStore();
   const { addItem } = useCartStore();
+  const { addToast } = useToastStore();
 
   React.useEffect(() => {
     initializeProducts(initialProducts);
@@ -50,7 +46,9 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
   const [selectedWeight, setSelectedWeight] = React.useState("");
   const [qty, setQty] = React.useState(1);
   const [activeImageIdx, setActiveImageIdx] = React.useState(0);
-  const [addedToCartToast, setAddedToCartToast] = React.useState(false);
+
+  // Quantity input element ref for auto-focusing
+  const qtyInputRef = React.useRef<HTMLInputElement>(null);
 
   // Derive active variant details
   const activeVariant = React.useMemo(() => {
@@ -61,12 +59,20 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
   // Reset secondary selections on color changes
   React.useEffect(() => {
     if (activeVariant) {
-      setSelectedSize(activeVariant.sizes[0] || "Standard");
-      setSelectedWeight(activeVariant.weights[0] || "250g");
+      setSelectedSize(activeVariant.sizes[0] || "");
+      setSelectedWeight(activeVariant.weights[0] || "");
       setActiveImageIdx(0);
-      setQty(1);
+      setQty(product?.moq || 5);
     }
-  }, [selectedColorIdx, activeVariant]);
+  }, [selectedColorIdx, activeVariant, product]);
+
+  // Auto-focus quantity input on mount
+  React.useEffect(() => {
+    setTimeout(() => {
+      qtyInputRef.current?.focus();
+      qtyInputRef.current?.select();
+    }, 300);
+  }, [selectedColorIdx]);
 
   if (!product) {
     return (
@@ -82,10 +88,32 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
 
   const favorited = isInWishlist(product._id);
   const colorVariants = product.colorVariants || [];
+  const moq = product.moq ?? 5;
+  const visibility = product.fieldVisibility || {
+    showDescription: true,
+    showSizes: true,
+    showWeights: true,
+    showDimensions: true,
+    showImages: true,
+  };
 
   const handleAddToCart = () => {
     if (!activeVariant) return;
-    
+
+    if (qty < moq) {
+      addToast(`Cannot add to cart. Minimum Order Quantity (MOQ) of ${moq} units is required.`, "warning");
+      setQty(moq);
+      qtyInputRef.current?.focus();
+      return;
+    }
+
+    if (qty > activeVariant.stock) {
+      addToast(`Cannot add to cart. Only ${activeVariant.stock} units are currently available.`, "warning");
+      setQty(activeVariant.stock);
+      qtyInputRef.current?.focus();
+      return;
+    }
+
     addItem(
       product,
       {
@@ -96,23 +124,37 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
       qty
     );
 
-    setAddedToCartToast(true);
-    setTimeout(() => setAddedToCartToast(false), 2000);
+    // Auto focus and select input for next action
+    qtyInputRef.current?.focus();
+    qtyInputRef.current?.select();
   };
+
+  // Indian standard GST breakdown
+  const gstRate = product.gstRate ?? 18;
+  const isIncl = product.priceIncludesGst ?? true;
+  const price = activeVariant ? activeVariant.price : 0;
+  const mrp = activeVariant ? activeVariant.mrp : 0;
+
+  let basePrice = price;
+  let taxAmount = 0;
+  let totalPrice = price;
+
+  if (isIncl) {
+    basePrice = price / (1 + gstRate / 100);
+    taxAmount = price - basePrice;
+  } else {
+    taxAmount = price * (gstRate / 100);
+    totalPrice = price + taxAmount;
+  }
+
+  const cgstAmount = taxAmount / 2;
+  const sgstAmount = taxAmount / 2;
 
   const currentImages = activeVariant?.images || [];
   const mainImage = currentImages[activeImageIdx] || "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80";
 
   return (
     <div className="container mx-auto px-4 py-8 text-foreground">
-      {/* Toast Alert */}
-      {addedToCartToast && (
-        <div className="fixed bottom-5 right-5 bg-primary text-primary-foreground border border-primary/20 shadow-lg px-4 py-3 rounded-lg z-50 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-5 duration-300">
-          <Check className="h-4.5 w-4.5 text-success-foreground bg-success p-0.5 rounded-full" />
-          <span className="text-sm font-bold">{qty} x Wholesale items added to cart!</span>
-        </div>
-      )}
-
       {/* Breadcrumb Header */}
       <div className="mb-6 flex justify-between items-center">
         <Link href="/products" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center font-medium">
@@ -125,7 +167,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
           className={favorited ? "text-destructive border-destructive bg-destructive/5 hover:bg-destructive/10" : ""}
         >
           <Heart className={`h-4 w-4 mr-2 ${favorited ? "fill-destructive" : ""}`} />
-          {favorited ? "In Wishlist" : "Add to Wishlist"}
+          {favorited ? "Saved in Wishlist" : "Save to Wishlist"}
         </Button>
       </div>
 
@@ -139,14 +181,14 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
               className="w-full h-full object-cover hover:scale-102 transition-transform duration-300"
             />
             {activeVariant && activeVariant.discount > 0 && (
-              <span className="absolute top-4 left-4 bg-destructive text-destructive-foreground text-xs font-black px-2.5 py-1 rounded shadow">
-                {activeVariant.discount}% OFF
+              <span className="absolute top-4 left-4 bg-destructive text-destructive-foreground text-xs font-black px-2.5 py-1 rounded shadow animate-pulse">
+                {activeVariant.discount}% DISCOUNT
               </span>
             )}
           </div>
           
           {/* Slider thumbnails list */}
-          {currentImages.length > 1 && (
+          {visibility.showImages && currentImages.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-2 pr-1">
               {currentImages.map((img, i) => (
                 <button 
@@ -167,10 +209,15 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
         <div className="flex flex-col space-y-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              <Badge variant="secondary" className="font-semibold">B2B Cargo Line</Badge>
+              <Badge variant="secondary" className="font-semibold">FACTORY DIRECT SUPPLY</Badge>
               {activeVariant && (
                 <Badge variant="outline" className="border-primary text-primary font-mono text-[10px]">
                   SKU: {activeVariant.sku}
+                </Badge>
+              )}
+              {product.hsnCode && (
+                <Badge variant="outline" className="border-border text-muted-foreground font-mono text-[10px]">
+                  HSN: {product.hsnCode}
                 </Badge>
               )}
             </div>
@@ -180,31 +227,53 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                 ★ {product.rating} <span className="text-muted-foreground ml-1 font-normal">({product.reviewCount} reviews)</span>
               </div>
               <span>|</span>
-              <span>1000+ wholesale units dispatched</span>
+              <span>100% Verified Wholesaler</span>
             </div>
           </div>
 
-          {/* Pricing & Stock Card */}
+          {/* Pricing & GST Tax Breakdown Card */}
           {activeVariant && (
-            <div className="p-6 bg-secondary/20 rounded-xl space-y-4 border border-border">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-primary">{formatPrice(activeVariant.price)}</span>
-                {activeVariant.mrp > activeVariant.price && (
-                  <span className="text-sm text-muted-foreground line-through font-medium">{formatPrice(activeVariant.mrp)}</span>
-                )}
-                <span className="text-xs text-muted-foreground font-semibold ml-2">+ 18% GST (Wholesale Claimable)</span>
+            <div className="p-6 bg-secondary/20 rounded-xl space-y-4 border border-border shadow-sm">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-primary">{formatPrice(totalPrice)}</span>
+                  {mrp > price && (
+                    <span className="text-sm text-muted-foreground line-through font-medium">{formatPrice(mrp)}</span>
+                  )}
+                  <span className="text-xs text-muted-foreground font-bold">
+                    {isIncl ? "(GST Inclusive)" : "(GST Exclusive)"}
+                  </span>
+                </div>
+                
+                {/* GST Tax split breakdown */}
+                <div className="text-xs text-muted-foreground border-t pt-2 mt-1 space-y-1 font-mono">
+                  <div className="flex justify-between max-w-xs">
+                    <span>Base Taxable Value:</span>
+                    <span className="font-semibold text-foreground">{formatPrice(basePrice)}</span>
+                  </div>
+                  <div className="flex justify-between max-w-xs text-emerald-600 dark:text-emerald-400">
+                    <span>CGST (Central Tax @ {gstRate / 2}%):</span>
+                    <span>{formatPrice(cgstAmount)}</span>
+                  </div>
+                  <div className="flex justify-between max-w-xs text-emerald-600 dark:text-emerald-400">
+                    <span>SGST (State Tax @ {gstRate / 2}%):</span>
+                    <span>{formatPrice(sgstAmount)}</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-4 text-xs pt-1 border-t border-border/40 mt-2">
-                {activeVariant.stock > 30 ? (
+              <div className="flex flex-wrap items-center gap-4 text-xs pt-3 border-t border-border/40">
+                {activeVariant.stock > moq * 2 ? (
                   <Badge variant="success">In Stock ({activeVariant.stock} available)</Badge>
                 ) : activeVariant.stock > 0 ? (
-                  <Badge variant="warning">Low Stock ({activeVariant.stock} left)</Badge>
+                  <Badge variant="warning">Low Stock ({activeVariant.stock} remaining)</Badge>
                 ) : (
                   <Badge variant="destructive">Out of Stock</Badge>
                 )}
-                <span className="text-muted-foreground font-medium">• MOQ: 5 units</span>
-                <span className="text-muted-foreground font-medium">• Dimensions: {activeVariant.dimensions}</span>
+                <span className="text-muted-foreground font-semibold">• Minimum Order: {moq} units</span>
+                {visibility.showDimensions && activeVariant.dimensions && (
+                  <span className="text-muted-foreground font-semibold">• Box Size: {activeVariant.dimensions}</span>
+                )}
               </div>
             </div>
           )}
@@ -213,7 +282,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
           {colorVariants.length > 0 && (
             <div className="space-y-3">
               <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">
-                Select Color: 
+                Select Option / Color: 
                 <span className="text-primary font-semibold ml-2">{activeVariant?.color}</span>
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -238,11 +307,11 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
           )}
 
           {/* Size Selection Swatches */}
-          {activeVariant && activeVariant.sizes.length > 0 && (
+          {visibility.showSizes && activeVariant && activeVariant.sizes && activeVariant.sizes.length > 0 && activeVariant.sizes[0] !== "" && (
             <div className="space-y-3 pt-2">
               <h4 className="font-bold text-sm text-foreground uppercase tracking-wider flex items-center gap-1.5">
                 <Maximize2 className="h-4.5 w-4.5 text-muted-foreground" />
-                Select Size: 
+                Select Pack Sizing: 
                 <span className="text-primary font-semibold ml-2">{selectedSize}</span>
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -267,11 +336,11 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
           )}
 
           {/* Weight Selection Swatches */}
-          {activeVariant && activeVariant.weights.length > 0 && (
+          {visibility.showWeights && activeVariant && activeVariant.weights && activeVariant.weights.length > 0 && activeVariant.weights[0] !== "" && (
             <div className="space-y-3 pt-2">
               <h4 className="font-bold text-sm text-foreground uppercase tracking-wider flex items-center gap-1.5">
                 <Scale className="h-4.5 w-4.5 text-muted-foreground" />
-                Select Cargo Weight: 
+                Select Weight Unit: 
                 <span className="text-primary font-semibold ml-2">{selectedWeight}</span>
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -298,22 +367,44 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
           {/* Quantity Selector & Action buttons */}
           {activeVariant && (
             <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t items-stretch">
-              <div className="flex items-center gap-2 border border-border rounded-lg p-1 bg-secondary/10 justify-between px-3 w-full sm:w-32">
-                <button
+              <div className="flex items-center gap-2 border border-border rounded-lg p-1 bg-secondary/10 justify-between px-3 w-full sm:w-36">
+                <Button
+                  variant="ghost"
                   type="button"
-                  onClick={() => setQty(prev => Math.max(1, prev - 1))}
-                  className="p-1 rounded hover:bg-secondary transition-colors"
+                  onClick={() => setQty(prev => Math.max(moq, prev - 1))}
+                  className="p-1 h-8 w-8 text-foreground"
+                  disabled={qty <= moq}
                 >
                   <Minus className="h-4 w-4" />
-                </button>
-                <span className="text-sm font-extrabold">{qty}</span>
-                <button
+                </Button>
+                
+                {/* Quantity Input Box */}
+                <input
+                  ref={qtyInputRef}
+                  type="number"
+                  className="w-12 text-center text-sm font-extrabold bg-transparent text-foreground focus:outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  value={qty}
+                  min={moq}
+                  max={activeVariant.stock}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val)) setQty(val);
+                  }}
+                  onBlur={() => {
+                    if (qty < moq) setQty(moq);
+                    if (qty > activeVariant.stock) setQty(activeVariant.stock);
+                  }}
+                />
+
+                <Button
+                  variant="ghost"
                   type="button"
-                  onClick={() => setQty(prev => prev + 1)}
-                  className="p-1 rounded hover:bg-secondary transition-colors"
+                  onClick={() => setQty(prev => Math.min(activeVariant.stock, prev + 1))}
+                  className="p-1 h-8 w-8 text-foreground"
+                  disabled={qty >= activeVariant.stock}
                 >
                   <Plus className="h-4 w-4" />
-                </button>
+                </Button>
               </div>
 
               <Button 
@@ -322,18 +413,12 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                 onClick={handleAddToCart}
                 disabled={activeVariant.stock <= 0}
               >
-                <ShoppingCart className="h-5 w-5" /> Add Bulk Cargo
+                <ShoppingCart className="h-5 w-5" /> Add to Cart
               </Button>
             </div>
           )}
 
-          {/* Barcode encoding SKU */}
-          {activeVariant && (
-            <div className="flex flex-col gap-1.5 p-3 bg-white rounded-lg border border-border w-max pt-4">
-              <span className="text-[9px] font-extrabold uppercase tracking-wider text-muted-foreground">Product Logistical SKU Barcode</span>
-              <Barcode sku={activeVariant.sku} height={40} />
-            </div>
-          )}
+          {/* NOTE: Barcode rendering hidden from public site (only used by admin dashboard) */}
 
           <div className="grid grid-cols-2 gap-4 py-6 border-y">
             <div className="flex items-center gap-3">
@@ -342,7 +427,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
               </div>
               <div>
                 <p className="font-semibold text-sm">Secure Payment</p>
-                <p className="text-xs text-muted-foreground">100% encrypted</p>
+                <p className="text-xs text-muted-foreground">100% encrypted B2B claims</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -351,15 +436,18 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
               </div>
               <div>
                 <p className="font-semibold text-sm">Fast Shipping</p>
-                <p className="text-xs text-muted-foreground">Across India</p>
+                <p className="text-xs text-muted-foreground">All Central India hubs</p>
               </div>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold">Product Description</h3>
-            <div className="text-muted-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: product.description }} />
-          </div>
+          {/* Product Description */}
+          {visibility.showDescription && product.description && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold">Product Description</h3>
+              <div className="text-muted-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: product.description }} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -368,7 +456,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
         <div className="mt-20 space-y-16 border-t pt-16">
           <div className="text-center space-y-4 max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl font-extrabold tracking-tight">From the Manufacturer</h2>
-            <p className="text-muted-foreground">Discover the premium features and build quality that makes this product a bestseller.</p>
+            <p className="text-muted-foreground">Explore marketing material and manufacturer specification boards.</p>
           </div>
           
           <div className="space-y-12 max-w-5xl mx-auto">
@@ -379,39 +467,10 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                   <div key={block.id} className="max-w-[970px] mx-auto border bg-secondary/10 overflow-hidden rounded-xl shadow-sm flex items-center justify-center">
                     <img 
                       src={block.imageUrl} 
-                      alt="Manufacturer marketing banner" 
-                      className="w-full object-cover"
+                      alt="Manufacturer marketing graphic sheet" 
+                      className="w-full object-contain"
                       style={{ aspectRatio: isTall ? "970/600" : "970/300" }}
                     />
-                  </div>
-                );
-              }
-              if (block.type === "image-text") {
-                return (
-                  <div key={block.id} className="grid md:grid-cols-2 gap-8 items-center bg-secondary/20 rounded-2xl overflow-hidden border">
-                    {block.imageUrl && (
-                      <div className="h-64 md:h-full relative">
-                        <img src={block.imageUrl} alt={block.title || "Product feature"} className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                    <div className="p-8 space-y-4">
-                      {block.title && <h3 className="text-2xl font-bold">{block.title}</h3>}
-                      {block.content && <p className="text-muted-foreground leading-relaxed">{block.content}</p>}
-                    </div>
-                  </div>
-                );
-              }
-              if (block.type === "features" && block.features) {
-                return (
-                  <div key={block.id} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {block.features.map((feature, idx) => (
-                      <div key={idx} className="bg-secondary/40 p-6 rounded-xl border text-center space-y-3">
-                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary font-bold text-xl">
-                          {idx + 1}
-                        </div>
-                        <p className="font-medium">{feature}</p>
-                      </div>
-                    ))}
                   </div>
                 );
               }

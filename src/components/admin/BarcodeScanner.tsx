@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useProductStore } from "@/stores/productStore";
+import { useToastStore } from "@/stores/toastStore";
 import { Barcode } from "@/components/ui/Barcode";
 import { formatPrice } from "@/lib/utils";
 import { X, Search, QrCode, ArrowRight, Minus, Plus, Camera, CameraOff } from "lucide-react";
@@ -137,7 +138,10 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
     let foundVariant = null;
 
     for (const p of products) {
-      const matchVar = p.colorVariants?.find(cv => cv.sku.toUpperCase() === cleaned);
+      const matchVar = p.colorVariants?.find(cv => 
+        cv.sku.toUpperCase() === cleaned || 
+        (cv.barcode && cv.barcode.toUpperCase() === cleaned)
+      );
       if (matchVar) {
         foundProduct = p;
         foundVariant = matchVar;
@@ -149,10 +153,12 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
       setScannedProduct(foundProduct);
       setScannedVariant(foundVariant);
       setScanInput(foundVariant.sku);
+      useToastStore.getState().addToast(`Matched variant: ${foundProduct.title} (${foundVariant.color})`, "success");
     } else {
       setScannedProduct(null);
       setScannedVariant(null);
-      setErrorMsg(`SKU Barcode "${barcodeVal}" not matched in active B2B variants inventory.`);
+      setErrorMsg(`Barcode "${barcodeVal}" not matched in active B2B variants inventory.`);
+      useToastStore.getState().addToast(`Barcode lookup failed.`, "error");
     }
   };
 
@@ -176,6 +182,7 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
     // Update local state to reflect change instantly
     setScannedProduct(updatedProduct);
     setScannedVariant({ ...scannedVariant, stock: newStock });
+    useToastStore.getState().addToast(`Stock level adjusted to ${newStock} units.`, "success");
   };
 
   // Generate warehouse storage location based on Category ID

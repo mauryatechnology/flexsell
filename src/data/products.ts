@@ -37,7 +37,8 @@ export const products: Product[] = [
         "mrp": 498,
         "discount": 50,
         "stock": 249,
-        "sku": "FS-HK-CHOP12-001-FOR"
+        "sku": "FS-HK-CHOP12-001-FOR",
+        "barcode": "FX1001"
       },
       {
         "color": "Slate Gray",
@@ -59,7 +60,8 @@ export const products: Product[] = [
         "mrp": 498,
         "discount": 50,
         "stock": 250,
-        "sku": "FS-HK-CHOP12-001-SLA"
+        "sku": "FS-HK-CHOP12-001-SLA",
+        "barcode": "FX1002"
       }
     ],
     "aPlusContent": [
@@ -81,7 +83,21 @@ export const products: Product[] = [
           "Safety Guard Protection Included"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Multi-Functional 12-in-1 Vegetable Chopper & Slicer online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "multi-functional 12-in-1 vegetable chopper & slicer, wholesale multi-functional 12-in-1 vegetable chopper & slicer, B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_002",
@@ -118,7 +134,8 @@ export const products: Product[] = [
         "mrp": 800,
         "discount": 60,
         "stock": 291,
-        "sku": "FS-HK-MAGWIP-002-DF"
+        "sku": "FS-HK-MAGWIP-002-DF",
+        "barcode": "FX1003"
       }
     ],
     "aPlusContent": [
@@ -129,7 +146,21 @@ export const products: Product[] = [
         "content": "Features industrial-grade NdFeB magnets that stay locked even through thick double-paned windows. Clean the exterior from the safety of your room.",
         "imageUrl": "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Double-Sided Magnetic Window Cleaner Glass Wiper | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Double-Sided Magnetic Window Cleaner Glass Wiper online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "double-sided magnetic window cleaner glass wiper, wholesale double-sided magnetic window cleaner glass wiper, B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_003",
@@ -164,7 +195,8 @@ export const products: Product[] = [
         "mrp": 77,
         "discount": 42,
         "stock": 88,
-        "sku": "FS-HK-SILLID-003-CLE"
+        "sku": "FS-HK-SILLID-003-CLE",
+        "barcode": "FX1004"
       },
       {
         "color": "Translucent Pink",
@@ -183,7 +215,8 @@ export const products: Product[] = [
         "mrp": 77,
         "discount": 42,
         "stock": 88,
-        "sku": "FS-HK-SILLID-003-TRA"
+        "sku": "FS-HK-SILLID-003-TRA",
+        "barcode": "FX1005"
       }
     ],
     "aPlusContent": [
@@ -198,7 +231,21 @@ export const products: Product[] = [
           "Airtight & Spill-Proof Seal"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Silicone Stretch Lids - 6 Pack Universal Sizes | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Silicone Stretch Lids - 6 Pack Universal Sizes online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "silicone stretch lids - 6 pack universal sizes, wholesale silicone stretch lids - 6 pack universal sizes, B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_004",
@@ -234,7 +281,8 @@ export const products: Product[] = [
         "mrp": 670,
         "discount": 42,
         "stock": 150,
-        "sku": "FS-EL-EARLED-004-MID"
+        "sku": "FS-EL-EARLED-004-MID",
+        "barcode": "FX1006"
       },
       {
         "color": "Pearl White",
@@ -254,7 +302,8 @@ export const products: Product[] = [
         "mrp": 670,
         "discount": 42,
         "stock": 150,
-        "sku": "FS-EL-EARLED-004-PEA"
+        "sku": "FS-EL-EARLED-004-PEA",
+        "barcode": "FX1007"
       },
       {
         "color": "Rose Gold",
@@ -274,7 +323,8 @@ export const products: Product[] = [
         "mrp": 670,
         "discount": 42,
         "stock": 152,
-        "sku": "FS-EL-EARLED-004-ROS"
+        "sku": "FS-EL-EARLED-004-ROS",
+        "barcode": "FX1008"
       }
     ],
     "aPlusContent": [
@@ -285,7 +335,21 @@ export const products: Product[] = [
         "content": "Check remaining battery life for both the charging case and each individual earbud at a single glance. Charge on the go with up to 30 hours of total playback time.",
         "imageUrl": "https://images.unsplash.com/photo-1608156639585-b3a032ef9689?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case | Direct Factory Wholesale price India",
+    "seoDescription": "Buy TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "tws wireless bluetooth 5.3 earbuds with digital led case, wholesale tws wireless bluetooth 5.3 earbuds with digital led case, B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_005",
@@ -321,7 +385,8 @@ export const products: Product[] = [
         "mrp": 800,
         "discount": 40,
         "stock": 222,
-        "sku": "FS-EL-RNG10IN-005-DF"
+        "sku": "FS-EL-RNG10IN-005-DF",
+        "barcode": "FX1009"
       }
     ],
     "aPlusContent": [
@@ -332,7 +397,21 @@ export const products: Product[] = [
         "content": "Optimize your studio setup easily. Seamlessly shift color temperatures between 3200K and 5600K to remove shadows and highlight fine product details.",
         "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "10-inch LED Ring Light with Dynamic Tripod Stand | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 10-inch LED Ring Light with Dynamic Tripod Stand online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "10-inch led ring light with dynamic tripod stand, wholesale 10-inch led ring light with dynamic tripod stand, B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_006",
@@ -368,7 +447,8 @@ export const products: Product[] = [
         "mrp": 1426,
         "discount": 44,
         "stock": 88,
-        "sku": "FS-EL-SMTCLK-006-CLA"
+        "sku": "FS-EL-SMTCLK-006-CLA",
+        "barcode": "FX1010"
       },
       {
         "color": "Navy Blue Strap",
@@ -388,7 +468,8 @@ export const products: Product[] = [
         "mrp": 1426,
         "discount": 44,
         "stock": 88,
-        "sku": "FS-EL-SMTCLK-006-NAV"
+        "sku": "FS-EL-SMTCLK-006-NAV",
+        "barcode": "FX1011"
       },
       {
         "color": "Powder Pink Strap",
@@ -408,7 +489,8 @@ export const products: Product[] = [
         "mrp": 1426,
         "discount": 44,
         "stock": 89,
-        "sku": "FS-EL-SMTCLK-006-POW"
+        "sku": "FS-EL-SMTCLK-006-POW",
+        "barcode": "FX1012"
       }
     ],
     "aPlusContent": [
@@ -419,7 +501,21 @@ export const products: Product[] = [
         "content": "Track your steps, calories, heart rate variance, and deep sleep cycles automatically. Synced data loads instantly onto Android & iOS companion apps.",
         "imageUrl": "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Dynamic Smart Watch with Full Touch SpO2 Monitor | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Dynamic Smart Watch with Full Touch SpO2 Monitor online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "dynamic smart watch with full touch spo2 monitor, wholesale dynamic smart watch with full touch spo2 monitor, B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_007",
@@ -455,7 +551,8 @@ export const products: Product[] = [
         "mrp": 412,
         "discount": 60,
         "stock": 245,
-        "sku": "FS-BP-FBRSH5-007-BAB"
+        "sku": "FS-BP-FBRSH5-007-BAB",
+        "barcode": "FX1013"
       },
       {
         "color": "Sky Blue",
@@ -475,7 +572,8 @@ export const products: Product[] = [
         "mrp": 412,
         "discount": 60,
         "stock": 246,
-        "sku": "FS-BP-FBRSH5-007-SKY"
+        "sku": "FS-BP-FBRSH5-007-SKY",
+        "barcode": "FX1014"
       }
     ],
     "aPlusContent": [
@@ -491,7 +589,21 @@ export const products: Product[] = [
           "1x Coarse Pumice Head"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "5-in-1 Electric Facial Cleaning Brush Set | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 5-in-1 Electric Facial Cleaning Brush Set online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "5-in-1 electric facial cleaning brush set, wholesale 5-in-1 electric facial cleaning brush set, B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_008",
@@ -528,7 +640,8 @@ export const products: Product[] = [
         "mrp": 863,
         "discount": 56,
         "stock": 167,
-        "sku": "FS-FA-LAPBAG-008-CHA"
+        "sku": "FS-FA-LAPBAG-008-CHA",
+        "barcode": "FX1015"
       },
       {
         "color": "Jet Black",
@@ -549,7 +662,8 @@ export const products: Product[] = [
         "mrp": 863,
         "discount": 56,
         "stock": 168,
-        "sku": "FS-FA-LAPBAG-008-JET"
+        "sku": "FS-FA-LAPBAG-008-JET",
+        "barcode": "FX1016"
       }
     ],
     "aPlusContent": [
@@ -560,7 +674,21 @@ export const products: Product[] = [
         "content": "Equipped with a secret back pocket to keep passports, cash, and smartphones secure. Multi-compartment interior organizes cables, stationeries, and books seamlessly.",
         "imageUrl": "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "6304",
+    "gstRate": 5,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Waterproof Anti-Theft Laptop Backpack with USB Port | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Waterproof Anti-Theft Laptop Backpack with USB Port online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "waterproof anti-theft laptop backpack with usb port, wholesale waterproof anti-theft laptop backpack with usb port, B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_009",
@@ -598,7 +726,8 @@ export const products: Product[] = [
         "mrp": 669,
         "discount": 61,
         "stock": 224,
-        "sku": "FS-HK-CHOP12-009-FOR"
+        "sku": "FS-HK-CHOP12-009-FOR",
+        "barcode": "FX1017"
       },
       {
         "color": "Slate Gray",
@@ -620,7 +749,8 @@ export const products: Product[] = [
         "mrp": 669,
         "discount": 61,
         "stock": 225,
-        "sku": "FS-HK-CHOP12-009-SLA"
+        "sku": "FS-HK-CHOP12-009-SLA",
+        "barcode": "FX1018"
       }
     ],
     "aPlusContent": [
@@ -642,7 +772,21 @@ export const products: Product[] = [
           "Safety Guard Protection Included"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 2) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 2) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "multi-functional 12-in-1 vegetable chopper & slicer (batch 2), wholesale multi-functional 12-in-1 vegetable chopper & slicer (batch 2), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_010",
@@ -679,7 +823,8 @@ export const products: Product[] = [
         "mrp": 700,
         "discount": 52,
         "stock": 395,
-        "sku": "FS-HK-MAGWIP-010-DF"
+        "sku": "FS-HK-MAGWIP-010-DF",
+        "barcode": "FX1019"
       }
     ],
     "aPlusContent": [
@@ -690,7 +835,21 @@ export const products: Product[] = [
         "content": "Features industrial-grade NdFeB magnets that stay locked even through thick double-paned windows. Clean the exterior from the safety of your room.",
         "imageUrl": "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 2) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 2) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "double-sided magnetic window cleaner glass wiper (batch 2), wholesale double-sided magnetic window cleaner glass wiper (batch 2), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_011",
@@ -725,7 +884,8 @@ export const products: Product[] = [
         "mrp": 83,
         "discount": 44,
         "stock": 87,
-        "sku": "FS-HK-SILLID-011-CLE"
+        "sku": "FS-HK-SILLID-011-CLE",
+        "barcode": "FX1020"
       },
       {
         "color": "Translucent Pink",
@@ -744,7 +904,8 @@ export const products: Product[] = [
         "mrp": 83,
         "discount": 44,
         "stock": 88,
-        "sku": "FS-HK-SILLID-011-TRA"
+        "sku": "FS-HK-SILLID-011-TRA",
+        "barcode": "FX1021"
       }
     ],
     "aPlusContent": [
@@ -759,7 +920,21 @@ export const products: Product[] = [
           "Airtight & Spill-Proof Seal"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 2) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 2) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "silicone stretch lids - 6 pack universal sizes (batch 2), wholesale silicone stretch lids - 6 pack universal sizes (batch 2), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_012",
@@ -795,7 +970,8 @@ export const products: Product[] = [
         "mrp": 1046,
         "discount": 61,
         "stock": 151,
-        "sku": "FS-EL-EARLED-012-MID"
+        "sku": "FS-EL-EARLED-012-MID",
+        "barcode": "FX1022"
       },
       {
         "color": "Pearl White",
@@ -815,7 +991,8 @@ export const products: Product[] = [
         "mrp": 1046,
         "discount": 61,
         "stock": 151,
-        "sku": "FS-EL-EARLED-012-PEA"
+        "sku": "FS-EL-EARLED-012-PEA",
+        "barcode": "FX1023"
       },
       {
         "color": "Rose Gold",
@@ -835,7 +1012,8 @@ export const products: Product[] = [
         "mrp": 1046,
         "discount": 61,
         "stock": 152,
-        "sku": "FS-EL-EARLED-012-ROS"
+        "sku": "FS-EL-EARLED-012-ROS",
+        "barcode": "FX1024"
       }
     ],
     "aPlusContent": [
@@ -846,7 +1024,21 @@ export const products: Product[] = [
         "content": "Check remaining battery life for both the charging case and each individual earbud at a single glance. Charge on the go with up to 30 hours of total playback time.",
         "imageUrl": "https://images.unsplash.com/photo-1608156639585-b3a032ef9689?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 2) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 2) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "tws wireless bluetooth 5.3 earbuds with digital led case (batch 2), wholesale tws wireless bluetooth 5.3 earbuds with digital led case (batch 2), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_013",
@@ -882,7 +1074,8 @@ export const products: Product[] = [
         "mrp": 1072,
         "discount": 53,
         "stock": 292,
-        "sku": "FS-EL-RNG10IN-013-DF"
+        "sku": "FS-EL-RNG10IN-013-DF",
+        "barcode": "FX1025"
       }
     ],
     "aPlusContent": [
@@ -893,7 +1086,21 @@ export const products: Product[] = [
         "content": "Optimize your studio setup easily. Seamlessly shift color temperatures between 3200K and 5600K to remove shadows and highlight fine product details.",
         "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "10-inch LED Ring Light with Dynamic Tripod Stand (Batch 2) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 10-inch LED Ring Light with Dynamic Tripod Stand (Batch 2) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "10-inch led ring light with dynamic tripod stand (batch 2), wholesale 10-inch led ring light with dynamic tripod stand (batch 2), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_014",
@@ -929,7 +1136,8 @@ export const products: Product[] = [
         "mrp": 1948,
         "discount": 57,
         "stock": 98,
-        "sku": "FS-EL-SMTCLK-014-CLA"
+        "sku": "FS-EL-SMTCLK-014-CLA",
+        "barcode": "FX1026"
       },
       {
         "color": "Navy Blue Strap",
@@ -949,7 +1157,8 @@ export const products: Product[] = [
         "mrp": 1948,
         "discount": 57,
         "stock": 98,
-        "sku": "FS-EL-SMTCLK-014-NAV"
+        "sku": "FS-EL-SMTCLK-014-NAV",
+        "barcode": "FX1027"
       },
       {
         "color": "Powder Pink Strap",
@@ -969,7 +1178,8 @@ export const products: Product[] = [
         "mrp": 1948,
         "discount": 57,
         "stock": 99,
-        "sku": "FS-EL-SMTCLK-014-POW"
+        "sku": "FS-EL-SMTCLK-014-POW",
+        "barcode": "FX1028"
       }
     ],
     "aPlusContent": [
@@ -980,7 +1190,21 @@ export const products: Product[] = [
         "content": "Track your steps, calories, heart rate variance, and deep sleep cycles automatically. Synced data loads instantly onto Android & iOS companion apps.",
         "imageUrl": "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 2) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 2) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "dynamic smart watch with full touch spo2 monitor (batch 2), wholesale dynamic smart watch with full touch spo2 monitor (batch 2), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_015",
@@ -1016,7 +1240,8 @@ export const products: Product[] = [
         "mrp": 288,
         "discount": 40,
         "stock": 159,
-        "sku": "FS-BP-FBRSH5-015-BAB"
+        "sku": "FS-BP-FBRSH5-015-BAB",
+        "barcode": "FX1029"
       },
       {
         "color": "Sky Blue",
@@ -1036,7 +1261,8 @@ export const products: Product[] = [
         "mrp": 288,
         "discount": 40,
         "stock": 159,
-        "sku": "FS-BP-FBRSH5-015-SKY"
+        "sku": "FS-BP-FBRSH5-015-SKY",
+        "barcode": "FX1030"
       }
     ],
     "aPlusContent": [
@@ -1052,7 +1278,21 @@ export const products: Product[] = [
           "1x Coarse Pumice Head"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "5-in-1 Electric Facial Cleaning Brush Set (Batch 2) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 5-in-1 Electric Facial Cleaning Brush Set (Batch 2) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "5-in-1 electric facial cleaning brush set (batch 2), wholesale 5-in-1 electric facial cleaning brush set (batch 2), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_016",
@@ -1089,7 +1329,8 @@ export const products: Product[] = [
         "mrp": 676,
         "discount": 41,
         "stock": 249,
-        "sku": "FS-FA-LAPBAG-016-CHA"
+        "sku": "FS-FA-LAPBAG-016-CHA",
+        "barcode": "FX1031"
       },
       {
         "color": "Jet Black",
@@ -1110,7 +1351,8 @@ export const products: Product[] = [
         "mrp": 676,
         "discount": 41,
         "stock": 250,
-        "sku": "FS-FA-LAPBAG-016-JET"
+        "sku": "FS-FA-LAPBAG-016-JET",
+        "barcode": "FX1032"
       }
     ],
     "aPlusContent": [
@@ -1121,7 +1363,21 @@ export const products: Product[] = [
         "content": "Equipped with a secret back pocket to keep passports, cash, and smartphones secure. Multi-compartment interior organizes cables, stationeries, and books seamlessly.",
         "imageUrl": "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "6304",
+    "gstRate": 5,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 2) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 2) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "waterproof anti-theft laptop backpack with usb port (batch 2), wholesale waterproof anti-theft laptop backpack with usb port (batch 2), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_017",
@@ -1159,7 +1415,8 @@ export const products: Product[] = [
         "mrp": 580,
         "discount": 53,
         "stock": 79,
-        "sku": "FS-HK-CHOP12-017-FOR"
+        "sku": "FS-HK-CHOP12-017-FOR",
+        "barcode": "FX1033"
       },
       {
         "color": "Slate Gray",
@@ -1181,7 +1438,8 @@ export const products: Product[] = [
         "mrp": 580,
         "discount": 53,
         "stock": 80,
-        "sku": "FS-HK-CHOP12-017-SLA"
+        "sku": "FS-HK-CHOP12-017-SLA",
+        "barcode": "FX1034"
       }
     ],
     "aPlusContent": [
@@ -1203,7 +1461,21 @@ export const products: Product[] = [
           "Safety Guard Protection Included"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 3) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 3) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "multi-functional 12-in-1 vegetable chopper & slicer (batch 3), wholesale multi-functional 12-in-1 vegetable chopper & slicer (batch 3), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_018",
@@ -1240,7 +1512,8 @@ export const products: Product[] = [
         "mrp": 858,
         "discount": 59,
         "stock": 460,
-        "sku": "FS-HK-MAGWIP-018-DF"
+        "sku": "FS-HK-MAGWIP-018-DF",
+        "barcode": "FX1035"
       }
     ],
     "aPlusContent": [
@@ -1251,7 +1524,21 @@ export const products: Product[] = [
         "content": "Features industrial-grade NdFeB magnets that stay locked even through thick double-paned windows. Clean the exterior from the safety of your room.",
         "imageUrl": "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 3) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 3) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "double-sided magnetic window cleaner glass wiper (batch 3), wholesale double-sided magnetic window cleaner glass wiper (batch 3), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_019",
@@ -1286,7 +1573,8 @@ export const products: Product[] = [
         "mrp": 83,
         "discount": 41,
         "stock": 218,
-        "sku": "FS-HK-SILLID-019-CLE"
+        "sku": "FS-HK-SILLID-019-CLE",
+        "barcode": "FX1036"
       },
       {
         "color": "Translucent Pink",
@@ -1305,7 +1593,8 @@ export const products: Product[] = [
         "mrp": 83,
         "discount": 41,
         "stock": 219,
-        "sku": "FS-HK-SILLID-019-TRA"
+        "sku": "FS-HK-SILLID-019-TRA",
+        "barcode": "FX1037"
       }
     ],
     "aPlusContent": [
@@ -1320,7 +1609,21 @@ export const products: Product[] = [
           "Airtight & Spill-Proof Seal"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 3) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 3) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "silicone stretch lids - 6 pack universal sizes (batch 3), wholesale silicone stretch lids - 6 pack universal sizes (batch 3), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_020",
@@ -1356,7 +1659,8 @@ export const products: Product[] = [
         "mrp": 889,
         "discount": 52,
         "stock": 34,
-        "sku": "FS-EL-EARLED-020-MID"
+        "sku": "FS-EL-EARLED-020-MID",
+        "barcode": "FX1038"
       },
       {
         "color": "Pearl White",
@@ -1376,7 +1680,8 @@ export const products: Product[] = [
         "mrp": 889,
         "discount": 52,
         "stock": 34,
-        "sku": "FS-EL-EARLED-020-PEA"
+        "sku": "FS-EL-EARLED-020-PEA",
+        "barcode": "FX1039"
       },
       {
         "color": "Rose Gold",
@@ -1396,7 +1701,8 @@ export const products: Product[] = [
         "mrp": 889,
         "discount": 52,
         "stock": 35,
-        "sku": "FS-EL-EARLED-020-ROS"
+        "sku": "FS-EL-EARLED-020-ROS",
+        "barcode": "FX1040"
       }
     ],
     "aPlusContent": [
@@ -1407,7 +1713,21 @@ export const products: Product[] = [
         "content": "Check remaining battery life for both the charging case and each individual earbud at a single glance. Charge on the go with up to 30 hours of total playback time.",
         "imageUrl": "https://images.unsplash.com/photo-1608156639585-b3a032ef9689?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 3) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 3) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "tws wireless bluetooth 5.3 earbuds with digital led case (batch 3), wholesale tws wireless bluetooth 5.3 earbuds with digital led case (batch 3), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_021",
@@ -1443,7 +1763,8 @@ export const products: Product[] = [
         "mrp": 1257,
         "discount": 58,
         "stock": 124,
-        "sku": "FS-EL-RNG10IN-021-DF"
+        "sku": "FS-EL-RNG10IN-021-DF",
+        "barcode": "FX1041"
       }
     ],
     "aPlusContent": [
@@ -1454,7 +1775,21 @@ export const products: Product[] = [
         "content": "Optimize your studio setup easily. Seamlessly shift color temperatures between 3200K and 5600K to remove shadows and highlight fine product details.",
         "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "10-inch LED Ring Light with Dynamic Tripod Stand (Batch 3) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 10-inch LED Ring Light with Dynamic Tripod Stand (Batch 3) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "10-inch led ring light with dynamic tripod stand (batch 3), wholesale 10-inch led ring light with dynamic tripod stand (batch 3), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_022",
@@ -1490,7 +1825,8 @@ export const products: Product[] = [
         "mrp": 2141,
         "discount": 59,
         "stock": 160,
-        "sku": "FS-EL-SMTCLK-022-CLA"
+        "sku": "FS-EL-SMTCLK-022-CLA",
+        "barcode": "FX1042"
       },
       {
         "color": "Navy Blue Strap",
@@ -1510,7 +1846,8 @@ export const products: Product[] = [
         "mrp": 2141,
         "discount": 59,
         "stock": 160,
-        "sku": "FS-EL-SMTCLK-022-NAV"
+        "sku": "FS-EL-SMTCLK-022-NAV",
+        "barcode": "FX1043"
       },
       {
         "color": "Powder Pink Strap",
@@ -1530,7 +1867,8 @@ export const products: Product[] = [
         "mrp": 2141,
         "discount": 59,
         "stock": 160,
-        "sku": "FS-EL-SMTCLK-022-POW"
+        "sku": "FS-EL-SMTCLK-022-POW",
+        "barcode": "FX1044"
       }
     ],
     "aPlusContent": [
@@ -1541,7 +1879,21 @@ export const products: Product[] = [
         "content": "Track your steps, calories, heart rate variance, and deep sleep cycles automatically. Synced data loads instantly onto Android & iOS companion apps.",
         "imageUrl": "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 3) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 3) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "dynamic smart watch with full touch spo2 monitor (batch 3), wholesale dynamic smart watch with full touch spo2 monitor (batch 3), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_023",
@@ -1577,7 +1929,8 @@ export const products: Product[] = [
         "mrp": 393,
         "discount": 54,
         "stock": 109,
-        "sku": "FS-BP-FBRSH5-023-BAB"
+        "sku": "FS-BP-FBRSH5-023-BAB",
+        "barcode": "FX1045"
       },
       {
         "color": "Sky Blue",
@@ -1597,7 +1950,8 @@ export const products: Product[] = [
         "mrp": 393,
         "discount": 54,
         "stock": 110,
-        "sku": "FS-BP-FBRSH5-023-SKY"
+        "sku": "FS-BP-FBRSH5-023-SKY",
+        "barcode": "FX1046"
       }
     ],
     "aPlusContent": [
@@ -1613,7 +1967,21 @@ export const products: Product[] = [
           "1x Coarse Pumice Head"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "5-in-1 Electric Facial Cleaning Brush Set (Batch 3) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 5-in-1 Electric Facial Cleaning Brush Set (Batch 3) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "5-in-1 electric facial cleaning brush set (batch 3), wholesale 5-in-1 electric facial cleaning brush set (batch 3), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_024",
@@ -1650,7 +2018,8 @@ export const products: Product[] = [
         "mrp": 819,
         "discount": 49,
         "stock": 204,
-        "sku": "FS-FA-LAPBAG-024-CHA"
+        "sku": "FS-FA-LAPBAG-024-CHA",
+        "barcode": "FX1047"
       },
       {
         "color": "Jet Black",
@@ -1671,7 +2040,8 @@ export const products: Product[] = [
         "mrp": 819,
         "discount": 49,
         "stock": 204,
-        "sku": "FS-FA-LAPBAG-024-JET"
+        "sku": "FS-FA-LAPBAG-024-JET",
+        "barcode": "FX1048"
       }
     ],
     "aPlusContent": [
@@ -1682,7 +2052,21 @@ export const products: Product[] = [
         "content": "Equipped with a secret back pocket to keep passports, cash, and smartphones secure. Multi-compartment interior organizes cables, stationeries, and books seamlessly.",
         "imageUrl": "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "6304",
+    "gstRate": 5,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 3) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 3) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "waterproof anti-theft laptop backpack with usb port (batch 3), wholesale waterproof anti-theft laptop backpack with usb port (batch 3), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_025",
@@ -1720,7 +2104,8 @@ export const products: Product[] = [
         "mrp": 520,
         "discount": 45,
         "stock": 197,
-        "sku": "FS-HK-CHOP12-025-FOR"
+        "sku": "FS-HK-CHOP12-025-FOR",
+        "barcode": "FX1049"
       },
       {
         "color": "Slate Gray",
@@ -1742,7 +2127,8 @@ export const products: Product[] = [
         "mrp": 520,
         "discount": 45,
         "stock": 197,
-        "sku": "FS-HK-CHOP12-025-SLA"
+        "sku": "FS-HK-CHOP12-025-SLA",
+        "barcode": "FX1050"
       }
     ],
     "aPlusContent": [
@@ -1764,7 +2150,21 @@ export const products: Product[] = [
           "Safety Guard Protection Included"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 4) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 4) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "multi-functional 12-in-1 vegetable chopper & slicer (batch 4), wholesale multi-functional 12-in-1 vegetable chopper & slicer (batch 4), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_026",
@@ -1801,7 +2201,8 @@ export const products: Product[] = [
         "mrp": 782,
         "discount": 53,
         "stock": 102,
-        "sku": "FS-HK-MAGWIP-026-DF"
+        "sku": "FS-HK-MAGWIP-026-DF",
+        "barcode": "FX1051"
       }
     ],
     "aPlusContent": [
@@ -1812,7 +2213,21 @@ export const products: Product[] = [
         "content": "Features industrial-grade NdFeB magnets that stay locked even through thick double-paned windows. Clean the exterior from the safety of your room.",
         "imageUrl": "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 4) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 4) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "double-sided magnetic window cleaner glass wiper (batch 4), wholesale double-sided magnetic window cleaner glass wiper (batch 4), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_027",
@@ -1847,7 +2262,8 @@ export const products: Product[] = [
         "mrp": 98,
         "discount": 48,
         "stock": 118,
-        "sku": "FS-HK-SILLID-027-CLE"
+        "sku": "FS-HK-SILLID-027-CLE",
+        "barcode": "FX1052"
       },
       {
         "color": "Translucent Pink",
@@ -1866,7 +2282,8 @@ export const products: Product[] = [
         "mrp": 98,
         "discount": 48,
         "stock": 119,
-        "sku": "FS-HK-SILLID-027-TRA"
+        "sku": "FS-HK-SILLID-027-TRA",
+        "barcode": "FX1053"
       }
     ],
     "aPlusContent": [
@@ -1881,7 +2298,21 @@ export const products: Product[] = [
           "Airtight & Spill-Proof Seal"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 4) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 4) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "silicone stretch lids - 6 pack universal sizes (batch 4), wholesale silicone stretch lids - 6 pack universal sizes (batch 4), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_028",
@@ -1917,7 +2348,8 @@ export const products: Product[] = [
         "mrp": 1176,
         "discount": 62,
         "stock": 82,
-        "sku": "FS-EL-EARLED-028-MID"
+        "sku": "FS-EL-EARLED-028-MID",
+        "barcode": "FX1054"
       },
       {
         "color": "Pearl White",
@@ -1937,7 +2369,8 @@ export const products: Product[] = [
         "mrp": 1176,
         "discount": 62,
         "stock": 82,
-        "sku": "FS-EL-EARLED-028-PEA"
+        "sku": "FS-EL-EARLED-028-PEA",
+        "barcode": "FX1055"
       },
       {
         "color": "Rose Gold",
@@ -1957,7 +2390,8 @@ export const products: Product[] = [
         "mrp": 1176,
         "discount": 62,
         "stock": 83,
-        "sku": "FS-EL-EARLED-028-ROS"
+        "sku": "FS-EL-EARLED-028-ROS",
+        "barcode": "FX1056"
       }
     ],
     "aPlusContent": [
@@ -1968,7 +2402,21 @@ export const products: Product[] = [
         "content": "Check remaining battery life for both the charging case and each individual earbud at a single glance. Charge on the go with up to 30 hours of total playback time.",
         "imageUrl": "https://images.unsplash.com/photo-1608156639585-b3a032ef9689?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 4) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 4) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "tws wireless bluetooth 5.3 earbuds with digital led case (batch 4), wholesale tws wireless bluetooth 5.3 earbuds with digital led case (batch 4), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_029",
@@ -2004,7 +2452,8 @@ export const products: Product[] = [
         "mrp": 920,
         "discount": 40,
         "stock": 104,
-        "sku": "FS-EL-RNG10IN-029-DF"
+        "sku": "FS-EL-RNG10IN-029-DF",
+        "barcode": "FX1057"
       }
     ],
     "aPlusContent": [
@@ -2015,7 +2464,21 @@ export const products: Product[] = [
         "content": "Optimize your studio setup easily. Seamlessly shift color temperatures between 3200K and 5600K to remove shadows and highlight fine product details.",
         "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "10-inch LED Ring Light with Dynamic Tripod Stand (Batch 4) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 10-inch LED Ring Light with Dynamic Tripod Stand (Batch 4) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "10-inch led ring light with dynamic tripod stand (batch 4), wholesale 10-inch led ring light with dynamic tripod stand (batch 4), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_030",
@@ -2051,7 +2514,8 @@ export const products: Product[] = [
         "mrp": 1953,
         "discount": 53,
         "stock": 71,
-        "sku": "FS-EL-SMTCLK-030-CLA"
+        "sku": "FS-EL-SMTCLK-030-CLA",
+        "barcode": "FX1058"
       },
       {
         "color": "Navy Blue Strap",
@@ -2071,7 +2535,8 @@ export const products: Product[] = [
         "mrp": 1953,
         "discount": 53,
         "stock": 71,
-        "sku": "FS-EL-SMTCLK-030-NAV"
+        "sku": "FS-EL-SMTCLK-030-NAV",
+        "barcode": "FX1059"
       },
       {
         "color": "Powder Pink Strap",
@@ -2091,7 +2556,8 @@ export const products: Product[] = [
         "mrp": 1953,
         "discount": 53,
         "stock": 72,
-        "sku": "FS-EL-SMTCLK-030-POW"
+        "sku": "FS-EL-SMTCLK-030-POW",
+        "barcode": "FX1060"
       }
     ],
     "aPlusContent": [
@@ -2102,7 +2568,21 @@ export const products: Product[] = [
         "content": "Track your steps, calories, heart rate variance, and deep sleep cycles automatically. Synced data loads instantly onto Android & iOS companion apps.",
         "imageUrl": "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 4) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 4) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "dynamic smart watch with full touch spo2 monitor (batch 4), wholesale dynamic smart watch with full touch spo2 monitor (batch 4), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_031",
@@ -2138,7 +2618,8 @@ export const products: Product[] = [
         "mrp": 350,
         "discount": 46,
         "stock": 62,
-        "sku": "FS-BP-FBRSH5-031-BAB"
+        "sku": "FS-BP-FBRSH5-031-BAB",
+        "barcode": "FX1061"
       },
       {
         "color": "Sky Blue",
@@ -2158,7 +2639,8 @@ export const products: Product[] = [
         "mrp": 350,
         "discount": 46,
         "stock": 62,
-        "sku": "FS-BP-FBRSH5-031-SKY"
+        "sku": "FS-BP-FBRSH5-031-SKY",
+        "barcode": "FX1062"
       }
     ],
     "aPlusContent": [
@@ -2174,7 +2656,21 @@ export const products: Product[] = [
           "1x Coarse Pumice Head"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "5-in-1 Electric Facial Cleaning Brush Set (Batch 4) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 5-in-1 Electric Facial Cleaning Brush Set (Batch 4) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "5-in-1 electric facial cleaning brush set (batch 4), wholesale 5-in-1 electric facial cleaning brush set (batch 4), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_032",
@@ -2211,7 +2707,8 @@ export const products: Product[] = [
         "mrp": 764,
         "discount": 43,
         "stock": 240,
-        "sku": "FS-FA-LAPBAG-032-CHA"
+        "sku": "FS-FA-LAPBAG-032-CHA",
+        "barcode": "FX1063"
       },
       {
         "color": "Jet Black",
@@ -2232,7 +2729,8 @@ export const products: Product[] = [
         "mrp": 764,
         "discount": 43,
         "stock": 241,
-        "sku": "FS-FA-LAPBAG-032-JET"
+        "sku": "FS-FA-LAPBAG-032-JET",
+        "barcode": "FX1064"
       }
     ],
     "aPlusContent": [
@@ -2243,7 +2741,21 @@ export const products: Product[] = [
         "content": "Equipped with a secret back pocket to keep passports, cash, and smartphones secure. Multi-compartment interior organizes cables, stationeries, and books seamlessly.",
         "imageUrl": "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "6304",
+    "gstRate": 5,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 4) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 4) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "waterproof anti-theft laptop backpack with usb port (batch 4), wholesale waterproof anti-theft laptop backpack with usb port (batch 4), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_033",
@@ -2281,7 +2793,8 @@ export const products: Product[] = [
         "mrp": 764,
         "discount": 61,
         "stock": 208,
-        "sku": "FS-HK-CHOP12-033-FOR"
+        "sku": "FS-HK-CHOP12-033-FOR",
+        "barcode": "FX1065"
       },
       {
         "color": "Slate Gray",
@@ -2303,7 +2816,8 @@ export const products: Product[] = [
         "mrp": 764,
         "discount": 61,
         "stock": 209,
-        "sku": "FS-HK-CHOP12-033-SLA"
+        "sku": "FS-HK-CHOP12-033-SLA",
+        "barcode": "FX1066"
       }
     ],
     "aPlusContent": [
@@ -2325,7 +2839,21 @@ export const products: Product[] = [
           "Safety Guard Protection Included"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 5) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 5) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "multi-functional 12-in-1 vegetable chopper & slicer (batch 5), wholesale multi-functional 12-in-1 vegetable chopper & slicer (batch 5), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_034",
@@ -2362,7 +2890,8 @@ export const products: Product[] = [
         "mrp": 724,
         "discount": 47,
         "stock": 271,
-        "sku": "FS-HK-MAGWIP-034-DF"
+        "sku": "FS-HK-MAGWIP-034-DF",
+        "barcode": "FX1067"
       }
     ],
     "aPlusContent": [
@@ -2373,7 +2902,21 @@ export const products: Product[] = [
         "content": "Features industrial-grade NdFeB magnets that stay locked even through thick double-paned windows. Clean the exterior from the safety of your room.",
         "imageUrl": "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 5) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 5) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "double-sided magnetic window cleaner glass wiper (batch 5), wholesale double-sided magnetic window cleaner glass wiper (batch 5), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_035",
@@ -2408,7 +2951,8 @@ export const products: Product[] = [
         "mrp": 108,
         "discount": 50,
         "stock": 97,
-        "sku": "FS-HK-SILLID-035-CLE"
+        "sku": "FS-HK-SILLID-035-CLE",
+        "barcode": "FX1068"
       },
       {
         "color": "Translucent Pink",
@@ -2427,7 +2971,8 @@ export const products: Product[] = [
         "mrp": 108,
         "discount": 50,
         "stock": 97,
-        "sku": "FS-HK-SILLID-035-TRA"
+        "sku": "FS-HK-SILLID-035-TRA",
+        "barcode": "FX1069"
       }
     ],
     "aPlusContent": [
@@ -2442,7 +2987,21 @@ export const products: Product[] = [
           "Airtight & Spill-Proof Seal"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 5) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 5) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "silicone stretch lids - 6 pack universal sizes (batch 5), wholesale silicone stretch lids - 6 pack universal sizes (batch 5), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_036",
@@ -2478,7 +3037,8 @@ export const products: Product[] = [
         "mrp": 879,
         "discount": 47,
         "stock": 117,
-        "sku": "FS-EL-EARLED-036-MID"
+        "sku": "FS-EL-EARLED-036-MID",
+        "barcode": "FX1070"
       },
       {
         "color": "Pearl White",
@@ -2498,7 +3058,8 @@ export const products: Product[] = [
         "mrp": 879,
         "discount": 47,
         "stock": 117,
-        "sku": "FS-EL-EARLED-036-PEA"
+        "sku": "FS-EL-EARLED-036-PEA",
+        "barcode": "FX1071"
       },
       {
         "color": "Rose Gold",
@@ -2518,7 +3079,8 @@ export const products: Product[] = [
         "mrp": 879,
         "discount": 47,
         "stock": 119,
-        "sku": "FS-EL-EARLED-036-ROS"
+        "sku": "FS-EL-EARLED-036-ROS",
+        "barcode": "FX1072"
       }
     ],
     "aPlusContent": [
@@ -2529,7 +3091,21 @@ export const products: Product[] = [
         "content": "Check remaining battery life for both the charging case and each individual earbud at a single glance. Charge on the go with up to 30 hours of total playback time.",
         "imageUrl": "https://images.unsplash.com/photo-1608156639585-b3a032ef9689?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 5) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 5) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "tws wireless bluetooth 5.3 earbuds with digital led case (batch 5), wholesale tws wireless bluetooth 5.3 earbuds with digital led case (batch 5), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_037",
@@ -2565,7 +3141,8 @@ export const products: Product[] = [
         "mrp": 1200,
         "discount": 52,
         "stock": 473,
-        "sku": "FS-EL-RNG10IN-037-DF"
+        "sku": "FS-EL-RNG10IN-037-DF",
+        "barcode": "FX1073"
       }
     ],
     "aPlusContent": [
@@ -2576,7 +3153,21 @@ export const products: Product[] = [
         "content": "Optimize your studio setup easily. Seamlessly shift color temperatures between 3200K and 5600K to remove shadows and highlight fine product details.",
         "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "10-inch LED Ring Light with Dynamic Tripod Stand (Batch 5) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 10-inch LED Ring Light with Dynamic Tripod Stand (Batch 5) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "10-inch led ring light with dynamic tripod stand (batch 5), wholesale 10-inch led ring light with dynamic tripod stand (batch 5), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_038",
@@ -2612,7 +3203,8 @@ export const products: Product[] = [
         "mrp": 1955,
         "discount": 51,
         "stock": 92,
-        "sku": "FS-EL-SMTCLK-038-CLA"
+        "sku": "FS-EL-SMTCLK-038-CLA",
+        "barcode": "FX1074"
       },
       {
         "color": "Navy Blue Strap",
@@ -2632,7 +3224,8 @@ export const products: Product[] = [
         "mrp": 1955,
         "discount": 51,
         "stock": 92,
-        "sku": "FS-EL-SMTCLK-038-NAV"
+        "sku": "FS-EL-SMTCLK-038-NAV",
+        "barcode": "FX1075"
       },
       {
         "color": "Powder Pink Strap",
@@ -2652,7 +3245,8 @@ export const products: Product[] = [
         "mrp": 1955,
         "discount": 51,
         "stock": 94,
-        "sku": "FS-EL-SMTCLK-038-POW"
+        "sku": "FS-EL-SMTCLK-038-POW",
+        "barcode": "FX1076"
       }
     ],
     "aPlusContent": [
@@ -2663,7 +3257,21 @@ export const products: Product[] = [
         "content": "Track your steps, calories, heart rate variance, and deep sleep cycles automatically. Synced data loads instantly onto Android & iOS companion apps.",
         "imageUrl": "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 5) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 5) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "dynamic smart watch with full touch spo2 monitor (batch 5), wholesale dynamic smart watch with full touch spo2 monitor (batch 5), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_039",
@@ -2699,7 +3307,8 @@ export const products: Product[] = [
         "mrp": 495,
         "discount": 60,
         "stock": 102,
-        "sku": "FS-BP-FBRSH5-039-BAB"
+        "sku": "FS-BP-FBRSH5-039-BAB",
+        "barcode": "FX1077"
       },
       {
         "color": "Sky Blue",
@@ -2719,7 +3328,8 @@ export const products: Product[] = [
         "mrp": 495,
         "discount": 60,
         "stock": 102,
-        "sku": "FS-BP-FBRSH5-039-SKY"
+        "sku": "FS-BP-FBRSH5-039-SKY",
+        "barcode": "FX1078"
       }
     ],
     "aPlusContent": [
@@ -2735,7 +3345,21 @@ export const products: Product[] = [
           "1x Coarse Pumice Head"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "5-in-1 Electric Facial Cleaning Brush Set (Batch 5) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 5-in-1 Electric Facial Cleaning Brush Set (Batch 5) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "5-in-1 electric facial cleaning brush set (batch 5), wholesale 5-in-1 electric facial cleaning brush set (batch 5), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_040",
@@ -2772,7 +3396,8 @@ export const products: Product[] = [
         "mrp": 860,
         "discount": 47,
         "stock": 185,
-        "sku": "FS-FA-LAPBAG-040-CHA"
+        "sku": "FS-FA-LAPBAG-040-CHA",
+        "barcode": "FX1079"
       },
       {
         "color": "Jet Black",
@@ -2793,7 +3418,8 @@ export const products: Product[] = [
         "mrp": 860,
         "discount": 47,
         "stock": 186,
-        "sku": "FS-FA-LAPBAG-040-JET"
+        "sku": "FS-FA-LAPBAG-040-JET",
+        "barcode": "FX1080"
       }
     ],
     "aPlusContent": [
@@ -2804,7 +3430,21 @@ export const products: Product[] = [
         "content": "Equipped with a secret back pocket to keep passports, cash, and smartphones secure. Multi-compartment interior organizes cables, stationeries, and books seamlessly.",
         "imageUrl": "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "6304",
+    "gstRate": 5,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 5) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 5) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "waterproof anti-theft laptop backpack with usb port (batch 5), wholesale waterproof anti-theft laptop backpack with usb port (batch 5), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_041",
@@ -2842,7 +3482,8 @@ export const products: Product[] = [
         "mrp": 545,
         "discount": 43,
         "stock": 201,
-        "sku": "FS-HK-CHOP12-041-FOR"
+        "sku": "FS-HK-CHOP12-041-FOR",
+        "barcode": "FX1081"
       },
       {
         "color": "Slate Gray",
@@ -2864,7 +3505,8 @@ export const products: Product[] = [
         "mrp": 545,
         "discount": 43,
         "stock": 202,
-        "sku": "FS-HK-CHOP12-041-SLA"
+        "sku": "FS-HK-CHOP12-041-SLA",
+        "barcode": "FX1082"
       }
     ],
     "aPlusContent": [
@@ -2886,7 +3528,21 @@ export const products: Product[] = [
           "Safety Guard Protection Included"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 6) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 6) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "multi-functional 12-in-1 vegetable chopper & slicer (batch 6), wholesale multi-functional 12-in-1 vegetable chopper & slicer (batch 6), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_042",
@@ -2923,7 +3579,8 @@ export const products: Product[] = [
         "mrp": 677,
         "discount": 41,
         "stock": 115,
-        "sku": "FS-HK-MAGWIP-042-DF"
+        "sku": "FS-HK-MAGWIP-042-DF",
+        "barcode": "FX1083"
       }
     ],
     "aPlusContent": [
@@ -2934,7 +3591,21 @@ export const products: Product[] = [
         "content": "Features industrial-grade NdFeB magnets that stay locked even through thick double-paned windows. Clean the exterior from the safety of your room.",
         "imageUrl": "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 6) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 6) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "double-sided magnetic window cleaner glass wiper (batch 6), wholesale double-sided magnetic window cleaner glass wiper (batch 6), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_043",
@@ -2969,7 +3640,8 @@ export const products: Product[] = [
         "mrp": 103,
         "discount": 46,
         "stock": 164,
-        "sku": "FS-HK-SILLID-043-CLE"
+        "sku": "FS-HK-SILLID-043-CLE",
+        "barcode": "FX1084"
       },
       {
         "color": "Translucent Pink",
@@ -2988,7 +3660,8 @@ export const products: Product[] = [
         "mrp": 103,
         "discount": 46,
         "stock": 165,
-        "sku": "FS-HK-SILLID-043-TRA"
+        "sku": "FS-HK-SILLID-043-TRA",
+        "barcode": "FX1085"
       }
     ],
     "aPlusContent": [
@@ -3003,7 +3676,21 @@ export const products: Product[] = [
           "Airtight & Spill-Proof Seal"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 6) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 6) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "silicone stretch lids - 6 pack universal sizes (batch 6), wholesale silicone stretch lids - 6 pack universal sizes (batch 6), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_044",
@@ -3039,7 +3726,8 @@ export const products: Product[] = [
         "mrp": 837,
         "discount": 42,
         "stock": 63,
-        "sku": "FS-EL-EARLED-044-MID"
+        "sku": "FS-EL-EARLED-044-MID",
+        "barcode": "FX1086"
       },
       {
         "color": "Pearl White",
@@ -3059,7 +3747,8 @@ export const products: Product[] = [
         "mrp": 837,
         "discount": 42,
         "stock": 63,
-        "sku": "FS-EL-EARLED-044-PEA"
+        "sku": "FS-EL-EARLED-044-PEA",
+        "barcode": "FX1087"
       },
       {
         "color": "Rose Gold",
@@ -3079,7 +3768,8 @@ export const products: Product[] = [
         "mrp": 837,
         "discount": 42,
         "stock": 64,
-        "sku": "FS-EL-EARLED-044-ROS"
+        "sku": "FS-EL-EARLED-044-ROS",
+        "barcode": "FX1088"
       }
     ],
     "aPlusContent": [
@@ -3090,7 +3780,21 @@ export const products: Product[] = [
         "content": "Check remaining battery life for both the charging case and each individual earbud at a single glance. Charge on the go with up to 30 hours of total playback time.",
         "imageUrl": "https://images.unsplash.com/photo-1608156639585-b3a032ef9689?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 6) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 6) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "tws wireless bluetooth 5.3 earbuds with digital led case (batch 6), wholesale tws wireless bluetooth 5.3 earbuds with digital led case (batch 6), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_045",
@@ -3126,7 +3830,8 @@ export const products: Product[] = [
         "mrp": 1578,
         "discount": 62,
         "stock": 238,
-        "sku": "FS-EL-RNG10IN-045-DF"
+        "sku": "FS-EL-RNG10IN-045-DF",
+        "barcode": "FX1089"
       }
     ],
     "aPlusContent": [
@@ -3137,7 +3842,21 @@ export const products: Product[] = [
         "content": "Optimize your studio setup easily. Seamlessly shift color temperatures between 3200K and 5600K to remove shadows and highlight fine product details.",
         "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "10-inch LED Ring Light with Dynamic Tripod Stand (Batch 6) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 10-inch LED Ring Light with Dynamic Tripod Stand (Batch 6) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "10-inch led ring light with dynamic tripod stand (batch 6), wholesale 10-inch led ring light with dynamic tripod stand (batch 6), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_046",
@@ -3173,7 +3892,8 @@ export const products: Product[] = [
         "mrp": 1750,
         "discount": 43,
         "stock": 77,
-        "sku": "FS-EL-SMTCLK-046-CLA"
+        "sku": "FS-EL-SMTCLK-046-CLA",
+        "barcode": "FX1090"
       },
       {
         "color": "Navy Blue Strap",
@@ -3193,7 +3913,8 @@ export const products: Product[] = [
         "mrp": 1750,
         "discount": 43,
         "stock": 77,
-        "sku": "FS-EL-SMTCLK-046-NAV"
+        "sku": "FS-EL-SMTCLK-046-NAV",
+        "barcode": "FX1091"
       },
       {
         "color": "Powder Pink Strap",
@@ -3213,7 +3934,8 @@ export const products: Product[] = [
         "mrp": 1750,
         "discount": 43,
         "stock": 77,
-        "sku": "FS-EL-SMTCLK-046-POW"
+        "sku": "FS-EL-SMTCLK-046-POW",
+        "barcode": "FX1092"
       }
     ],
     "aPlusContent": [
@@ -3224,7 +3946,21 @@ export const products: Product[] = [
         "content": "Track your steps, calories, heart rate variance, and deep sleep cycles automatically. Synced data loads instantly onto Android & iOS companion apps.",
         "imageUrl": "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "8509",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 6) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 6) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "dynamic smart watch with full touch spo2 monitor (batch 6), wholesale dynamic smart watch with full touch spo2 monitor (batch 6), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_047",
@@ -3260,7 +3996,8 @@ export const products: Product[] = [
         "mrp": 403,
         "discount": 49,
         "stock": 153,
-        "sku": "FS-BP-FBRSH5-047-BAB"
+        "sku": "FS-BP-FBRSH5-047-BAB",
+        "barcode": "FX1093"
       },
       {
         "color": "Sky Blue",
@@ -3280,7 +4017,8 @@ export const products: Product[] = [
         "mrp": 403,
         "discount": 49,
         "stock": 154,
-        "sku": "FS-BP-FBRSH5-047-SKY"
+        "sku": "FS-BP-FBRSH5-047-SKY",
+        "barcode": "FX1094"
       }
     ],
     "aPlusContent": [
@@ -3296,7 +4034,21 @@ export const products: Product[] = [
           "1x Coarse Pumice Head"
         ]
       }
-    ]
+    ],
+    "hsnCode": "3924",
+    "gstRate": 18,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "5-in-1 Electric Facial Cleaning Brush Set (Batch 6) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy 5-in-1 Electric Facial Cleaning Brush Set (Batch 6) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "5-in-1 electric facial cleaning brush set (batch 6), wholesale 5-in-1 electric facial cleaning brush set (batch 6), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   },
   {
     "_id": "prod_048",
@@ -3333,7 +4085,8 @@ export const products: Product[] = [
         "mrp": 1250,
         "discount": 62,
         "stock": 105,
-        "sku": "FS-FA-LAPBAG-048-CHA"
+        "sku": "FS-FA-LAPBAG-048-CHA",
+        "barcode": "FX1095"
       },
       {
         "color": "Jet Black",
@@ -3354,7 +4107,8 @@ export const products: Product[] = [
         "mrp": 1250,
         "discount": 62,
         "stock": 105,
-        "sku": "FS-FA-LAPBAG-048-JET"
+        "sku": "FS-FA-LAPBAG-048-JET",
+        "barcode": "FX1096"
       }
     ],
     "aPlusContent": [
@@ -3365,6 +4119,20 @@ export const products: Product[] = [
         "content": "Equipped with a secret back pocket to keep passports, cash, and smartphones secure. Multi-compartment interior organizes cables, stationeries, and books seamlessly.",
         "imageUrl": "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=800&q=80"
       }
-    ]
+    ],
+    "hsnCode": "6304",
+    "gstRate": 5,
+    "priceIncludesGst": true,
+    "moq": 5,
+    "seoTitle": "Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 6) | Direct Factory Wholesale price India",
+    "seoDescription": "Buy Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 6) online in bulk. Sourced direct from factory. MOQ: 5 units. Lowest B2B prices with GST claimable invoices.",
+    "seoKeywords": "waterproof anti-theft laptop backpack with usb port (batch 6), wholesale waterproof anti-theft laptop backpack with usb port (batch 6), B2B bulk buy, cargo supply",
+    "fieldVisibility": {
+      "showDescription": true,
+      "showSizes": true,
+      "showWeights": true,
+      "showDimensions": true,
+      "showImages": true
+    }
   }
 ];

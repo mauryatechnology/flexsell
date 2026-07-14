@@ -472,7 +472,7 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
                           disabled={product.totalStock <= 0}
                         >
                           <ShoppingCart className="h-4 w-4" />
-                          Add Bulk Cargo
+                          Add to Cart
                         </Button>
                       </div>
                     </CardContent>
@@ -578,7 +578,7 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
                         disabled={product.totalStock <= 0}
                       >
                         <ShoppingCart className="h-4 w-4" />
-                        Add Bulk Cargo
+                        Add to Cart
                       </Button>
                     </div>
                   </div>

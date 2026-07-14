@@ -4,7 +4,6 @@ import * as React from "react";
 
 // Code 39 Encoding Table
 // 1 = Black Bar (narrow or wide), 0 = White space (narrow or wide)
-// Narrow = single unit, Wide = double unit
 const CODE39_MAP: Record<string, string> = {
   "0": "101001101101",
   "1": "110100101011",
@@ -60,10 +59,14 @@ interface BarcodeProps {
   height?: number;
 }
 
-export function Barcode({ value = "", sku, className = "", width = 1.2, height = 35 }: BarcodeProps) {
+export function Barcode({ value = "", sku, className = "", width = 0.8, height = 30 }: BarcodeProps) {
   const encodeValue = React.useMemo(() => {
-    if (sku) return sku;
-    return value;
+    let raw = sku || value || "";
+    // If it's a long SKU (longer than 8 characters), slice it down to compress space
+    if (raw.length > 8 && !raw.startsWith("FX")) {
+      raw = raw.slice(-6); // Take last 6 characters for a smaller footprint
+    }
+    return raw;
   }, [value, sku]);
 
   // Normalize value to uppercase and strip invalid characters
@@ -92,13 +95,13 @@ export function Barcode({ value = "", sku, className = "", width = 1.2, height =
   }, [encodedText]);
 
   if (!binaryBars) {
-    return <div className="text-xs text-destructive">Invalid Barcode Value</div>;
+    return <div className="text-[10px] text-destructive font-mono">Invalid Barcode</div>;
   }
 
   const svgWidth = binaryBars.length * width;
 
   return (
-    <div className={`flex flex-col items-center p-2 bg-white rounded border border-gray-200 w-max ${className}`}>
+    <div className={`flex flex-col items-center p-1.5 bg-white rounded border border-gray-150 w-max select-none ${className}`}>
       <svg
         width={svgWidth}
         height={height}
@@ -121,8 +124,8 @@ export function Barcode({ value = "", sku, className = "", width = 1.2, height =
           return null;
         })}
       </svg>
-      <span className="text-[9px] font-mono font-bold tracking-wider text-black mt-1.5 uppercase">
-        {sku ? `SKU: ${sku}` : rawText}
+      <span className="text-[8px] font-mono font-bold tracking-widest text-black mt-1 uppercase">
+        {sku || value}
       </span>
     </div>
   );

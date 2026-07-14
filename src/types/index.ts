@@ -25,6 +25,14 @@ export interface ColorVariant {
   discount: number;
   stock: number;
   sku: string;
+  barcode?: string; // Short unique code (e.g. FX100A)
+}
+
+export interface HsnRecord extends BaseDocument {
+  code: string;       // e.g. "3924"
+  gstRate: number;    // e.g. 18
+  description: string;
+  isActive: boolean;
 }
 
 export interface APlusBlock {
@@ -49,6 +57,22 @@ export interface Product extends BaseDocument {
   totalStock: number;
   colorVariants: ColorVariant[];
   aPlusContent?: APlusBlock[];
+  
+  // Dynamic B2B Indian Tax, MOQ, and SEO fields
+  hsnCode?: string;
+  gstRate?: number;
+  priceIncludesGst?: boolean;
+  moq?: number;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+  fieldVisibility?: {
+    showDescription: boolean;
+    showSizes: boolean;
+    showWeights: boolean;
+    showDimensions: boolean;
+    showImages: boolean;
+  };
 }
 
 export interface Banner extends BaseDocument {

@@ -236,7 +236,7 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
         }`}>
           <div className="flex justify-between items-center border-b pb-2">
             <h3 className="font-bold text-sm uppercase tracking-wider flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4 text-primary" /> Filter Cargo
+              <SlidersHorizontal className="h-4 w-4 text-primary" /> Filter Products
             </h3>
             <button 
               onClick={handleClearFilters}
@@ -454,7 +454,7 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
                           disabled={product.totalStock <= 0}
                         >
                           <ShoppingCart className="h-4 w-4" />
-                          Add Bulk Cargo
+                          Add to Cart
                         </Button>
                       </div>
                     </CardContent>
@@ -562,7 +562,7 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
                         disabled={product.totalStock <= 0}
                       >
                         <ShoppingCart className="h-4 w-4" />
-                        Add Bulk Cargo
+                        Add to Cart
                       </Button>
                     </div>
                   </div>
