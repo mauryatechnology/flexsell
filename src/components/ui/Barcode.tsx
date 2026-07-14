@@ -62,11 +62,10 @@ interface BarcodeProps {
 }
 
 export function Barcode({ value = "", sku, fsiNo, className = "", width = 1.2, height = 35 }: BarcodeProps) {
-  // If sku and fsiNo are provided, combine them for encoding
+  // If fsiNo is provided, encode only the FSI to keep the barcode lines short & compact!
   const encodeValue = React.useMemo(() => {
-    if (sku || fsiNo) {
-      return `${sku || ""}-${fsiNo || ""}`;
-    }
+    if (fsiNo) return fsiNo;
+    if (sku) return sku;
     return value;
   }, [value, sku, fsiNo]);
 

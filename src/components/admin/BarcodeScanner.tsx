@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { useProductStore } from "@/stores/productStore";
 import { Barcode } from "@/components/ui/Barcode";
 import { formatPrice } from "@/lib/utils";
-import { X, Search, QrCode, ArrowRight, Minus, Plus } from "lucide-react";
+import { X, Search, QrCode, ArrowRight, Minus, Plus, Camera, CameraOff } from "lucide-react";
 
 interface BarcodeScannerProps {
   isOpen: boolean;
@@ -20,7 +20,64 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
   const [scannedProduct, setScannedProduct] = React.useState<any>(null);
   const [errorMsg, setErrorMsg] = React.useState("");
 
-  // Auto-focus input on open
+  // Camera states
+  const [isScanning, setIsScanning] = React.useState(false);
+  const html5QrcodeRef = React.useRef<any>(null);
+
+  // Stop camera function
+  const stopCamera = React.useCallback(async () => {
+    if (html5QrcodeRef.current) {
+      try {
+        if (html5QrcodeRef.current.isScanning) {
+          await html5QrcodeRef.current.stop();
+        }
+      } catch (err) {
+        console.error("Failed to stop camera scanner:", err);
+      } finally {
+        html5QrcodeRef.current = null;
+        setIsScanning(false);
+      }
+    }
+  }, []);
+
+  // Start camera function
+  const startCamera = async () => {
+    setErrorMsg("");
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      await stopCamera();
+
+      const scanner = new Html5Qrcode("scanner-video-feed");
+      html5QrcodeRef.current = scanner;
+      setIsScanning(true);
+
+      await scanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: (width, height) => {
+            const boxWidth = Math.min(width * 0.85, 280);
+            const boxHeight = Math.min(height * 0.45, 110);
+            return { width: boxWidth, height: boxHeight };
+          },
+          aspectRatio: 1.333333
+        },
+        (decodedText) => {
+          handleScanSearch(decodedText);
+          stopCamera();
+        },
+        (error) => {
+          // Keep searching
+        }
+      );
+    } catch (err) {
+      console.error("Failed to start camera scanner:", err);
+      setErrorMsg("Camera access failed. Ensure permissions are granted.");
+      setIsScanning(false);
+    }
+  };
+
+  // Auto-focus input on open & clean up camera
   const inputRef = React.useRef<HTMLInputElement>(null);
   React.useEffect(() => {
     if (isOpen) {
@@ -28,8 +85,13 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
       setScanInput("");
       setScannedProduct(null);
       setErrorMsg("");
+    } else {
+      stopCamera();
     }
-  }, [isOpen]);
+    return () => {
+      stopCamera();
+    };
+  }, [isOpen, stopCamera]);
 
   const handleScanSearch = (barcodeVal: string) => {
     setErrorMsg("");
@@ -111,9 +173,36 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
                 />
               </div>
               <Button onClick={() => handleScanSearch(scanInput)}>Trigger Scan</Button>
+              <Button
+                type="button"
+                variant={isScanning ? "destructive" : "secondary"}
+                onClick={isScanning ? stopCamera : startCamera}
+                className="flex items-center gap-2"
+              >
+                {isScanning ? (
+                  <>
+                    <CameraOff className="h-4 w-4" /> Stop Cam
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-4 w-4" /> Live Camera Scan
+                  </>
+                )}
+              </Button>
             </div>
             {errorMsg && <p className="text-xs text-destructive font-medium">{errorMsg}</p>}
           </div>
+
+          {isScanning && (
+            <div className="relative w-full max-w-lg mx-auto aspect-[4/3] rounded-xl overflow-hidden border border-primary/30 bg-black flex flex-col items-center justify-center">
+              <div id="scanner-video-feed" className="w-full h-full"></div>
+              {/* Laser scanning visual animation line */}
+              <div className="absolute inset-x-0 h-0.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-bounce top-1/2"></div>
+              <div className="absolute bottom-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded">
+                Align barcode inside the central window
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Left Column: Quick Simulation Dropdown */}
