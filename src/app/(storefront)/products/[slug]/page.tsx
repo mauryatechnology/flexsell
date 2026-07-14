@@ -7,13 +7,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const product = products.find((p) => p.slug === slug);
   if (!product) return {};
+  const defaultVariant = product.colorVariants?.[0];
+  const sku = defaultVariant?.sku || "NO SKU";
+  const imgUrl = defaultVariant?.images?.[0] || "";
   return {
     title: `${product.title} - Factory Wholesale Price`,
-    description: `Buy ${product.title} at factory direct wholesale rates. SKU: ${product.sku}. ${product.description.slice(0, 150)}...`,
+    description: `Buy ${product.title} at factory direct wholesale rates. SKU: ${sku}. ${product.description.slice(0, 150)}...`,
     openGraph: {
       title: `${product.title} | FlexSell Wholesale`,
       description: product.description,
-      images: [{ url: product.images[0] }]
+      images: [{ url: imgUrl }]
     }
   };
 }

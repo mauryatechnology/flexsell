@@ -33,16 +33,13 @@ export const useCartStore = create<CartState>()(
         
         const itemId = `${product._id}-${variantKey}`;
         
-        // Calculate price per unit with variant offsets
-        let calculatedPrice = product.price;
-        if (product.variants) {
-          Object.entries(selectedVariants).forEach(([category, value]) => {
-            const match = product.variants?.find(v => v.name === category && v.value === value);
-            if (match) {
-              calculatedPrice += match.priceOffset;
-            }
-          });
-        }
+        // Calculate price per unit from matching color variant
+        const selectedColor = selectedVariants["Color"] || selectedVariants["color"] || "Default";
+        const matchedVariant = product.colorVariants?.find(
+          cv => cv.color.toLowerCase() === selectedColor.toLowerCase()
+        ) || product.colorVariants?.[0];
+        
+        const calculatedPrice = matchedVariant ? matchedVariant.price : 0;
         
         set((state) => {
           const existingIndex = state.items.findIndex(item => item.id === itemId);

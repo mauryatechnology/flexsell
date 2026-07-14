@@ -8,6 +8,7 @@ import { useProductStore } from "@/stores/productStore";
 import { Barcode } from "@/components/ui/Barcode";
 import { formatPrice } from "@/lib/utils";
 import { X, Search, QrCode, ArrowRight, Minus, Plus, Camera, CameraOff } from "lucide-react";
+import { Product, ColorVariant } from "@/types";
 
 interface BarcodeScannerProps {
   isOpen: boolean;
@@ -17,7 +18,8 @@ interface BarcodeScannerProps {
 export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
   const { products, updateProduct } = useProductStore();
   const [scanInput, setScanInput] = React.useState("");
-  const [scannedProduct, setScannedProduct] = React.useState<any>(null);
+  const [scannedProduct, setScannedProduct] = React.useState<Product | null>(null);
+  const [scannedVariant, setScannedVariant] = React.useState<ColorVariant | null>(null);
   const [errorMsg, setErrorMsg] = React.useState("");
 
   // Camera states
@@ -44,35 +46,68 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
   const startCamera = async () => {
     setErrorMsg("");
     try {
-      const { Html5Qrcode } = await import("html5-qrcode");
-      await stopCamera();
+      // Request media camera permission explicitly first
+      if (typeof navigator !== "undefined" && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        // Release hardware track instantly
+        tempStream.getTracks().forEach(track => track.stop());
+      } else {
+        throw new Error("Camera API is not supported in this browser.");
+      }
 
-      const scanner = new Html5Qrcode("scanner-video-feed");
-      html5QrcodeRef.current = scanner;
+      // Set scanning state first, so React renders the video div container in the DOM
       setIsScanning(true);
 
-      await scanner.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: (width, height) => {
-            const boxWidth = Math.min(width * 0.85, 280);
-            const boxHeight = Math.min(height * 0.45, 110);
-            return { width: boxWidth, height: boxHeight };
-          },
-          aspectRatio: 1.333333
-        },
-        (decodedText) => {
-          handleScanSearch(decodedText);
-          stopCamera();
-        },
-        (error) => {
-          // Keep searching
+      // Wait for React to render and commit the element to the DOM
+      setTimeout(async () => {
+        try {
+          const { Html5Qrcode } = await import("html5-qrcode");
+          
+          // Re-verify that the scanning was not cancelled during the tick
+          const container = document.getElementById("scanner-video-feed");
+          if (!container) {
+            console.error("scanner-video-feed element not found in DOM yet");
+            return;
+          }
+
+          await stopCamera();
+
+          const scanner = new Html5Qrcode("scanner-video-feed");
+          html5QrcodeRef.current = scanner;
+
+          await scanner.start(
+            { facingMode: "environment" },
+            {
+              fps: 10,
+              qrbox: (width, height) => {
+                const boxWidth = Math.min(width * 0.85, 280);
+                const boxHeight = Math.min(height * 0.45, 110);
+                return { width: boxWidth, height: boxHeight };
+              },
+              aspectRatio: 1.333333
+            },
+            (decodedText) => {
+              handleScanSearch(decodedText);
+              stopCamera();
+            },
+            (error) => {
+              // Keep searching
+            }
+          );
+        } catch (delayedErr) {
+          console.error("Delayed camera start failed:", delayedErr);
+          setErrorMsg("Failed to initialize video scanner feed.");
+          setIsScanning(false);
         }
-      );
-    } catch (err) {
-      console.error("Failed to start camera scanner:", err);
-      setErrorMsg("Camera access failed. Ensure permissions are granted.");
+      }, 150);
+
+    } catch (err: any) {
+      console.error("Camera scanner failed to start:", err);
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        setErrorMsg("Camera permission denied. Please allow camera access in browser settings.");
+      } else {
+        setErrorMsg("Camera access failed. Ensure a camera is connected and enabled.");
+      }
       setIsScanning(false);
     }
   };
@@ -98,29 +133,49 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
     const cleaned = barcodeVal.trim().toUpperCase();
     if (!cleaned) return;
 
-    // Search product where value matches SKU-FSI combination
-    const found = products.find(p => {
-      const matchKey = `${p.sku}-${p.fsiNo}`.toUpperCase().replace(/[^A-Z0-9]/g, "");
-      const searchKey = cleaned.replace(/[^A-Z0-9]/g, "");
-      return matchKey === searchKey || p.sku.toUpperCase() === cleaned || p.fsiNo.toUpperCase() === cleaned;
-    });
+    let foundProduct = null;
+    let foundVariant = null;
 
-    if (found) {
-      setScannedProduct(found);
-      setScanInput(`${found.sku}-${found.fsiNo}`);
+    for (const p of products) {
+      const matchVar = p.colorVariants?.find(cv => cv.sku.toUpperCase() === cleaned);
+      if (matchVar) {
+        foundProduct = p;
+        foundVariant = matchVar;
+        break;
+      }
+    }
+
+    if (foundProduct && foundVariant) {
+      setScannedProduct(foundProduct);
+      setScannedVariant(foundVariant);
+      setScanInput(foundVariant.sku);
     } else {
       setScannedProduct(null);
-      setErrorMsg(`Barcode "${barcodeVal}" not matched in active B2B inventory.`);
+      setScannedVariant(null);
+      setErrorMsg(`SKU Barcode "${barcodeVal}" not matched in active B2B variants inventory.`);
     }
   };
 
   const handleStockChange = (amount: number) => {
-    if (!scannedProduct) return;
-    const newStock = Math.max(0, scannedProduct.stock + amount);
-    updateProduct(scannedProduct._id, { stock: newStock });
+    if (!scannedProduct || !scannedVariant) return;
+    const newStock = Math.max(0, scannedVariant.stock + amount);
+    
+    const updatedVariants = scannedProduct.colorVariants.map((cv: ColorVariant) => 
+      cv.sku === scannedVariant.sku ? { ...cv, stock: newStock } : cv
+    );
+    const totalStock = updatedVariants.reduce((sum: number, v: ColorVariant) => sum + v.stock, 0);
+
+    const updatedProduct = {
+      ...scannedProduct,
+      totalStock,
+      colorVariants: updatedVariants
+    };
+
+    updateProduct(scannedProduct._id, updatedProduct);
     
     // Update local state to reflect change instantly
-    setScannedProduct((prev: any) => ({ ...prev, stock: newStock }));
+    setScannedProduct(updatedProduct);
+    setScannedVariant({ ...scannedVariant, stock: newStock });
   };
 
   // Generate warehouse storage location based on Category ID
@@ -210,7 +265,7 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Product to Scan</label>
               <div className="space-y-1 max-h-48 overflow-y-auto border rounded-md p-2 bg-secondary/15">
                 {products.slice(0, 10).map((prod) => {
-                  const bcValue = `${prod.sku}-${prod.fsiNo}`;
+                  const bcValue = prod.colorVariants?.[0]?.sku || prod._id;
                   return (
                     <button
                       key={prod._id}
@@ -226,16 +281,16 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
 
             {/* Right Columns: Scanned Details */}
             <div className="md:col-span-2">
-              {scannedProduct ? (
+              {scannedProduct && scannedVariant ? (
                 <div className="space-y-6">
                   <div className="flex gap-4 items-start border-b pb-4">
                     <div className="flex-1">
                       <h3 className="font-bold text-base leading-tight">{scannedProduct.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">SKU: {scannedProduct.sku}</p>
-                      <p className="text-xs text-muted-foreground">FSI: {scannedProduct.fsiNo}</p>
+                      <p className="text-xs text-muted-foreground mt-1">SKU: {scannedVariant.sku}</p>
+                      <p className="text-xs text-muted-foreground">Color: {scannedVariant.color} | Sizes: {scannedVariant.sizes.join(", ")} | Weights: {scannedVariant.weights.join(", ")}</p>
                     </div>
                     {/* Small Barcode display */}
-                    <Barcode sku={scannedProduct.sku} fsiNo={scannedProduct.fsiNo} />
+                    <Barcode sku={scannedVariant.sku} />
                   </div>
 
                   {/* Stock Audit Controls */}
@@ -244,10 +299,10 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
                       <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Current Stock</p>
                       <div className="flex items-baseline gap-2 mt-2">
                         <span className={`text-3xl font-extrabold ${
-                          scannedProduct.stock > 25 ? "text-success" :
-                          scannedProduct.stock > 10 ? "text-yellow-600 dark:text-yellow-500" :
+                          scannedVariant.stock > 25 ? "text-success" :
+                          scannedVariant.stock > 10 ? "text-yellow-600 dark:text-yellow-500" :
                           "text-destructive"
-                        }`}>{scannedProduct.stock}</span>
+                        }`}>{scannedVariant.stock}</span>
                         <span className="text-xs text-muted-foreground">units</span>
                       </div>
                     </div>
@@ -279,7 +334,7 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
                   <div className="border-t pt-4 flex justify-between items-center text-sm">
                     <div>
                       <span className="text-muted-foreground">Price: </span>
-                      <span className="font-bold text-foreground">{formatPrice(scannedProduct.price)}</span>
+                      <span className="font-bold text-foreground">{formatPrice(scannedVariant.price)}</span>
                     </div>
                     <div className="text-xs text-success bg-success/15 px-2.5 py-1 rounded-full font-semibold">
                       Fulfillments Enabled

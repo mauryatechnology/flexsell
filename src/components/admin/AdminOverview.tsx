@@ -31,7 +31,7 @@ export function AdminOverview({ initialProducts }: AdminOverviewProps) {
   }, [orders]);
 
   const lowStockCount = React.useMemo(() => {
-    return activeProducts.filter(p => p.stock < 15).length;
+    return activeProducts.filter(p => p.totalStock < 15).length;
   }, [activeProducts]);
 
   const recentOrders = React.useMemo(() => {

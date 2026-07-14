@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Search, Info, Eye } from "lucide-react";
 import { useOrderStore, Order } from "@/stores/orderStore";
 import { formatPrice } from "@/lib/utils";
+import { Pagination } from "@/components/ui/Pagination";
 
 export function AdminOrdersManager() {
   const { orders, initializeOrders, updateOrderStatus } = useOrderStore();
@@ -31,6 +32,20 @@ export function AdminOrdersManager() {
       o.customerName.toLowerCase().includes(term)
     );
   }, [orders, searchTerm]);
+
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+
+  const paginatedOrders = React.useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredOrders.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredOrders, currentPage]);
 
   return (
     <div className="space-y-6 text-foreground">
@@ -77,7 +92,7 @@ export function AdminOrdersManager() {
                         </td>
                       </tr>
                     ) : (
-                      filteredOrders.map((order) => (
+                      paginatedOrders.map((order) => (
                         <tr key={order._id} className="hover:bg-secondary/20 transition-colors">
                           <td className="px-6 py-4 font-bold">{order._id}</td>
                           <td className="px-6 py-4 text-muted-foreground">{order.date}</td>
@@ -105,6 +120,15 @@ export function AdminOrdersManager() {
                     )}
                   </tbody>
                 </table>
+              </div>
+              <div className="px-4 pb-4">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={filteredOrders.length}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                />
               </div>
             </CardContent>
           </Card>

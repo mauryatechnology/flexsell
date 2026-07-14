@@ -47,16 +47,23 @@ export function CartView() {
             const formattedVariants = Object.entries(item.selectedVariants)
               .map(([key, val]) => `${key}: ${val}`)
               .join(", ");
+            const matchingColor = item.selectedVariants["Color"];
+            const activeVariant = item.product.colorVariants?.find(cv => cv.color === matchingColor) 
+              || item.product.colorVariants?.[0] 
+              || { sku: "NO SKU", images: [""] };
+            const imgUrl = activeVariant.images?.[0] || "";
+            const sku = activeVariant.sku;
+
             return (
               <Card key={item.id}>
                 <CardContent className="p-4 flex gap-4">
                   <div className="w-24 h-24 bg-secondary rounded-md overflow-hidden flex-shrink-0">
-                    <img src={item.product.images[0]} alt={item.product.title} className="w-full h-full object-cover" />
+                    <img src={imgUrl} alt={item.product.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
                       <h3 className="font-semibold text-foreground line-clamp-1">{item.product.title}</h3>
-                      <p className="text-xs text-muted-foreground">SKU: {item.product.sku}</p>
+                      <p className="text-xs text-muted-foreground font-mono">SKU: {sku}</p>
                       {formattedVariants && (
                         <p className="text-xs text-primary font-medium mt-1">{formattedVariants}</p>
                       )}

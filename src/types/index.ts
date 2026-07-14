@@ -14,12 +14,17 @@ export interface Category extends BaseDocument {
   order: number;
 }
 
-export interface ProductVariant {
-  id: string;
-  name: string;      // e.g., "Color", "Size", "Weight"
-  value: string;     // e.g., "Red", "XL", "500g"
-  priceOffset: number; // e.g., +50 or 0
+export interface ColorVariant {
+  color: string;
+  sizes: string[];
+  weights: string[];
+  dimensions: string;
+  images: string[];
+  price: number;
+  mrp: number;
+  discount: number;
   stock: number;
+  sku: string;
 }
 
 export interface APlusBlock {
@@ -35,20 +40,14 @@ export interface Product extends BaseDocument {
   title: string;
   slug: string;
   description: string;
-  images: string[];
-  price: number;
-  mrp: number;
-  discount: number;
-  sku: string;
-  fsiNo: string;
   categoryId: string;
   vendorId?: string;
-  stock: number;
   rating: number;
   reviewCount: number;
   tags: string[];
   isActive: boolean;
-  variants?: ProductVariant[];
+  totalStock: number;
+  colorVariants: ColorVariant[];
   aPlusContent?: APlusBlock[];
 }
 

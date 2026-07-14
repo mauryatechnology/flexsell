@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Search, Filter, Eye, Download, Info } from "lucide-react";
 import { useOrderStore, Order } from "@/stores/orderStore";
 import { formatPrice } from "@/lib/utils";
+import { Pagination } from "@/components/ui/Pagination";
 
 export function ClientOrdersView() {
   const searchParams = useSearchParams();
@@ -31,6 +32,20 @@ export function ClientOrdersView() {
       o.customerName.toLowerCase().includes(term)
     );
   }, [orders, searchTerm]);
+
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const ITEMS_PER_PAGE = 5;
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+
+  const paginatedOrders = React.useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredOrders.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredOrders, currentPage]);
 
   return (
     <div className="space-y-6 text-foreground flex-1">
@@ -89,7 +104,7 @@ export function ClientOrdersView() {
                         </td>
                       </tr>
                     ) : (
-                      filteredOrders.map((order) => (
+                      paginatedOrders.map((order) => (
                         <tr key={order._id} className="hover:bg-secondary/20 transition-colors">
                           <td className="px-6 py-4">
                             <p className="font-bold">{order._id}</p>
@@ -117,6 +132,15 @@ export function ClientOrdersView() {
                     )}
                   </tbody>
                 </table>
+              </div>
+              <div className="px-4 pb-4">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={filteredOrders.length}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                />
               </div>
             </CardContent>
           </Card>

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useProductStore } from "@/stores/productStore";
 import { useCategoryStore } from "@/stores/categoryStore";
-import { Product, Category, ProductVariant, APlusBlock } from "@/types";
+import { Product, Category, ColorVariant, APlusBlock } from "@/types";
 import { Barcode } from "@/components/ui/Barcode";
 
 interface AdminProductFormProps {
@@ -23,7 +23,7 @@ interface AdminProductFormProps {
 
 export function AdminProductForm({ productId, initialProducts, initialCategories }: AdminProductFormProps) {
   const router = useRouter();
-  const { products, initializeProducts, addProduct, updateProduct, getNextFsiNo } = useProductStore();
+  const { products, initializeProducts, addProduct, updateProduct } = useProductStore();
   const { categories, initializeCategories } = useCategoryStore();
 
   React.useEffect(() => {
@@ -42,26 +42,34 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
 
   // Core Form states
   const [title, setTitle] = React.useState("");
-  const [sku, setSku] = React.useState("");
-  const [fsiNo, setFsiNo] = React.useState("");
   const [description, setDescription] = React.useState("");
-  const [price, setPrice] = React.useState(0);
-  const [mrp, setMrp] = React.useState(0);
   const [categoryId, setCategoryId] = React.useState("");
-  const [stock, setStock] = React.useState(100);
   const [tagsText, setTagsText] = React.useState("");
+
+  // Color variants states
+  const [variantsList, setVariantsList] = React.useState<ColorVariant[]>([
+    {
+      color: "Default",
+      sizes: ["Standard"],
+      weights: ["250g"],
+      dimensions: "15x12x8 cm",
+      images: [""],
+      price: 0,
+      mrp: 0,
+      discount: 0,
+      stock: 100,
+      sku: ""
+    }
+  ]);
+
+  // Helper strings to bind comma-separated variant lists inside the editor
+  const [variantSizes, setVariantSizes] = React.useState<Record<number, string>>({});
+  const [variantWeights, setVariantWeights] = React.useState<Record<number, string>>({});
+  const [variantImages, setVariantImages] = React.useState<Record<number, string>>({});
 
   // Editor states
   const [editorMode, setEditorMode] = React.useState<"edit" | "preview">("edit");
   const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
-
-  // Dynamic Image fields
-  const [imageUrls, setImageUrls] = React.useState<string[]>([""]);
-
-  // Dynamic Options (Variants)
-  const [colorsText, setColorsText] = React.useState("");
-  const [sizesText, setSizesText] = React.useState("");
-  const [weightsText, setWeightsText] = React.useState("");
 
   // Dynamic A+ Content blocks
   const [aPlusBlocks, setAPlusBlocks] = React.useState<APlusBlock[]>([]);
@@ -70,38 +78,35 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
   React.useEffect(() => {
     if (existingProduct) {
       setTitle(existingProduct.title);
-      setSku(existingProduct.sku);
-      setFsiNo(existingProduct.fsiNo || "");
       setDescription(existingProduct.description);
-      setPrice(existingProduct.price);
-      setMrp(existingProduct.mrp);
       setCategoryId(existingProduct.categoryId);
-      setStock(existingProduct.stock);
       setTagsText(existingProduct.tags.join(", "));
-      
-      // Load images list
-      setImageUrls(existingProduct.images.length > 0 ? existingProduct.images : [""]);
-
-      // Load variants lists
-      if (existingProduct.variants) {
-        const colors = existingProduct.variants.filter(v => v.name === "Color").map(v => v.value);
-        const sizes = existingProduct.variants.filter(v => v.name === "Size").map(v => v.value);
-        const weights = existingProduct.variants.filter(v => v.name === "Weight").map(v => v.value);
-        setColorsText(Array.from(new Set(colors)).join(", "));
-        setSizesText(Array.from(new Set(sizes)).join(", "));
-        setWeightsText(Array.from(new Set(weights)).join(", "));
-      }
-
-      // Load A+ Blocks
       setAPlusBlocks(existingProduct.aPlusContent || []);
+
+      if (existingProduct.colorVariants && existingProduct.colorVariants.length > 0) {
+        setVariantsList(existingProduct.colorVariants);
+        
+        // Populate inputs
+        const initialSizes: Record<number, string> = {};
+        const initialWeights: Record<number, string> = {};
+        const initialImages: Record<number, string> = {};
+        
+        existingProduct.colorVariants.forEach((v, idx) => {
+          initialSizes[idx] = v.sizes.join(", ");
+          initialWeights[idx] = v.weights.join(", ");
+          initialImages[idx] = v.images.join(", ");
+        });
+        
+        setVariantSizes(initialSizes);
+        setVariantWeights(initialWeights);
+        setVariantImages(initialImages);
+      }
     } else {
       if (activeCategories.length > 0) {
         setCategoryId(activeCategories[0]._id);
       }
-      // Auto-generate next FSI No in unique hex sequence from store settings!
-      setFsiNo(getNextFsiNo());
     }
-  }, [existingProduct, activeCategories, getNextFsiNo]);
+  }, [existingProduct, activeCategories]);
 
   // Insert Rich Text Formatting helper
   const insertFormatting = (before: string, after: string = "") => {
@@ -118,56 +123,97 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
       text.substring(0, start) + replacement + text.substring(end)
     );
 
-    // Refocus & set selection
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + before.length, start + before.length + (selected || "text").length);
     }, 0);
   };
 
-  // Image upload handler
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  // Add / Remove variant controls
+  const addVariant = () => {
+    const defaultSkuSuffix = `VAR-${variantsList.length + 1}`;
+    setVariantsList(prev => [
+      ...prev,
+      {
+        color: `New Color ${prev.length + 1}`,
+        sizes: ["Standard"],
+        weights: ["250g"],
+        dimensions: "15x12x8 cm",
+        images: [""],
+        price: 0,
+        mrp: 0,
+        discount: 0,
+        stock: 50,
+        sku: ""
+      }
+    ]);
+  };
+
+  const removeVariant = (index: number) => {
+    if (variantsList.length <= 1) return;
+    setVariantsList(prev => prev.filter((_, i) => i !== index));
+    
+    // Adjust comma helper caches
+    setVariantSizes(prev => {
+      const copy = { ...prev };
+      delete copy[index];
+      return copy;
+    });
+    setVariantWeights(prev => {
+      const copy = { ...prev };
+      delete copy[index];
+      return copy;
+    });
+    setVariantImages(prev => {
+      const copy = { ...prev };
+      delete copy[index];
+      return copy;
+    });
+  };
+
+  // Update variant field
+  const updateVariantField = (index: number, field: keyof ColorVariant, value: any) => {
+    setVariantsList(prev => prev.map((item, idx) => {
+      if (idx !== index) return item;
+      
+      const updated = { ...item, [field]: value };
+      
+      // Calculate discount automatically on price/mrp edits
+      if (field === "price" || field === "mrp") {
+        const p = field === "price" ? Number(value) : item.price;
+        const m = field === "mrp" ? Number(value) : item.mrp;
+        updated.discount = m > 0 ? Math.round(((m - p) / m) * 100) : 0;
+      }
+      
+      return updated;
+    }));
+  };
+
+  // Local Base64 File Uploader for variant images
+  const handleVariantImageUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
-        const newUrls = [...imageUrls];
-        newUrls[index] = event.target.result as string;
-        setImageUrls(newUrls);
+        const base64 = event.target.result as string;
+        const currentImagesString = variantImages[index] || "";
+        const updatedImagesString = currentImagesString 
+          ? `${currentImagesString}, ${base64}` 
+          : base64;
+          
+        setVariantImages(prev => ({ ...prev, [index]: updatedImagesString }));
+        updateVariantField(index, "images", updatedImagesString.split(",").map(url => url.trim()).filter(Boolean));
       }
     };
     reader.readAsDataURL(file);
   };
 
-  // Add/Remove Image fields
-  const addImageUrlField = () => setImageUrls([...imageUrls, ""]);
-  const removeImageUrlField = (index: number) => {
-    const newUrls = imageUrls.filter((_, i) => i !== index);
-    setImageUrls(newUrls.length > 0 ? newUrls : [""]);
-  };
-
-  // A+ Block upload handler
-  const handleBlockImageUpload = (e: React.ChangeEvent<HTMLInputElement>, blockId: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setAPlusBlocks(prev => prev.map(b =>
-          b.id === blockId ? { ...b, imageUrl: event.target?.result as string } : b
-        ));
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Add/Remove A+ Content Blocks
+  // A+ blocks builder helpers
   const addAPlusBlock = () => {
     const newBlock: APlusBlock = {
-      id: `ap-${Date.now()}`,
+      id: `ap_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type: "image",
       content: "970x600",
       imageUrl: ""
@@ -179,82 +225,76 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
     setAPlusBlocks(aPlusBlocks.filter(b => b.id !== id));
   };
 
+  const handleBlockImageUpload = (e: React.ChangeEvent<HTMLInputElement>, blockId: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result;
+      if (result) {
+        setAPlusBlocks(prev => prev.map(b => 
+          b.id === blockId ? { ...b, imageUrl: result as string, type: "image" } : b
+        ));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Save product details
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title || !sku || !categoryId) {
-      alert("Please fill in Title, SKU, and Category.");
+    if (!title) {
+      alert("Product Title is required.");
       return;
     }
 
-    const images = imageUrls
-      .map(url => url.trim())
-      .filter(url => url !== "");
+    // Parse comma text fields into variant arrays
+    const finalVariants = variantsList.map((item, idx) => {
+      const sizes = variantSizes[idx] 
+        ? variantSizes[idx].split(",").map(s => s.trim()).filter(Boolean) 
+        : item.sizes;
+      const weights = variantWeights[idx] 
+        ? variantWeights[idx].split(",").map(w => w.trim()).filter(Boolean) 
+        : item.weights;
+      const images = variantImages[idx] 
+        ? variantImages[idx].split(",").map(img => img.trim()).filter(Boolean) 
+        : item.images;
 
-    if (images.length === 0) {
-      images.push("https://placehold.co/600x600/f1f5f9/0f172a?text=Product+Placeholder");
+      return {
+        ...item,
+        sizes: sizes.length > 0 ? sizes : ["Standard"],
+        weights: weights.length > 0 ? weights : ["250g"],
+        images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80"],
+        price: Number(item.price),
+        mrp: Number(item.mrp),
+        stock: Number(item.stock)
+      };
+    });
+
+    // Check SKU constraints
+    const invalidSku = finalVariants.some(v => !v.sku);
+    if (invalidSku) {
+      alert("Each variant color must have a unique SKU code.");
+      return;
     }
 
-    const tags = tagsText
-      .split(",")
-      .map(tag => tag.trim())
-      .filter(tag => tag !== "");
+    const totalStock = finalVariants.reduce((sum, v) => sum + v.stock, 0);
+    const tags = tagsText.split(",").map(t => t.trim()).filter(Boolean);
 
-    // Generate B2B variants array from Colors, Sizes, and Weights inputs
-    const variants: ProductVariant[] = [];
-
-    const colors = colorsText.split(",").map(c => c.trim()).filter(c => c !== "");
-    const sizes = sizesText.split(",").map(s => s.trim()).filter(s => s !== "");
-    const weights = weightsText.split(",").map(w => w.trim()).filter(w => w !== "");
-
-    colors.forEach((col, idx) => {
-      variants.push({
-        id: `${sku}-v-col-${idx}`,
-        name: "Color",
-        value: col,
-        priceOffset: idx > 0 ? idx * 25 : 0,
-        stock: Math.floor(stock / (colors.length || 1))
-      });
-    });
-
-    sizes.forEach((sz, idx) => {
-      variants.push({
-        id: `${sku}-v-sz-${idx}`,
-        name: "Size",
-        value: sz,
-        priceOffset: idx > 0 ? idx * 50 : 0,
-        stock: stock
-      });
-    });
-
-    weights.forEach((wt, idx) => {
-      variants.push({
-        id: `${sku}-v-wt-${idx}`,
-        name: "Weight",
-        value: wt,
-        priceOffset: idx > 0 ? idx * 100 : 0,
-        stock: stock
-      });
-    });
-
-    const productData = {
+    const productData: Omit<Product, "_id" | "createdAt"> = {
       title,
-      slug: title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      slug: existingProduct ? existingProduct.slug : title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now().toString().slice(-4),
       description,
-      images,
-      price: Number(price),
-      mrp: Number(mrp),
-      discount: mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0,
-      sku,
-      fsiNo,
       categoryId,
-      stock: Number(stock),
       rating: existingProduct ? existingProduct.rating : 4.5,
       reviewCount: existingProduct ? existingProduct.reviewCount : 12,
       tags,
-      variants,
-      aPlusContent: aPlusBlocks,
-      isActive: true
+      isActive: true,
+      totalStock,
+      colorVariants: finalVariants,
+      aPlusContent: aPlusBlocks
     };
 
     if (existingProduct) {
@@ -279,7 +319,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
             {existingProduct ? "Edit Product" : "Add New Product"}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {existingProduct ? `Modify SKU: ${existingProduct.sku}` : "Add cargo lines direct from factory"}
+            {existingProduct ? `Modify catalog properties for ${existingProduct.title}` : "Add cargo lines direct from factory"}
           </p>
         </div>
       </div>
@@ -290,9 +330,9 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
           <CardContent className="p-6 space-y-6">
             <h3 className="font-bold text-lg border-b pb-2">Basic Info</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Product Title</label>
+                <label className="text-sm font-medium">Product Title / Name</label>
                 <Input
                   placeholder="e.g., 12-in-1 Vegetable Chopper"
                   value={title}
@@ -302,32 +342,27 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">SKU Code</label>
-                <Input
-                  placeholder="e.g., FS-HK-CHOP12"
-                  value={sku}
-                  onChange={(e) => setSku(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">FSI Number</label>
-                <Input
-                  placeholder="e.g., FSI-89012345-67"
-                  value={fsiNo}
-                  onChange={(e) => setFsiNo(e.target.value)}
-                  required
-                />
+                <label className="text-sm font-medium">Category</label>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-foreground"
+                >
+                  {activeCategories.map(cat => (
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            {(sku || fsiNo) && (
-              <div className="flex flex-col items-center gap-2 p-4 bg-secondary/10 rounded-lg border border-dashed border-border w-max mx-auto">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Live Product Barcode (SKU-FSI)</p>
-                <Barcode sku={sku} fsiNo={fsiNo} />
-              </div>
-            )}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tags (comma separated)</label>
+              <Input
+                placeholder="e.g., kitchen, bestseller, new"
+                value={tagsText}
+                onChange={(e) => setTagsText(e.target.value)}
+              />
+            </div>
 
             {/* Rich Text Editor for Description */}
             <div className="space-y-2">
@@ -353,7 +388,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
 
               {editorMode === "edit" ? (
                 <div className="border rounded-md overflow-hidden bg-background">
-                  {/* Rich Text formatting Toolbar */}
+                  {/* Rich Text Toolbar */}
                   <div className="flex items-center gap-1 p-2 bg-secondary/30 border-b flex-wrap">
                     <button
                       type="button"
@@ -404,14 +439,6 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                     >
                       <ListOrdered className="h-4 w-4" />
                     </button>
-                    <span className="w-px h-5 bg-border mx-1" />
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting("<p>", "</p>")}
-                      className="px-2 py-1 text-xs font-semibold rounded hover:bg-secondary text-muted-foreground hover:text-foreground"
-                    >
-                      Paragraph
-                    </button>
                   </div>
                   <textarea
                     ref={descriptionRef}
@@ -431,180 +458,182 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
           </CardContent>
         </Card>
 
-        {/* Section 2: Pricing & Inventory */}
-        <Card>
-          <CardContent className="p-6 space-y-6">
-            <h3 className="font-bold text-lg border-b pb-2">Pricing & Stock</h3>
+        {/* Section 2: Dynamic Variants */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center border-b pb-2">
+            <h3 className="font-extrabold text-xl text-foreground">Dynamic Color Variants</h3>
+            <Button type="button" size="sm" onClick={addVariant} className="flex items-center gap-1.5">
+              <Plus className="h-4 w-4" /> Add Color Variant
+            </Button>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">B2B Wholesale Price (₹)</label>
-                <Input
-                  type="number"
-                  value={price || ""}
-                  onChange={(e) => setPrice(Number(e.target.value))}
-                  required
-                />
-              </div>
+          <div className="space-y-6">
+            {variantsList.map((item, idx) => {
+              const currentSizes = variantSizes[idx] !== undefined ? variantSizes[idx] : item.sizes.join(", ");
+              const currentWeights = variantWeights[idx] !== undefined ? variantWeights[idx] : item.weights.join(", ");
+              const currentImages = variantImages[idx] !== undefined ? variantImages[idx] : item.images.join(", ");
+              const imagePreviewList = currentImages.split(",").map(url => url.trim()).filter(Boolean);
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Retail MRP (₹)</label>
-                <Input
-                  type="number"
-                  value={mrp || ""}
-                  onChange={(e) => setMrp(Number(e.target.value))}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Stock Quantity</label>
-                <Input
-                  type="number"
-                  value={stock || ""}
-                  onChange={(e) => setStock(Number(e.target.value))}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
-                <select
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-foreground"
-                >
-                  {activeCategories.map(cat => (
-                    <option key={cat._id} value={cat._id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tags (comma separated)</label>
-                <Input
-                  placeholder="e.g., kitchen, bestseller, new"
-                  value={tagsText}
-                  onChange={(e) => setTagsText(e.target.value)}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Section 3: Dynamic Image Manager */}
-        <Card>
-          <CardContent className="p-6 space-y-6">
-            <div className="flex justify-between items-center border-b pb-2">
-              <h3 className="font-bold text-lg">Product Images</h3>
-              <Button type="button" size="sm" variant="outline" onClick={addImageUrlField}>
-                <Plus className="h-4 w-4 mr-1" /> Add Image URL
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              {imageUrls.map((url, idx) => (
-                <div key={idx} className="flex gap-4 items-start bg-secondary/10 p-4 rounded-lg border relative">
-                  <div className="flex-1 space-y-3">
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-muted-foreground">Image URL {idx + 1}</label>
-                      <Input
-                        placeholder="https://example.com/image.jpg"
-                        value={url}
-                        onChange={(e) => {
-                          const newUrls = [...imageUrls];
-                          newUrls[idx] = e.target.value;
-                          setImageUrls(newUrls);
-                        }}
-                      />
-                    </div>
-
-                    {/* File Upload Zone */}
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 px-3 py-1.5 bg-background hover:bg-secondary/50 border rounded-md cursor-pointer text-xs font-medium transition-colors">
-                        <Upload className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span>Upload File</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleImageUpload(e, idx)}
-                        />
-                      </label>
-                      {url.startsWith("data:image") ? (
-                        <span className="text-[10px] text-success font-medium">Local file loaded (Base64)</span>
-                      ) : url ? (
-                        <span className="text-[10px] text-muted-foreground truncate max-w-[200px]">{url}</span>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {/* Thumbnail Preview */}
-                  {url && (
-                    <div className="w-16 h-16 rounded border bg-secondary overflow-hidden flex-shrink-0">
-                      <img src={url} alt="Preview" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-
-                  {imageUrls.length > 1 && (
-                    <Button
+              return (
+                <Card key={idx} className="border border-border relative bg-card text-foreground group shadow-sm hover:shadow">
+                  {variantsList.length > 1 && (
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:bg-destructive/10 self-center"
-                      onClick={() => removeImageUrlField(idx)}
+                      onClick={() => removeVariant(idx)}
+                      className="absolute top-4 right-4 text-destructive hover:bg-destructive/10 p-1.5 rounded-full transition-colors"
+                      title="Delete Variant"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </button>
                   )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Section 4: Dynamic Attributes & Variants (Colors, Sizes, Weights) */}
-        <Card>
-          <CardContent className="p-6 space-y-6">
-            <h3 className="font-bold text-lg border-b pb-2">Dynamic Variants (Comma separated)</h3>
+                  <CardContent className="p-6 space-y-6">
+                    <h4 className="font-bold text-sm text-primary uppercase tracking-wider">Color Line #{idx + 1}</h4>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase text-muted-foreground">Color Name</label>
+                        <Input
+                          placeholder="e.g. Forest Green"
+                          value={item.color}
+                          onChange={(e) => updateVariantField(idx, "color", e.target.value)}
+                          required
+                        />
+                      </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Available Colors</label>
-                <Input
-                  placeholder="e.g., Crimson Red, Matte Black, Aqua"
-                  value={colorsText}
-                  onChange={(e) => setColorsText(e.target.value)}
-                />
-                <p className="text-[10px] text-muted-foreground">Generates individual color variant lines.</p>
-              </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase text-muted-foreground">Variant SKU Code</label>
+                        <Input
+                          placeholder="e.g. FS-HK-CHOP12-001-FG"
+                          value={item.sku}
+                          onChange={(e) => updateVariantField(idx, "sku", e.target.value)}
+                          required
+                        />
+                      </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Available Sizes</label>
-                <Input
-                  placeholder="e.g., Small, Medium, Large"
-                  value={sizesText}
-                  onChange={(e) => setSizesText(e.target.value)}
-                />
-                <p className="text-[10px] text-muted-foreground">Generates B2B quantity packing variants.</p>
-              </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase text-muted-foreground">Cargo Dimensions</label>
+                        <Input
+                          placeholder="e.g. 15x12x8 cm"
+                          value={item.dimensions}
+                          onChange={(e) => updateVariantField(idx, "dimensions", e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Available Weights</label>
-                <Input
-                  placeholder="e.g., 250g, 500g, 1kg"
-                  value={weightsText}
-                  onChange={(e) => setWeightsText(e.target.value)}
-                />
-                <p className="text-[10px] text-muted-foreground">Useful for shipping cargo calculations.</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase text-muted-foreground">B2B Wholesale Price (₹)</label>
+                        <Input
+                          type="number"
+                          value={item.price || ""}
+                          onChange={(e) => updateVariantField(idx, "price", Number(e.target.value))}
+                          required
+                        />
+                      </div>
 
-        {/* Section 5: Flexsell-style A+ Content Blocks Builder */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase text-muted-foreground">Retail MRP (₹)</label>
+                        <Input
+                          type="number"
+                          value={item.mrp || ""}
+                          onChange={(e) => updateVariantField(idx, "mrp", Number(e.target.value))}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase text-muted-foreground">Variant Stock</label>
+                        <Input
+                          type="number"
+                          value={item.stock || ""}
+                          onChange={(e) => updateVariantField(idx, "stock", Number(e.target.value))}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase text-muted-foreground">Sizes (comma separated)</label>
+                        <Input
+                          placeholder="e.g. Standard 1.2L, Pro 2.0L"
+                          value={currentSizes}
+                          onChange={(e) => {
+                            setVariantSizes(prev => ({ ...prev, [idx]: e.target.value }));
+                            updateVariantField(idx, "sizes", e.target.value.split(",").map(s => s.trim()).filter(Boolean));
+                          }}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase text-muted-foreground">Weights (comma separated)</label>
+                        <Input
+                          placeholder="e.g. 250g, 500g"
+                          value={currentWeights}
+                          onChange={(e) => {
+                            setVariantWeights(prev => ({ ...prev, [idx]: e.target.value }));
+                            updateVariantField(idx, "weights", e.target.value.split(",").map(w => w.trim()).filter(Boolean));
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase text-muted-foreground">Variant Image URLs (comma separated)</label>
+                        <Input
+                          placeholder="e.g. https://images.com/img1.jpg, https://images.com/img2.jpg"
+                          value={currentImages}
+                          onChange={(e) => {
+                            setVariantImages(prev => ({ ...prev, [idx]: e.target.value }));
+                            updateVariantField(idx, "images", e.target.value.split(",").map(img => img.trim()).filter(Boolean));
+                          }}
+                        />
+                      </div>
+
+                      {/* Image Upload Zone */}
+                      <div className="flex flex-wrap items-center gap-4">
+                        <label className="flex items-center gap-2 px-3 py-1.5 bg-background hover:bg-secondary/50 border rounded-md cursor-pointer text-xs font-medium transition-colors">
+                          <Upload className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>Upload Local Variant Image</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleVariantImageUpload(e, idx)}
+                          />
+                        </label>
+                      </div>
+
+                      {/* Thumbnail Previews */}
+                      {imagePreviewList.length > 0 && (
+                        <div className="flex gap-2 flex-wrap pt-2">
+                          {imagePreviewList.map((url, imgIdx) => (
+                            <div key={imgIdx} className="w-14 h-14 rounded border bg-secondary overflow-hidden flex-shrink-0 relative">
+                              <img src={url} alt="Preview" className="w-full h-full object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Dynamic Barcode preview per color variant SKU */}
+                      {item.sku && (
+                        <div className="flex flex-col items-center gap-2 p-2 bg-secondary/15 rounded-lg border w-max mx-auto sm:mx-0">
+                          <p className="text-[9px] font-bold text-muted-foreground uppercase">Barcode (SKU)</p>
+                          <Barcode sku={item.sku} />
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Section 5: A+ Content Blocks */}
         <Card>
           <CardContent className="p-6 space-y-6">
             <div className="flex justify-between items-center border-b pb-2">
@@ -677,9 +706,6 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                             onChange={(e) => handleBlockImageUpload(e, block.id)}
                           />
                         </label>
-                        {block.imageUrl?.startsWith("data:image") ? (
-                          <span className="text-[10px] text-success font-medium block">Loaded local file (Base64)</span>
-                        ) : null}
                       </div>
 
                       {block.imageUrl && (

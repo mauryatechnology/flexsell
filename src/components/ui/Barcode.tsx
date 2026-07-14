@@ -55,19 +55,16 @@ const CODE39_MAP: Record<string, string> = {
 interface BarcodeProps {
   value?: string;
   sku?: string;
-  fsiNo?: string;
   className?: string;
   width?: number;
   height?: number;
 }
 
-export function Barcode({ value = "", sku, fsiNo, className = "", width = 1.2, height = 35 }: BarcodeProps) {
-  // If fsiNo is provided, encode only the FSI to keep the barcode lines short & compact!
+export function Barcode({ value = "", sku, className = "", width = 1.2, height = 35 }: BarcodeProps) {
   const encodeValue = React.useMemo(() => {
-    if (fsiNo) return fsiNo;
     if (sku) return sku;
     return value;
-  }, [value, sku, fsiNo]);
+  }, [value, sku]);
 
   // Normalize value to uppercase and strip invalid characters
   const rawText = React.useMemo(() => {
@@ -125,7 +122,7 @@ export function Barcode({ value = "", sku, fsiNo, className = "", width = 1.2, h
         })}
       </svg>
       <span className="text-[9px] font-mono font-bold tracking-wider text-black mt-1.5 uppercase">
-        {sku || fsiNo ? `${sku || "NO SKU"} | ${fsiNo || "NO FSI"}` : rawText}
+        {sku ? `SKU: ${sku}` : rawText}
       </span>
     </div>
   );

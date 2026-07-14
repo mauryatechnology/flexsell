@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Plus, Edit, Trash2, X, Check } from "lucide-react";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { Category } from "@/types";
+import { Pagination } from "@/components/ui/Pagination";
 
 interface AdminCategoriesManagerProps {
   initialCategories: Category[];
@@ -30,6 +31,16 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
 
   const activeCategories = categories.length > 0 ? categories : initialCategories;
   const parentCategories = activeCategories.filter(c => !c.parentId);
+
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  const totalPages = Math.ceil(activeCategories.length / ITEMS_PER_PAGE);
+
+  const paginatedCategories = React.useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return activeCategories.slice(start, start + ITEMS_PER_PAGE);
+  }, [activeCategories, currentPage]);
 
   // Load selected category into the form
   const handleEditClick = (cat: Category) => {
@@ -101,7 +112,7 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {activeCategories.map((cat) => {
+                    {paginatedCategories.map((cat) => {
                       const parent = activeCategories.find(c => c._id === cat.parentId);
                       return (
                         <tr key={cat._id} className="hover:bg-secondary/20 transition-colors">
@@ -138,6 +149,15 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
                     })}
                   </tbody>
                 </table>
+              </div>
+              <div className="px-4 pb-4">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={activeCategories.length}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                />
               </div>
             </CardContent>
           </Card>

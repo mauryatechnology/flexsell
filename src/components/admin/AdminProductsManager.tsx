@@ -12,6 +12,7 @@ import { useProductStore } from "@/stores/productStore";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { Product, Category } from "@/types";
 import { BarcodeScanner } from "./BarcodeScanner";
+import { Pagination } from "@/components/ui/Pagination";
 
 interface AdminProductsManagerProps {
   initialProducts: Product[];
@@ -20,7 +21,7 @@ interface AdminProductsManagerProps {
 
 export function AdminProductsManager({ initialProducts, initialCategories }: AdminProductsManagerProps) {
   const router = useRouter();
-  const { products, initializeProducts, deleteProduct, fsiStartHex, setFsiStartHex } = useProductStore();
+  const { products, initializeProducts, deleteProduct } = useProductStore();
   const { categories, initializeCategories } = useCategoryStore();
 
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -41,9 +42,23 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
     const term = searchTerm.toLowerCase();
     return activeProducts.filter(p => 
       p.title.toLowerCase().includes(term) || 
-      p.sku.toLowerCase().includes(term)
+      p.colorVariants?.some(cv => cv.sku.toLowerCase().includes(term))
     );
   }, [activeProducts, searchTerm]);
+
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+
+  const paginatedProducts = React.useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
 
   // Find category name by ID
   const getCategoryName = (catId: string) => {
@@ -70,25 +85,7 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
         </div>
       </div>
 
-      {/* FSI Barcode Settings */}
-      <Card className="border">
-        <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h4 className="font-bold text-sm text-foreground">FSI Hex Sequencer Settings</h4>
-            <p className="text-xs text-muted-foreground">Configure the starting hexadecimal sequence seed for new product uploads.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase">Hex Start:</span>
-            <Input
-              className="w-28 text-foreground font-mono text-center uppercase"
-              value={fsiStartHex}
-              onChange={(e) => setFsiStartHex(e.target.value)}
-              maxLength={6}
-              placeholder="A000"
-            />
-          </div>
-        </CardContent>
-      </Card>
+
 
       <Card>
         <CardHeader className="p-4 border-b">
@@ -123,37 +120,42 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
                     </td>
                   </tr>
                 ) : (
-                  filteredProducts.map((product) => (
-                    <tr key={product._id} className="hover:bg-secondary/20 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-md bg-secondary overflow-hidden flex-shrink-0">
-                            <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
+                  paginatedProducts.map((product) => {
+                    const defaultVariant = product.colorVariants?.[0] || { price: 0, mrp: 0, stock: 0, sku: "NO SKU", images: [""] };
+                    const imgUrl = defaultVariant.images?.[0] || "";
+                    const variantsCount = product.colorVariants?.length || 0;
+
+                    return (
+                      <tr key={product._id} className="hover:bg-secondary/20 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-md bg-secondary overflow-hidden flex-shrink-0 border">
+                              {imgUrl && <img src={imgUrl} alt={product.title} className="w-full h-full object-cover" />}
+                            </div>
+                            <div>
+                              <p className="font-bold line-clamp-1">{product.title}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">Category: {getCategoryName(product.categoryId)} | {variantsCount} color variants</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold line-clamp-1">{product.title}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">Category: {getCategoryName(product.categoryId)}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 font-mono text-xs space-y-1 whitespace-nowrap">
-                        <div className="font-bold text-foreground">SKU: {product.sku}</div>
-                        {product.fsiNo && <div className="text-primary text-[10px]">FSI: {product.fsiNo}</div>}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-bold">{formatPrice(product.price)}</div>
-                        <div className="text-xs text-muted-foreground line-through">{formatPrice(product.mrp)}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {product.stock > 10 ? (
-                          <span className="text-success font-medium">{product.stock} in stock</span>
-                        ) : (
-                          <span className="text-destructive font-medium">{product.stock} in stock (Low)</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="bg-success/10 text-success px-2 py-1 rounded-full text-xs font-semibold">Active</span>
-                      </td>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-xs space-y-1 whitespace-nowrap">
+                          <div className="font-bold text-foreground">SKU: {defaultVariant.sku}</div>
+                          <div className="text-[10px] text-muted-foreground">Colors: {product.colorVariants?.map(cv => cv.color).join(", ")}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-bold">{formatPrice(defaultVariant.price)}</div>
+                          <div className="text-xs text-muted-foreground line-through">{formatPrice(defaultVariant.mrp)}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {product.totalStock > 10 ? (
+                            <span className="text-success font-medium">{product.totalStock} in stock</span>
+                          ) : (
+                            <span className="text-destructive font-medium">{product.totalStock} in stock (Low)</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="bg-success/10 text-success px-2 py-1 rounded-full text-xs font-semibold">Active</span>
+                        </td>
                       <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap">
                         <Link href={`/admin/products/${product._id}`}>
                           <Button variant="ghost" size="icon">
@@ -170,10 +172,20 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
                         </Button>
                       </td>
                     </tr>
-                  ))
-                )}
+                  );
+                })
+              )}
               </tbody>
             </table>
+          </div>
+          <div className="px-4 pb-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={filteredProducts.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+            />
           </div>
         </CardContent>
       </Card>
