@@ -1,47 +1,85 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { Category } from "@/types";
+import { categoryService } from "@/services/categoryService";
 
 interface CategoryStoreState {
   categories: Category[];
-  initializeCategories: (initial: Category[]) => void;
-  addCategory: (category: Omit<Category, "_id" | "createdAt">) => void;
-  updateCategory: (id: string, updatedFields: Partial<Category>) => void;
-  deleteCategory: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  initializeCategories: (initial?: Category[]) => Promise<void>;
+  addCategory: (category: Omit<Category, "_id" | "createdAt">) => Promise<void>;
+  updateCategory: (id: string, updatedFields: Partial<Category>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
 }
 
-export const useCategoryStore = create<CategoryStoreState>()(
-  persist(
-    (set, get) => ({
-      categories: [],
-      
-      initializeCategories: (initial) => {
-        if (get().categories.length === 0) {
-          set({ categories: initial });
-        }
-      },
-      
-      addCategory: (categoryData) => set((state) => {
-        const newCategory: Category = {
-          ...categoryData,
-          _id: `cat_${(state.categories.length + 1).toString().padStart(3, "0")}`,
-          isActive: true
-        };
-        return { categories: [...state.categories, newCategory] };
-      }),
-      
-      updateCategory: (id, updatedFields) => set((state) => ({
-        categories: state.categories.map(c => 
-          c._id === id ? { ...c, ...updatedFields } : c
-        )
-      })),
-      
-      deleteCategory: (id) => set((state) => ({
-        categories: state.categories.filter(c => c._id !== id)
-      }))
-    }),
-    {
-      name: "flexsell-categories-storage",
+export const useCategoryStore = create<CategoryStoreState>()((set, get) => ({
+  categories: [],
+  isLoading: false,
+  error: null,
+
+  initializeCategories: async (initial) => {
+    if (get().categories.length > 0) return;
+    set({ isLoading: true, error: null });
+    try {
+      const data = await categoryService.getCategories();
+      set({ categories: data, isLoading: false });
+    } catch (err) {
+      set({ 
+        categories: initial || [], 
+        error: err instanceof Error ? err.message : "Failed to load categories", 
+        isLoading: false 
+      });
     }
-  )
-);
+  },
+
+  addCategory: async (categoryData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const newCategory = await categoryService.createCategory(categoryData);
+      set((state) => ({
+        categories: [...state.categories, newCategory],
+        isLoading: false
+      }));
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : "Failed to add category",
+        isLoading: false
+      });
+      throw err;
+    }
+  },
+
+  updateCategory: async (id, updatedFields) => {
+    set({ isLoading: true, error: null });
+    try {
+      const updatedCategory = await categoryService.updateCategory(id, updatedFields);
+      set((state) => ({
+        categories: state.categories.map(c => c._id === id ? updatedCategory : c),
+        isLoading: false
+      }));
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : "Failed to update category",
+        isLoading: false
+      });
+      throw err;
+    }
+  },
+
+  deleteCategory: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      await categoryService.deleteCategory(id);
+      set((state) => ({
+        categories: state.categories.filter(c => c._id !== id),
+        isLoading: false
+      }));
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : "Failed to delete category",
+        isLoading: false
+      });
+      throw err;
+    }
+  }
+}));

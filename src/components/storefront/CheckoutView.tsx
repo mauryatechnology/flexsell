@@ -66,6 +66,7 @@ export function CheckoutView() {
   const [state, setState] = React.useState(activeCustomer.state);
   const [pinCode, setPinCode] = React.useState(activeCustomer.pinCode);
   const [phone, setPhone] = React.useState(activeCustomer.phone);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   // Sync state on mount
   React.useEffect(() => {
@@ -78,7 +79,7 @@ export function CheckoutView() {
     setBuyerState(val);
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email || !firstName || !lastName || !address || !city || !state || !pinCode || !phone) {
@@ -99,14 +100,21 @@ export function CheckoutView() {
       phone
     };
 
-    // Create B2B order using the dynamic grandTotal
-    const orderId = createOrder(items, grandTotal, shippingAddress);
+    setIsSubmitting(true);
+    try {
+      // Create B2B order using the dynamic grandTotal
+      const orderId = await createOrder(items, grandTotal, shippingAddress);
 
-    // Clear shopping cart
-    clearCart();
+      // Clear shopping cart
+      clearCart();
 
-    // Redirect to client orders
-    router.push(`/client/orders?success=${orderId}`);
+      // Redirect to client orders
+      router.push(`/client/orders?success=${orderId}`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to place order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (items.length === 0) {
@@ -304,8 +312,8 @@ export function CheckoutView() {
                 <span>{formatPrice(grandTotal)}</span>
               </div>
 
-              <Button type="submit" size="lg" className="w-full text-base bg-foreground text-background hover:bg-foreground/90">
-                Confirm Order
+              <Button type="submit" size="lg" className="w-full text-base bg-foreground text-background hover:bg-foreground/90" disabled={isSubmitting}>
+                {isSubmitting ? "Placing Order..." : "Confirm Order"}
               </Button>
               
               <p className="text-xs text-center text-muted-foreground">

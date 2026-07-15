@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
-import { customers } from "@/data/customers";
+import { Customer } from "@/data/customers";
+import { customerService } from "@/services/customerService";
 import { useOrderStore } from "@/stores/orderStore";
 import { formatPrice } from "@/lib/utils";
 import { ArrowLeft, User, ShoppingBag, CreditCard, Mail, Phone, MapPin, Building, ShieldAlert, CheckCircle2, Truck, Clock } from "lucide-react";
@@ -19,17 +20,39 @@ export default function AdminCustomerDetailPage({ params }: PageProps) {
   const customerId = resolvedParams.id;
 
   const { orders, initializeOrders } = useOrderStore();
+  const [customers, setCustomers] = React.useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    initializeOrders();
+    const loadData = async () => {
+      try {
+        await initializeOrders();
+        const data = await customerService.getCustomers();
+        setCustomers(data);
+      } catch (err) {
+        console.error("Failed to load customer detail data", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
   }, [initializeOrders]);
 
-  const customer = React.useMemo(() => customers.find(c => c.id === customerId), [customerId]);
+  const customer = React.useMemo(() => customers.find(c => c.id === customerId), [customers, customerId]);
 
   const customerOrders = React.useMemo(() => {
     if (!customer) return [];
     return orders.filter(o => o.shippingAddress.email.toLowerCase() === customer.email.toLowerCase());
   }, [orders, customer]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center text-foreground">
+        <h2 className="text-xl font-bold mb-2">Loading Customer Profile...</h2>
+        <p className="text-muted-foreground">Retrieving B2B invoice and purchase histories.</p>
+      </div>
+    );
+  }
 
   if (!customer) {
     return (

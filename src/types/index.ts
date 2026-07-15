@@ -89,3 +89,53 @@ export interface Banner extends BaseDocument {
   isActive: boolean;
   order: number;
 }
+
+export interface CartItem {
+  id: string; // Dynamic combination of productID + selected variants
+  product: Product;
+  selectedVariants: Record<string, string>;
+  quantity: number;
+  pricePerUnit: number;
+}
+
+export interface HistoryEvent {
+  status: string;
+  timestamp: string;
+  description: string;
+}
+
+export interface ShipmentDetails {
+  type: "self" | "third-party";
+  carrierName?: string;
+  trackingId: string;
+  trackingUrl?: string;
+  shippedAt?: string;
+  deliveredAt?: string;
+  estimatedDelivery?: string;
+  notes?: string;
+}
+
+export interface Order extends BaseDocument {
+  date: string;
+  amount: number;
+  status: "Processing" | "Shipped" | "Delivered" | "Cancelled";
+  statusClass: string;
+  itemsCount: number;
+  customerName: string;
+  shippingAddress: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    company?: string;
+    address: string;
+    apartment?: string;
+    city: string;
+    state: string;
+    pinCode: string;
+    phone: string;
+  };
+  items: CartItem[];
+  shipmentDetails?: ShipmentDetails;
+  history: HistoryEvent[];
+}
+

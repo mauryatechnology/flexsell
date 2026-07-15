@@ -1,10 +1,11 @@
 import * as React from "react";
-import { products } from "@/data/products";
+import { productService } from "@/services/productService";
 import { ProductDetailView } from "@/components/storefront/ProductDetailView";
 import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
+  const products = await productService.getProducts();
   const product = products.find((p) => p.slug === slug);
   if (!product) return {};
   const defaultVariant = product.colorVariants?.[0];
@@ -23,5 +24,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const products = await productService.getProducts();
   return <ProductDetailView slug={slug} initialProducts={products} />;
 }

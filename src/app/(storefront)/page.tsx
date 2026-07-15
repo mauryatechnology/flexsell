@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { categories } from "@/data/categories";
-import { products } from "@/data/products";
+import { categoryService } from "@/services/categoryService";
+import { productService } from "@/services/productService";
 import { pagesContent } from "@/data/pagesContent";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -10,8 +10,10 @@ import { ShoppingCart } from "lucide-react";
 
 import { TrendingProducts } from "@/components/storefront/TrendingProducts";
 
-export default function HomePage() {
+export default async function HomePage() {
   const homeData = pagesContent.homepage;
+  const categories = await categoryService.getCategories();
+  const products = await productService.getProducts();
   return (
     <div className="flex flex-col gap-12 pb-12">
       {/* Hero Banner (Placeholder for Carousel) */}

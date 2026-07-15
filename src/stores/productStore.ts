@@ -1,48 +1,85 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { Product } from "@/types";
+import { productService } from "@/services/productService";
 
 interface ProductStoreState {
   products: Product[];
-  initializeProducts: (initial: Product[]) => void;
-  addProduct: (product: Omit<Product, "_id" | "createdAt">) => void;
-  updateProduct: (id: string, updatedFields: Partial<Product>) => void;
-  deleteProduct: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  initializeProducts: (initial?: Product[]) => Promise<void>;
+  addProduct: (product: Omit<Product, "_id" | "createdAt">) => Promise<void>;
+  updateProduct: (id: string, updatedFields: Partial<Product>) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
 }
 
-export const useProductStore = create<ProductStoreState>()(
-  persist(
-    (set, get) => ({
-      products: [],
-      
-      initializeProducts: (initial) => {
-        if (get().products.length === 0) {
-          set({ products: initial });
-        }
-      },
-      
-      addProduct: (productData) => set((state) => {
-        const newProduct: Product = {
-          ...productData,
-          _id: `prod_${(state.products.length + 1).toString().padStart(3, "0")}`,
-          isActive: true,
-          createdAt: new Date().toISOString()
-        };
-        return { products: [newProduct, ...state.products] };
-      }),
-      
-      updateProduct: (id, updatedFields) => set((state) => ({
-        products: state.products.map(p => 
-          p._id === id ? { ...p, ...updatedFields } : p
-        )
-      })),
-      
-      deleteProduct: (id) => set((state) => ({
-        products: state.products.filter(p => p._id !== id)
-      }))
-    }),
-    {
-      name: "flexsell-products-storage",
+export const useProductStore = create<ProductStoreState>()((set, get) => ({
+  products: [],
+  isLoading: false,
+  error: null,
+
+  initializeProducts: async (initial) => {
+    if (get().products.length > 0) return;
+    set({ isLoading: true, error: null });
+    try {
+      const data = await productService.getProducts();
+      set({ products: data, isLoading: false });
+    } catch (err) {
+      set({ 
+        products: initial || [], 
+        error: err instanceof Error ? err.message : "Failed to load products", 
+        isLoading: false 
+      });
     }
-  )
-);
+  },
+
+  addProduct: async (productData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const newProduct = await productService.createProduct(productData);
+      set((state) => ({ 
+        products: [newProduct, ...state.products], 
+        isLoading: false 
+      }));
+    } catch (err) {
+      set({ 
+        error: err instanceof Error ? err.message : "Failed to add product", 
+        isLoading: false 
+      });
+      throw err;
+    }
+  },
+
+  updateProduct: async (id, updatedFields) => {
+    set({ isLoading: true, error: null });
+    try {
+      const updatedProduct = await productService.updateProduct(id, updatedFields);
+      set((state) => ({
+        products: state.products.map(p => p._id === id ? updatedProduct : p),
+        isLoading: false
+      }));
+    } catch (err) {
+      set({ 
+        error: err instanceof Error ? err.message : "Failed to update product", 
+        isLoading: false 
+      });
+      throw err;
+    }
+  },
+
+  deleteProduct: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      await productService.deleteProduct(id);
+      set((state) => ({
+        products: state.products.filter(p => p._id !== id),
+        isLoading: false
+      }));
+    } catch (err) {
+      set({ 
+        error: err instanceof Error ? err.message : "Failed to delete product", 
+        isLoading: false 
+      });
+      throw err;
+    }
+  }
+}));

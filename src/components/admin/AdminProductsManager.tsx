@@ -140,19 +140,33 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
     return processedProducts.slice(start, start + ITEMS_PER_PAGE);
   }, [processedProducts, currentPage]);
 
-  const toggleProductActive = (id: string, currentStatus: boolean) => {
-    updateProduct(id, { isActive: !currentStatus });
-    addToast(
-      `Product status toggled to ${!currentStatus ? "Active" : "Inactive"}.`,
-      "success"
-    );
+  const toggleProductActive = async (id: string, currentStatus: boolean) => {
+    try {
+      await updateProduct(id, { isActive: !currentStatus });
+      addToast(
+        `Product status toggled to ${!currentStatus ? "Active" : "Inactive"}.`,
+        "success"
+      );
+    } catch (err) {
+      addToast(
+        err instanceof Error ? err.message : "Failed to toggle product status",
+        "error"
+      );
+    }
   };
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if (confirm("Are you sure you want to permanently delete this product?")) {
-      deleteProduct(id);
-      setSelectedProductIds(prev => prev.filter(pId => pId !== id));
-      addToast("Product successfully removed from catalog.", "info");
+      try {
+        await deleteProduct(id);
+        setSelectedProductIds(prev => prev.filter(pId => pId !== id));
+        addToast("Product successfully removed from catalog.", "info");
+      } catch (err) {
+        addToast(
+          err instanceof Error ? err.message : "Failed to delete product",
+          "error"
+        );
+      }
     }
   };
 
@@ -180,12 +194,19 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
   };
 
   // Bulk actions handlers
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedProductIds.length === 0) return;
     if (confirm(`Are you sure you want to delete the ${selectedProductIds.length} selected products?`)) {
-      selectedProductIds.forEach(id => deleteProduct(id));
-      addToast(`Successfully deleted ${selectedProductIds.length} products in bulk.`, "success");
-      setSelectedProductIds([]);
+      try {
+        await Promise.all(selectedProductIds.map(id => deleteProduct(id)));
+        addToast(`Successfully deleted ${selectedProductIds.length} products in bulk.`, "success");
+        setSelectedProductIds([]);
+      } catch (err) {
+        addToast(
+          err instanceof Error ? err.message : "Failed to delete products",
+          "error"
+        );
+      }
     }
   };
 

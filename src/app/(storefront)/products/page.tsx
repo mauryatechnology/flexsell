@@ -1,7 +1,8 @@
 import * as React from "react";
-import { products } from "@/data/products";
+import { productService } from "@/services/productService";
 import { ProductCatalog } from "@/components/storefront/ProductCatalog";
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const products = await productService.getProducts();
   return <ProductCatalog initialProducts={products} />;
 }

@@ -55,7 +55,7 @@ export function AdminOrdersManager() {
     }
   }, [isFulfilling, shipType, activeSelectedOrder]);
 
-  const handleConfirmFulfillment = (e: React.FormEvent) => {
+  const handleConfirmFulfillment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeSelectedOrder) return;
 
@@ -74,8 +74,20 @@ export function AdminOrdersManager() {
       notes: dispatchNotes || undefined
     };
 
-    shipOrder(activeSelectedOrder._id, details);
-    setIsFulfilling(false);
+    try {
+      await shipOrder(activeSelectedOrder._id, details);
+      setIsFulfilling(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to ship order. Please try again.");
+    }
+  };
+
+  const handleUpdateStatus = async (id: string, status: Order["status"]) => {
+    try {
+      await updateOrderStatus(id, status);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update order status. Please try again.");
+    }
   };
 
   const filteredOrders = React.useMemo(() => {
@@ -332,10 +344,10 @@ export function AdminOrdersManager() {
                       
                       {activeSelectedOrder.status === "Processing" && (
                         <div className="flex flex-col gap-1.5">
-                          <Button size="sm" onClick={() => setIsFulfilling(true)} className="flex items-center gap-1.5 font-bold h-8 text-xs">
+                           <Button size="sm" onClick={() => setIsFulfilling(true)} className="flex items-center gap-1.5 font-bold h-8 text-xs">
                             <Truck className="h-3.5 w-3.5" /> Fulfill Shipment
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => updateOrderStatus(activeSelectedOrder._id, "Cancelled")} className="text-destructive hover:bg-destructive/10 border-destructive/30 hover:border-destructive h-8 text-xs">
+                          <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(activeSelectedOrder._id, "Cancelled")} className="text-destructive hover:bg-destructive/10 border-destructive/30 hover:border-destructive h-8 text-xs">
                             Cancel Order
                           </Button>
                         </div>
@@ -343,10 +355,10 @@ export function AdminOrdersManager() {
 
                       {activeSelectedOrder.status === "Shipped" && (
                         <div className="flex flex-col gap-1.5">
-                          <Button size="sm" onClick={() => updateOrderStatus(activeSelectedOrder._id, "Delivered")} className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 h-8 text-xs font-bold">
+                           <Button size="sm" onClick={() => handleUpdateStatus(activeSelectedOrder._id, "Delivered")} className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 h-8 text-xs font-bold">
                             <CheckCircle className="h-3.5 w-3.5" /> Mark Delivered
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => updateOrderStatus(activeSelectedOrder._id, "Cancelled")} className="text-destructive hover:bg-destructive/10 border-destructive/30 hover:border-destructive h-8 text-xs">
+                          <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(activeSelectedOrder._id, "Cancelled")} className="text-destructive hover:bg-destructive/10 border-destructive/30 hover:border-destructive h-8 text-xs">
                             Cancel Order
                           </Button>
                         </div>

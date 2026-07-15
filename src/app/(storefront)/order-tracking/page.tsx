@@ -9,12 +9,16 @@ import { PackageSearch, ArrowLeft, Truck, Calendar, Clock, AlertTriangle, Check,
 import { formatPrice } from "@/lib/utils";
 
 export default function OrderTrackingPage() {
-  const { orders } = useOrderStore();
+  const { orders, initializeOrders } = useOrderStore();
   const [orderId, setOrderId] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [trackedOrder, setTrackedOrder] = React.useState<Order | null>(null);
   const [errorMsg, setErrorMsg] = React.useState("");
   const [hasSearched, setHasSearched] = React.useState(false);
+
+  React.useEffect(() => {
+    initializeOrders();
+  }, [initializeOrders]);
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();

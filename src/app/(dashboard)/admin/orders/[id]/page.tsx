@@ -16,8 +16,22 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
   const resolvedParams = React.use(params);
   const orderId = resolvedParams.id;
 
-  const { orders } = useOrderStore();
+  const { orders, initializeOrders, isLoading } = useOrderStore();
+
+  React.useEffect(() => {
+    initializeOrders();
+  }, [initializeOrders]);
+
   const order = React.useMemo(() => orders.find(o => o._id === orderId), [orders, orderId]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center text-foreground">
+        <h2 className="text-xl font-bold mb-2">Loading Order Invoice...</h2>
+        <p className="text-muted-foreground">Fetching cargo dispatch logs from database.</p>
+      </div>
+    );
+  }
 
   if (!order) {
     return (

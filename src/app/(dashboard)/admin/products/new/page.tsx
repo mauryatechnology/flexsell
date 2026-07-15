@@ -1,8 +1,10 @@
 import * as React from "react";
-import { products } from "@/data/products";
-import { categories } from "@/data/categories";
+import { productService } from "@/services/productService";
+import { categoryService } from "@/services/categoryService";
 import { AdminProductForm } from "@/components/admin/AdminProductForm";
 
-export default function AdminNewProductPage() {
+export default async function AdminNewProductPage() {
+  const products = await productService.getProducts();
+  const categories = await categoryService.getCategories();
   return <AdminProductForm initialProducts={products} initialCategories={categories} />;
 }

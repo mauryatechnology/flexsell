@@ -1,89 +1,86 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { HsnRecord } from "@/types";
+import { hsnService } from "@/services/hsnService";
 
 interface HsnStoreState {
   hsns: HsnRecord[];
   supplierState: string; // Default: "Madhya Pradesh"
-  initializeHsns: () => void;
-  addHsn: (hsn: Omit<HsnRecord, "_id" | "createdAt" | "updatedAt">) => void;
-  updateHsn: (id: string, updatedFields: Partial<HsnRecord>) => void;
-  deleteHsn: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  initializeHsns: () => Promise<void>;
+  addHsn: (hsn: Omit<HsnRecord, "_id" | "createdAt" | "updatedAt">) => Promise<void>;
+  updateHsn: (id: string, updatedFields: Partial<HsnRecord>) => Promise<void>;
+  deleteHsn: (id: string) => Promise<void>;
   setSupplierState: (stateName: string) => void;
 }
 
-export const useHsnStore = create<HsnStoreState>()(
-  persist(
-    (set, get) => ({
-      hsns: [],
-      supplierState: "Madhya Pradesh",
+export const useHsnStore = create<HsnStoreState>()((set, get) => ({
+  hsns: [],
+  supplierState: "Madhya Pradesh",
+  isLoading: false,
+  error: null,
 
-      initializeHsns: () => {
-        if (get().hsns.length === 0) {
-          const defaultHsns: HsnRecord[] = [
-            {
-              _id: "hsn_3924",
-              code: "3924",
-              gstRate: 18,
-              description: "Plastics tableware, kitchenware, other household articles",
-              isActive: true
-            },
-            {
-              _id: "hsn_7323",
-              code: "7323",
-              gstRate: 12,
-              description: "Table, kitchen or other household articles of iron or steel",
-              isActive: true
-            },
-            {
-              _id: "hsn_8215",
-              code: "8215",
-              gstRate: 18,
-              description: "Spoons, forks, ladles, skimmers, cake-servers, fish-knives, butter-knives",
-              isActive: true
-            },
-            {
-              _id: "hsn_6304",
-              code: "6304",
-              gstRate: 5,
-              description: "Other furnishing articles, bedsheets, blankets, towels",
-              isActive: true
-            },
-            {
-              _id: "hsn_8509",
-              code: "8509",
-              gstRate: 18,
-              description: "Electro-mechanical domestic appliances with self-contained electric motor",
-              isActive: true
-            }
-          ];
-          set({ hsns: defaultHsns });
-        }
-      },
-
-      addHsn: (hsnData) => set((state) => {
-        const newRecord: HsnRecord = {
-          ...hsnData,
-          _id: `hsn_${Math.random().toString(36).substring(2, 9)}`,
-          createdAt: new Date().toISOString()
-        };
-        return { hsns: [...state.hsns, newRecord] };
-      }),
-
-      updateHsn: (id, updatedFields) => set((state) => ({
-        hsns: state.hsns.map(h => 
-          h._id === id ? { ...h, ...updatedFields, updatedAt: new Date().toISOString() } : h
-        )
-      })),
-
-      deleteHsn: (id) => set((state) => ({
-        hsns: state.hsns.filter(h => h._id !== id)
-      })),
-
-      setSupplierState: (stateName) => set({ supplierState: stateName })
-    }),
-    {
-      name: "flexsell-hsn-storage",
+  initializeHsns: async () => {
+    if (get().hsns.length > 0) return;
+    set({ isLoading: true, error: null });
+    try {
+      const data = await hsnService.getHsnRecords();
+      set({ hsns: data, isLoading: false });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : "Failed to load HSN codes",
+        isLoading: false
+      });
     }
-  )
-);
+  },
+
+  addHsn: async (hsnData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const newRecord = await hsnService.createHsnRecord(hsnData);
+      set((state) => ({ hsns: [...state.hsns, newRecord], isLoading: false }));
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : "Failed to add HSN code",
+        isLoading: false
+      });
+      throw err;
+    }
+  },
+
+  updateHsn: async (id, updatedFields) => {
+    set({ isLoading: true, error: null });
+    try {
+      const updatedRecord = await hsnService.updateHsnRecord(id, updatedFields);
+      set((state) => ({
+        hsns: state.hsns.map((h) => (h._id === id ? updatedRecord : h)),
+        isLoading: false
+      }));
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : "Failed to update HSN code",
+        isLoading: false
+      });
+      throw err;
+    }
+  },
+
+  deleteHsn: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      await hsnService.deleteHsnRecord(id);
+      set((state) => ({
+        hsns: state.hsns.filter((h) => h._id !== id),
+        isLoading: false
+      }));
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : "Failed to delete HSN code",
+        isLoading: false
+      });
+      throw err;
+    }
+  },
+
+  setSupplierState: (stateName) => set({ supplierState: stateName })
+}));
