@@ -224,6 +224,13 @@ export const orderService = {
       await delay();
       return getMockOrders();
     }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const OrderModel = (await import("@/models/Order")).default;
+      const orders = await OrderModel.find({}).sort({ createdAt: -1 }).lean();
+      return JSON.parse(JSON.stringify(orders));
+    }
     return apiClient.get<Order[]>("/orders");
   },
 
@@ -323,7 +330,93 @@ export const orderService = {
       saveMockOrders([newOrder, ...orders]);
       return newOrder;
     }
-    
+
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const OrderModel = (await import("@/models/Order")).default;
+      const ProductModel = (await import("@/models/Product")).default;
+      
+      const count = await OrderModel.countDocuments();
+      const nextIdNum = 10026 + count;
+      const orderId = `FS-${nextIdNum}`;
+
+      // Deduct stock in database
+      for (const item of items) {
+        try {
+          const dbProduct = await ProductModel.findById(item.product._id);
+          if (!dbProduct) continue;
+
+          const selectedColor = item.selectedVariants["Color"] || item.selectedVariants["color"] || "Default";
+          const selectedSize = item.selectedVariants["Pack Sizing"] || item.selectedVariants["Size"] || item.selectedVariants["size"];
+          const selectedWeight = item.selectedVariants["Weight Unit"] || item.selectedVariants["Weight"] || item.selectedVariants["weight"];
+
+          const cv = dbProduct.colorVariants?.find(
+            (c: any) => c.color.toLowerCase() === selectedColor.toLowerCase()
+          ) || dbProduct.colorVariants?.[0];
+
+          if (cv && cv.subVariants) {
+            const sv = cv.subVariants.find((s: any) => 
+              (!selectedSize || s.size.toLowerCase() === selectedSize.toLowerCase()) && 
+              (!selectedWeight || s.weight.toLowerCase() === selectedWeight.toLowerCase())
+            ) || cv.subVariants[0];
+
+            if (sv) {
+              sv.stock = Math.max(0, sv.stock - item.quantity);
+              
+              // Recalculate totalStock
+              dbProduct.totalStock = dbProduct.colorVariants.reduce((sum: number, c: any) => 
+                sum + (c.subVariants?.reduce((sSum: number, s: any) => sSum + s.stock, 0) || 0)
+              , 0);
+
+              await dbProduct.save();
+            }
+          }
+        } catch (err) {
+          console.error("Failed to deduct stock during server-side order creation:", item, err);
+        }
+      }
+
+      const orderDate = new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric"
+      });
+
+      const orderTime = new Date().toLocaleString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+      const customerName = `${shippingAddress.firstName} ${shippingAddress.lastName}${
+        shippingAddress.company ? ` (${shippingAddress.company})` : ""
+      }`;
+
+      const order = await OrderModel.create({
+        _id: orderId,
+        date: orderDate,
+        amount,
+        status: "Processing",
+        statusClass: statusClasses["Processing"],
+        itemsCount: items.reduce((sum, item) => sum + item.quantity, 0),
+        customerName,
+        shippingAddress,
+        items,
+        history: [
+          {
+            status: "Placed",
+            timestamp: orderTime,
+            description: "Wholesale order generated successfully."
+          }
+        ]
+      });
+
+      return JSON.parse(JSON.stringify(order));
+    }
+
     return apiClient.post<Order>("/orders", { items, amount, shippingAddress });
   },
 
@@ -370,6 +463,43 @@ export const orderService = {
       saveMockOrders(newOrders);
       return updatedOrder;
     }
+
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const OrderModel = (await import("@/models/Order")).default;
+      
+      const order = await OrderModel.findById(id);
+      if (!order) throw new Error("Order not found");
+
+      let description = `Order status updated to ${status}.`;
+      if (status === "Processing") {
+        description = "Order packaging and B2B validation completed.";
+      } else if (status === "Delivered") {
+        description = "Order cargo delivered safely to customer dock.";
+      } else if (status === "Cancelled") {
+        description = "Order has been cancelled by administrator.";
+      }
+
+      const newEvent = {
+        status,
+        timestamp: new Date().toLocaleString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        }),
+        description
+      };
+
+      order.status = status;
+      order.statusClass = statusClasses[status];
+      order.history.unshift(newEvent);
+      await order.save();
+
+      return JSON.parse(JSON.stringify(order));
+    }
     
     return apiClient.put<Order>(`/orders/${id}/status`, { status });
   },
@@ -414,6 +544,41 @@ export const orderService = {
       if (!updatedOrder) throw new Error("Order not found");
       saveMockOrders(newOrders);
       return updatedOrder;
+    }
+
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const OrderModel = (await import("@/models/Order")).default;
+
+      const order = await OrderModel.findById(id);
+      if (!order) throw new Error("Order not found");
+
+      const timestamp = new Date().toLocaleString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+      const carrierInfo = shipmentDetails.type === "self" 
+        ? "local transport cargo (Self)" 
+        : `${shipmentDetails.carrierName} courier`;
+
+      const newEvent = {
+        status: "Shipped",
+        timestamp,
+        description: `Shipment dispatched and handed over to ${carrierInfo}. Tracking ID: ${shipmentDetails.trackingId}`
+      };
+
+      order.status = "Shipped";
+      order.statusClass = statusClasses["Shipped"];
+      order.shipmentDetails = shipmentDetails;
+      order.history.unshift(newEvent);
+      await order.save();
+
+      return JSON.parse(JSON.stringify(order));
     }
 
     return apiClient.put<Order>(`/orders/${id}/ship`, shipmentDetails);

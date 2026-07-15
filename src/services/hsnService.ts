@@ -77,6 +77,13 @@ export const hsnService = {
       await delay();
       return getMockHsns();
     }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const HsnRecordModel = (await import("@/models/HsnRecord")).default;
+      const records = await HsnRecordModel.find({}).lean();
+      return JSON.parse(JSON.stringify(records));
+    }
     return apiClient.get<HsnRecord[]>("/hsn");
   },
 
@@ -93,6 +100,16 @@ export const hsnService = {
       };
       saveMockHsns([...hsns, newRecord]);
       return newRecord;
+    }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const HsnRecordModel = (await import("@/models/HsnRecord")).default;
+      const record = await HsnRecordModel.create({
+        ...hsnData,
+        _id: `hsn_${Math.random().toString(36).substring(2, 9)}`
+      });
+      return JSON.parse(JSON.stringify(record));
     }
     return apiClient.post<HsnRecord>("/hsn", hsnData);
   },
@@ -122,6 +139,18 @@ export const hsnService = {
       saveMockHsns(newHsns);
       return updatedRecord;
     }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const HsnRecordModel = (await import("@/models/HsnRecord")).default;
+      const record = await HsnRecordModel.findByIdAndUpdate(
+        id,
+        { $set: updatedFields },
+        { new: true }
+      ).lean();
+      if (!record) throw new Error("HSN record not found");
+      return JSON.parse(JSON.stringify(record));
+    }
     return apiClient.put<HsnRecord>(`/hsn/${id}`, updatedFields);
   },
 
@@ -131,6 +160,13 @@ export const hsnService = {
       const hsns = getMockHsns();
       const newHsns = hsns.filter((h) => h._id !== id);
       saveMockHsns(newHsns);
+      return;
+    }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const HsnRecordModel = (await import("@/models/HsnRecord")).default;
+      await HsnRecordModel.findByIdAndDelete(id);
       return;
     }
     return apiClient.delete<void>(`/hsn/${id}`);

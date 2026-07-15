@@ -39,6 +39,13 @@ export const productService = {
       await delay();
       return getMockProducts();
     }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const ProductModel = (await import("@/models/Product")).default;
+      const products = await ProductModel.find({}).sort({ createdAt: -1 }).lean();
+      return JSON.parse(JSON.stringify(products));
+    }
     return apiClient.get<Product[]>("/products");
   },
 
@@ -50,6 +57,14 @@ export const productService = {
       if (!product) throw new Error("Product not found");
       return product;
     }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const ProductModel = (await import("@/models/Product")).default;
+      const product = await ProductModel.findById(id).lean();
+      if (!product) throw new Error("Product not found");
+      return JSON.parse(JSON.stringify(product));
+    }
     return apiClient.get<Product>(`/products/${id}`);
   },
 
@@ -60,6 +75,14 @@ export const productService = {
       const product = products.find((p) => p.slug === slug);
       if (!product) throw new Error("Product not found");
       return product;
+    }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const ProductModel = (await import("@/models/Product")).default;
+      const product = await ProductModel.findOne({ slug }).lean();
+      if (!product) throw new Error("Product not found");
+      return JSON.parse(JSON.stringify(product));
     }
     return apiClient.get<Product>(`/products/slug/${slug}`);
   },
@@ -81,6 +104,20 @@ export const productService = {
       };
       saveMockProducts([newProduct, ...products]);
       return newProduct;
+    }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const ProductModel = (await import("@/models/Product")).default;
+      const randomObjectId = Array.from({ length: 24 }, () =>
+        Math.floor(Math.random() * 16).toString(16)
+      ).join("");
+      const product = await ProductModel.create({
+        ...productData,
+        _id: randomObjectId,
+        isActive: true
+      });
+      return JSON.parse(JSON.stringify(product));
     }
     return apiClient.post<Product>("/products", productData);
   },
@@ -106,6 +143,18 @@ export const productService = {
       saveMockProducts(newProducts);
       return updatedProduct;
     }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const ProductModel = (await import("@/models/Product")).default;
+      const product = await ProductModel.findByIdAndUpdate(
+        id,
+        { $set: updatedFields },
+        { new: true }
+      ).lean();
+      if (!product) throw new Error("Product not found");
+      return JSON.parse(JSON.stringify(product));
+    }
     return apiClient.put<Product>(`/products/${id}`, updatedFields);
   },
 
@@ -115,6 +164,13 @@ export const productService = {
       const products = getMockProducts();
       const newProducts = products.filter((p) => p._id !== id);
       saveMockProducts(newProducts);
+      return;
+    }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const ProductModel = (await import("@/models/Product")).default;
+      await ProductModel.findByIdAndDelete(id);
       return;
     }
     return apiClient.delete<void>(`/products/${id}`);

@@ -39,6 +39,13 @@ export const categoryService = {
       await delay();
       return getMockCategories();
     }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const CategoryModel = (await import("@/models/Category")).default;
+      const categories = await CategoryModel.find({}).sort({ order: 1 }).lean();
+      return JSON.parse(JSON.stringify(categories));
+    }
     return apiClient.get<Category[]>("/categories");
   },
 
@@ -58,6 +65,20 @@ export const categoryService = {
       };
       saveMockCategories([...categories, newCategory]);
       return newCategory;
+    }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const CategoryModel = (await import("@/models/Category")).default;
+      const randomObjectId = Array.from({ length: 24 }, () =>
+        Math.floor(Math.random() * 16).toString(16)
+      ).join("");
+      const category = await CategoryModel.create({
+        ...categoryData,
+        _id: randomObjectId,
+        isActive: true
+      });
+      return JSON.parse(JSON.stringify(category));
     }
     return apiClient.post<Category>("/categories", categoryData);
   },
@@ -83,6 +104,18 @@ export const categoryService = {
       saveMockCategories(newCategories);
       return updatedCategory;
     }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const CategoryModel = (await import("@/models/Category")).default;
+      const category = await CategoryModel.findByIdAndUpdate(
+        id,
+        { $set: updatedFields },
+        { new: true }
+      ).lean();
+      if (!category) throw new Error("Category not found");
+      return JSON.parse(JSON.stringify(category));
+    }
     return apiClient.put<Category>(`/categories/${id}`, updatedFields);
   },
 
@@ -92,6 +125,13 @@ export const categoryService = {
       const categories = getMockCategories();
       const newCategories = categories.filter((c) => c._id !== id);
       saveMockCategories(newCategories);
+      return;
+    }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const CategoryModel = (await import("@/models/Category")).default;
+      await CategoryModel.findByIdAndDelete(id);
       return;
     }
     return apiClient.delete<void>(`/categories/${id}`);
