@@ -2,11 +2,11 @@ import { Product } from "@/types";
 
 export const products: Product[] = [
   {
-    "_id": "prod_001",
+    "_id": "60c72b2f9b1d8e001c8e1001",
     "title": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer",
     "slug": "multi-functional-12-in-1-vegetable-chopper-slicer-001",
     "description": "Effortlessly chop, slice, grate, and dice vegetables with our ultimate kitchen utility helper. Comes with 8 interchangeable stainless steel blades, a safety hand guard, and a large catch container. Perfect for busy kitchens, saving up to 70% of food preparation time.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.4,
     "reviewCount": 61,
     "tags": [
@@ -214,11 +214,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_002",
+    "_id": "60c72b2f9b1d8e001c8e1002",
     "title": "Double-Sided Magnetic Window Cleaner Glass Wiper",
     "slug": "double-sided-magnetic-window-cleaner-glass-wiper-002",
     "description": "Wash both sides of your windows simultaneously with this magnetic wiper tool. Built-in sponge holds water, strong internal magnet locks the two cleaning sides together. Includes a safety rope to prevent accidental drops from high floors.",
-    "categoryId": "cat_home_cleaning",
+    "categoryId": "60c72b2f9b1d8e001c8e1a17",
     "rating": 4.9,
     "reviewCount": 207,
     "tags": [
@@ -309,11 +309,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_003",
+    "_id": "60c72b2f9b1d8e001c8e1003",
     "title": "Silicone Stretch Lids - 6 Pack Universal Sizes",
     "slug": "silicone-stretch-lids-6-pack-universal-sizes-003",
     "description": "Re-usable silicone stretch covers that fit round, oval, or square bowls, cups, and containers. Eliminates the need for single-use plastic wrap. Leak-proof seal keeps food fresh longer, microwave and freezer safe.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.4,
     "reviewCount": 116,
     "tags": [
@@ -416,11 +416,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_004",
+    "_id": "60c72b2f9b1d8e001c8e1004",
     "title": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case",
     "slug": "tws-wireless-bluetooth-5-3-earbuds-with-digital-led-case-004",
     "description": "True wireless earbuds featuring advanced Bluetooth 5.3 chip, deep bass hi-fi sound, and crisp call clarity. Compact charging case features a smart LED battery percentage screen. Ergonomic comfortable fit with sweatproof IPX4 design.",
-    "categoryId": "cat_mob_acc",
+    "categoryId": "60c72b2f9b1d8e001c8e1a18",
     "rating": 4.6,
     "reviewCount": 86,
     "tags": [
@@ -553,11 +553,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_005",
+    "_id": "60c72b2f9b1d8e001c8e1005",
     "title": "10-inch LED Ring Light with Dynamic Tripod Stand",
     "slug": "10-inch-led-ring-light-with-dynamic-tripod-stand-005",
     "description": "Professional ring light with 3 light modes (warm, natural, cool) and 10 levels of brightness adjustment. Includes an adjustable smartphone holder and a stable metal tripod stand extending up to 6 feet. Ideal for content creators, influencers, and online sellers.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 4.2,
     "reviewCount": 153,
     "tags": [
@@ -626,11 +626,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_006",
+    "_id": "60c72b2f9b1d8e001c8e1006",
     "title": "Dynamic Smart Watch with Full Touch SpO2 Monitor",
     "slug": "dynamic-smart-watch-with-full-touch-spo2-monitor-006",
     "description": "Premium fitness tracker featuring a 1.69\" HD color touch screen, real-time heart rate monitoring, SpO2 blood oxygen measurement, and 12 sports tracking modes. Receive smart notifications from WhatsApp, Instagram, and calls with a 7-day long-lasting battery.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 4.6,
     "reviewCount": 91,
     "tags": [
@@ -763,11 +763,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_007",
+    "_id": "60c72b2f9b1d8e001c8e1007",
     "title": "5-in-1 Electric Facial Cleaning Brush Set",
     "slug": "5-in-1-electric-facial-cleaning-brush-set-007",
     "description": "Bring the spa experience home. Waterproof face cleanser brush featuring 5 interchangeable attachments: scrubbing brush, pumice stone, makeup sponge, massage head, and exfoliating buffer. Cleanses 6x better than manual washing.",
-    "categoryId": "cat_skincare",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1a",
     "rating": 4,
     "reviewCount": 124,
     "tags": [
@@ -873,11 +873,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_008",
+    "_id": "60c72b2f9b1d8e001c8e1008",
     "title": "Waterproof Anti-Theft Laptop Backpack with USB Port",
     "slug": "waterproof-anti-theft-laptop-backpack-with-usb-port-008",
     "description": "Spacious business laptop backpack built from waterproof premium oxford nylon. Features a hidden anti-theft zipper pocket, padded sleeve fitting up to 15.6\" laptops, and a convenient built-in USB charging port for on-the-go power.",
-    "categoryId": "cat_bags",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1b",
     "rating": 4,
     "reviewCount": 156,
     "tags": [
@@ -1022,11 +1022,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_009",
+    "_id": "60c72b2f9b1d8e001c8e1009",
     "title": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 2)",
     "slug": "multi-functional-12-in-1-vegetable-chopper-slicer-009",
     "description": "Effortlessly chop, slice, grate, and dice vegetables with our ultimate kitchen utility helper. Comes with 8 interchangeable stainless steel blades, a safety hand guard, and a large catch container. Perfect for busy kitchens, saving up to 70% of food preparation time.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.5,
     "reviewCount": 111,
     "tags": [
@@ -1184,11 +1184,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_010",
+    "_id": "60c72b2f9b1d8e001c8e1010",
     "title": "Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 2)",
     "slug": "double-sided-magnetic-window-cleaner-glass-wiper-010",
     "description": "Wash both sides of your windows simultaneously with this magnetic wiper tool. Built-in sponge holds water, strong internal magnet locks the two cleaning sides together. Includes a safety rope to prevent accidental drops from high floors.",
-    "categoryId": "cat_home_cleaning",
+    "categoryId": "60c72b2f9b1d8e001c8e1a17",
     "rating": 4.1,
     "reviewCount": 43,
     "tags": [
@@ -1279,11 +1279,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_011",
+    "_id": "60c72b2f9b1d8e001c8e1011",
     "title": "Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 2)",
     "slug": "silicone-stretch-lids-6-pack-universal-sizes-011",
     "description": "Re-usable silicone stretch covers that fit round, oval, or square bowls, cups, and containers. Eliminates the need for single-use plastic wrap. Leak-proof seal keeps food fresh longer, microwave and freezer safe.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.2,
     "reviewCount": 182,
     "tags": [
@@ -1386,11 +1386,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_012",
+    "_id": "60c72b2f9b1d8e001c8e1012",
     "title": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 2)",
     "slug": "tws-wireless-bluetooth-5-3-earbuds-with-digital-led-case-012",
     "description": "True wireless earbuds featuring advanced Bluetooth 5.3 chip, deep bass hi-fi sound, and crisp call clarity. Compact charging case features a smart LED battery percentage screen. Ergonomic comfortable fit with sweatproof IPX4 design.",
-    "categoryId": "cat_mob_acc",
+    "categoryId": "60c72b2f9b1d8e001c8e1a18",
     "rating": 4,
     "reviewCount": 222,
     "tags": [
@@ -1523,11 +1523,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_013",
+    "_id": "60c72b2f9b1d8e001c8e1013",
     "title": "10-inch LED Ring Light with Dynamic Tripod Stand (Batch 2)",
     "slug": "10-inch-led-ring-light-with-dynamic-tripod-stand-013",
     "description": "Professional ring light with 3 light modes (warm, natural, cool) and 10 levels of brightness adjustment. Includes an adjustable smartphone holder and a stable metal tripod stand extending up to 6 feet. Ideal for content creators, influencers, and online sellers.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 4.6,
     "reviewCount": 106,
     "tags": [
@@ -1596,11 +1596,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_014",
+    "_id": "60c72b2f9b1d8e001c8e1014",
     "title": "Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 2)",
     "slug": "dynamic-smart-watch-with-full-touch-spo2-monitor-014",
     "description": "Premium fitness tracker featuring a 1.69\" HD color touch screen, real-time heart rate monitoring, SpO2 blood oxygen measurement, and 12 sports tracking modes. Receive smart notifications from WhatsApp, Instagram, and calls with a 7-day long-lasting battery.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 4.7,
     "reviewCount": 184,
     "tags": [
@@ -1733,11 +1733,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_015",
+    "_id": "60c72b2f9b1d8e001c8e1015",
     "title": "5-in-1 Electric Facial Cleaning Brush Set (Batch 2)",
     "slug": "5-in-1-electric-facial-cleaning-brush-set-015",
     "description": "Bring the spa experience home. Waterproof face cleanser brush featuring 5 interchangeable attachments: scrubbing brush, pumice stone, makeup sponge, massage head, and exfoliating buffer. Cleanses 6x better than manual washing.",
-    "categoryId": "cat_skincare",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1a",
     "rating": 4.6,
     "reviewCount": 97,
     "tags": [
@@ -1843,11 +1843,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_016",
+    "_id": "60c72b2f9b1d8e001c8e1016",
     "title": "Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 2)",
     "slug": "waterproof-anti-theft-laptop-backpack-with-usb-port-016",
     "description": "Spacious business laptop backpack built from waterproof premium oxford nylon. Features a hidden anti-theft zipper pocket, padded sleeve fitting up to 15.6\" laptops, and a convenient built-in USB charging port for on-the-go power.",
-    "categoryId": "cat_bags",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1b",
     "rating": 3.9,
     "reviewCount": 105,
     "tags": [
@@ -1992,11 +1992,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_017",
+    "_id": "60c72b2f9b1d8e001c8e1017",
     "title": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 3)",
     "slug": "multi-functional-12-in-1-vegetable-chopper-slicer-017",
     "description": "Effortlessly chop, slice, grate, and dice vegetables with our ultimate kitchen utility helper. Comes with 8 interchangeable stainless steel blades, a safety hand guard, and a large catch container. Perfect for busy kitchens, saving up to 70% of food preparation time.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.7,
     "reviewCount": 107,
     "tags": [
@@ -2154,11 +2154,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_018",
+    "_id": "60c72b2f9b1d8e001c8e1018",
     "title": "Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 3)",
     "slug": "double-sided-magnetic-window-cleaner-glass-wiper-018",
     "description": "Wash both sides of your windows simultaneously with this magnetic wiper tool. Built-in sponge holds water, strong internal magnet locks the two cleaning sides together. Includes a safety rope to prevent accidental drops from high floors.",
-    "categoryId": "cat_home_cleaning",
+    "categoryId": "60c72b2f9b1d8e001c8e1a17",
     "rating": 4.7,
     "reviewCount": 157,
     "tags": [
@@ -2249,11 +2249,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_019",
+    "_id": "60c72b2f9b1d8e001c8e1019",
     "title": "Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 3)",
     "slug": "silicone-stretch-lids-6-pack-universal-sizes-019",
     "description": "Re-usable silicone stretch covers that fit round, oval, or square bowls, cups, and containers. Eliminates the need for single-use plastic wrap. Leak-proof seal keeps food fresh longer, microwave and freezer safe.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.5,
     "reviewCount": 87,
     "tags": [
@@ -2356,11 +2356,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_020",
+    "_id": "60c72b2f9b1d8e001c8e1020",
     "title": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 3)",
     "slug": "tws-wireless-bluetooth-5-3-earbuds-with-digital-led-case-020",
     "description": "True wireless earbuds featuring advanced Bluetooth 5.3 chip, deep bass hi-fi sound, and crisp call clarity. Compact charging case features a smart LED battery percentage screen. Ergonomic comfortable fit with sweatproof IPX4 design.",
-    "categoryId": "cat_mob_acc",
+    "categoryId": "60c72b2f9b1d8e001c8e1a18",
     "rating": 3.8,
     "reviewCount": 120,
     "tags": [
@@ -2493,11 +2493,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_021",
+    "_id": "60c72b2f9b1d8e001c8e1021",
     "title": "10-inch LED Ring Light with Dynamic Tripod Stand (Batch 3)",
     "slug": "10-inch-led-ring-light-with-dynamic-tripod-stand-021",
     "description": "Professional ring light with 3 light modes (warm, natural, cool) and 10 levels of brightness adjustment. Includes an adjustable smartphone holder and a stable metal tripod stand extending up to 6 feet. Ideal for content creators, influencers, and online sellers.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 3.9,
     "reviewCount": 211,
     "tags": [
@@ -2566,11 +2566,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_022",
+    "_id": "60c72b2f9b1d8e001c8e1022",
     "title": "Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 3)",
     "slug": "dynamic-smart-watch-with-full-touch-spo2-monitor-022",
     "description": "Premium fitness tracker featuring a 1.69\" HD color touch screen, real-time heart rate monitoring, SpO2 blood oxygen measurement, and 12 sports tracking modes. Receive smart notifications from WhatsApp, Instagram, and calls with a 7-day long-lasting battery.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 3.9,
     "reviewCount": 135,
     "tags": [
@@ -2703,11 +2703,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_023",
+    "_id": "60c72b2f9b1d8e001c8e1023",
     "title": "5-in-1 Electric Facial Cleaning Brush Set (Batch 3)",
     "slug": "5-in-1-electric-facial-cleaning-brush-set-023",
     "description": "Bring the spa experience home. Waterproof face cleanser brush featuring 5 interchangeable attachments: scrubbing brush, pumice stone, makeup sponge, massage head, and exfoliating buffer. Cleanses 6x better than manual washing.",
-    "categoryId": "cat_skincare",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1a",
     "rating": 4.4,
     "reviewCount": 123,
     "tags": [
@@ -2813,11 +2813,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_024",
+    "_id": "60c72b2f9b1d8e001c8e1024",
     "title": "Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 3)",
     "slug": "waterproof-anti-theft-laptop-backpack-with-usb-port-024",
     "description": "Spacious business laptop backpack built from waterproof premium oxford nylon. Features a hidden anti-theft zipper pocket, padded sleeve fitting up to 15.6\" laptops, and a convenient built-in USB charging port for on-the-go power.",
-    "categoryId": "cat_bags",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1b",
     "rating": 4.9,
     "reviewCount": 72,
     "tags": [
@@ -2962,11 +2962,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_025",
+    "_id": "60c72b2f9b1d8e001c8e1025",
     "title": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 4)",
     "slug": "multi-functional-12-in-1-vegetable-chopper-slicer-025",
     "description": "Effortlessly chop, slice, grate, and dice vegetables with our ultimate kitchen utility helper. Comes with 8 interchangeable stainless steel blades, a safety hand guard, and a large catch container. Perfect for busy kitchens, saving up to 70% of food preparation time.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.4,
     "reviewCount": 37,
     "tags": [
@@ -3124,11 +3124,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_026",
+    "_id": "60c72b2f9b1d8e001c8e1026",
     "title": "Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 4)",
     "slug": "double-sided-magnetic-window-cleaner-glass-wiper-026",
     "description": "Wash both sides of your windows simultaneously with this magnetic wiper tool. Built-in sponge holds water, strong internal magnet locks the two cleaning sides together. Includes a safety rope to prevent accidental drops from high floors.",
-    "categoryId": "cat_home_cleaning",
+    "categoryId": "60c72b2f9b1d8e001c8e1a17",
     "rating": 4.1,
     "reviewCount": 226,
     "tags": [
@@ -3219,11 +3219,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_027",
+    "_id": "60c72b2f9b1d8e001c8e1027",
     "title": "Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 4)",
     "slug": "silicone-stretch-lids-6-pack-universal-sizes-027",
     "description": "Re-usable silicone stretch covers that fit round, oval, or square bowls, cups, and containers. Eliminates the need for single-use plastic wrap. Leak-proof seal keeps food fresh longer, microwave and freezer safe.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.1,
     "reviewCount": 126,
     "tags": [
@@ -3326,11 +3326,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_028",
+    "_id": "60c72b2f9b1d8e001c8e1028",
     "title": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 4)",
     "slug": "tws-wireless-bluetooth-5-3-earbuds-with-digital-led-case-028",
     "description": "True wireless earbuds featuring advanced Bluetooth 5.3 chip, deep bass hi-fi sound, and crisp call clarity. Compact charging case features a smart LED battery percentage screen. Ergonomic comfortable fit with sweatproof IPX4 design.",
-    "categoryId": "cat_mob_acc",
+    "categoryId": "60c72b2f9b1d8e001c8e1a18",
     "rating": 4.8,
     "reviewCount": 43,
     "tags": [
@@ -3463,11 +3463,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_029",
+    "_id": "60c72b2f9b1d8e001c8e1029",
     "title": "10-inch LED Ring Light with Dynamic Tripod Stand (Batch 4)",
     "slug": "10-inch-led-ring-light-with-dynamic-tripod-stand-029",
     "description": "Professional ring light with 3 light modes (warm, natural, cool) and 10 levels of brightness adjustment. Includes an adjustable smartphone holder and a stable metal tripod stand extending up to 6 feet. Ideal for content creators, influencers, and online sellers.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 4.1,
     "reviewCount": 63,
     "tags": [
@@ -3536,11 +3536,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_030",
+    "_id": "60c72b2f9b1d8e001c8e1030",
     "title": "Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 4)",
     "slug": "dynamic-smart-watch-with-full-touch-spo2-monitor-030",
     "description": "Premium fitness tracker featuring a 1.69\" HD color touch screen, real-time heart rate monitoring, SpO2 blood oxygen measurement, and 12 sports tracking modes. Receive smart notifications from WhatsApp, Instagram, and calls with a 7-day long-lasting battery.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 4.1,
     "reviewCount": 147,
     "tags": [
@@ -3673,11 +3673,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_031",
+    "_id": "60c72b2f9b1d8e001c8e1031",
     "title": "5-in-1 Electric Facial Cleaning Brush Set (Batch 4)",
     "slug": "5-in-1-electric-facial-cleaning-brush-set-031",
     "description": "Bring the spa experience home. Waterproof face cleanser brush featuring 5 interchangeable attachments: scrubbing brush, pumice stone, makeup sponge, massage head, and exfoliating buffer. Cleanses 6x better than manual washing.",
-    "categoryId": "cat_skincare",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1a",
     "rating": 4.4,
     "reviewCount": 49,
     "tags": [
@@ -3783,11 +3783,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_032",
+    "_id": "60c72b2f9b1d8e001c8e1032",
     "title": "Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 4)",
     "slug": "waterproof-anti-theft-laptop-backpack-with-usb-port-032",
     "description": "Spacious business laptop backpack built from waterproof premium oxford nylon. Features a hidden anti-theft zipper pocket, padded sleeve fitting up to 15.6\" laptops, and a convenient built-in USB charging port for on-the-go power.",
-    "categoryId": "cat_bags",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1b",
     "rating": 4.7,
     "reviewCount": 160,
     "tags": [
@@ -3932,11 +3932,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_033",
+    "_id": "60c72b2f9b1d8e001c8e1033",
     "title": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 5)",
     "slug": "multi-functional-12-in-1-vegetable-chopper-slicer-033",
     "description": "Effortlessly chop, slice, grate, and dice vegetables with our ultimate kitchen utility helper. Comes with 8 interchangeable stainless steel blades, a safety hand guard, and a large catch container. Perfect for busy kitchens, saving up to 70% of food preparation time.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.2,
     "reviewCount": 76,
     "tags": [
@@ -4094,11 +4094,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_034",
+    "_id": "60c72b2f9b1d8e001c8e1034",
     "title": "Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 5)",
     "slug": "double-sided-magnetic-window-cleaner-glass-wiper-034",
     "description": "Wash both sides of your windows simultaneously with this magnetic wiper tool. Built-in sponge holds water, strong internal magnet locks the two cleaning sides together. Includes a safety rope to prevent accidental drops from high floors.",
-    "categoryId": "cat_home_cleaning",
+    "categoryId": "60c72b2f9b1d8e001c8e1a17",
     "rating": 4.8,
     "reviewCount": 136,
     "tags": [
@@ -4189,11 +4189,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_035",
+    "_id": "60c72b2f9b1d8e001c8e1035",
     "title": "Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 5)",
     "slug": "silicone-stretch-lids-6-pack-universal-sizes-035",
     "description": "Re-usable silicone stretch covers that fit round, oval, or square bowls, cups, and containers. Eliminates the need for single-use plastic wrap. Leak-proof seal keeps food fresh longer, microwave and freezer safe.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4,
     "reviewCount": 90,
     "tags": [
@@ -4296,11 +4296,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_036",
+    "_id": "60c72b2f9b1d8e001c8e1036",
     "title": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 5)",
     "slug": "tws-wireless-bluetooth-5-3-earbuds-with-digital-led-case-036",
     "description": "True wireless earbuds featuring advanced Bluetooth 5.3 chip, deep bass hi-fi sound, and crisp call clarity. Compact charging case features a smart LED battery percentage screen. Ergonomic comfortable fit with sweatproof IPX4 design.",
-    "categoryId": "cat_mob_acc",
+    "categoryId": "60c72b2f9b1d8e001c8e1a18",
     "rating": 4.3,
     "reviewCount": 200,
     "tags": [
@@ -4433,11 +4433,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_037",
+    "_id": "60c72b2f9b1d8e001c8e1037",
     "title": "10-inch LED Ring Light with Dynamic Tripod Stand (Batch 5)",
     "slug": "10-inch-led-ring-light-with-dynamic-tripod-stand-037",
     "description": "Professional ring light with 3 light modes (warm, natural, cool) and 10 levels of brightness adjustment. Includes an adjustable smartphone holder and a stable metal tripod stand extending up to 6 feet. Ideal for content creators, influencers, and online sellers.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 4.3,
     "reviewCount": 132,
     "tags": [
@@ -4506,11 +4506,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_038",
+    "_id": "60c72b2f9b1d8e001c8e1038",
     "title": "Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 5)",
     "slug": "dynamic-smart-watch-with-full-touch-spo2-monitor-038",
     "description": "Premium fitness tracker featuring a 1.69\" HD color touch screen, real-time heart rate monitoring, SpO2 blood oxygen measurement, and 12 sports tracking modes. Receive smart notifications from WhatsApp, Instagram, and calls with a 7-day long-lasting battery.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 4.8,
     "reviewCount": 169,
     "tags": [
@@ -4643,11 +4643,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_039",
+    "_id": "60c72b2f9b1d8e001c8e1039",
     "title": "5-in-1 Electric Facial Cleaning Brush Set (Batch 5)",
     "slug": "5-in-1-electric-facial-cleaning-brush-set-039",
     "description": "Bring the spa experience home. Waterproof face cleanser brush featuring 5 interchangeable attachments: scrubbing brush, pumice stone, makeup sponge, massage head, and exfoliating buffer. Cleanses 6x better than manual washing.",
-    "categoryId": "cat_skincare",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1a",
     "rating": 4,
     "reviewCount": 216,
     "tags": [
@@ -4753,11 +4753,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_040",
+    "_id": "60c72b2f9b1d8e001c8e1040",
     "title": "Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 5)",
     "slug": "waterproof-anti-theft-laptop-backpack-with-usb-port-040",
     "description": "Spacious business laptop backpack built from waterproof premium oxford nylon. Features a hidden anti-theft zipper pocket, padded sleeve fitting up to 15.6\" laptops, and a convenient built-in USB charging port for on-the-go power.",
-    "categoryId": "cat_bags",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1b",
     "rating": 4.3,
     "reviewCount": 196,
     "tags": [
@@ -4902,11 +4902,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_041",
+    "_id": "60c72b2f9b1d8e001c8e1041",
     "title": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer (Batch 6)",
     "slug": "multi-functional-12-in-1-vegetable-chopper-slicer-041",
     "description": "Effortlessly chop, slice, grate, and dice vegetables with our ultimate kitchen utility helper. Comes with 8 interchangeable stainless steel blades, a safety hand guard, and a large catch container. Perfect for busy kitchens, saving up to 70% of food preparation time.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 3.9,
     "reviewCount": 50,
     "tags": [
@@ -5064,11 +5064,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_042",
+    "_id": "60c72b2f9b1d8e001c8e1042",
     "title": "Double-Sided Magnetic Window Cleaner Glass Wiper (Batch 6)",
     "slug": "double-sided-magnetic-window-cleaner-glass-wiper-042",
     "description": "Wash both sides of your windows simultaneously with this magnetic wiper tool. Built-in sponge holds water, strong internal magnet locks the two cleaning sides together. Includes a safety rope to prevent accidental drops from high floors.",
-    "categoryId": "cat_home_cleaning",
+    "categoryId": "60c72b2f9b1d8e001c8e1a17",
     "rating": 4.4,
     "reviewCount": 212,
     "tags": [
@@ -5159,11 +5159,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_043",
+    "_id": "60c72b2f9b1d8e001c8e1043",
     "title": "Silicone Stretch Lids - 6 Pack Universal Sizes (Batch 6)",
     "slug": "silicone-stretch-lids-6-pack-universal-sizes-043",
     "description": "Re-usable silicone stretch covers that fit round, oval, or square bowls, cups, and containers. Eliminates the need for single-use plastic wrap. Leak-proof seal keeps food fresh longer, microwave and freezer safe.",
-    "categoryId": "cat_kitchen_tools",
+    "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4,
     "reviewCount": 58,
     "tags": [
@@ -5266,11 +5266,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_044",
+    "_id": "60c72b2f9b1d8e001c8e1044",
     "title": "TWS Wireless Bluetooth 5.3 Earbuds with Digital LED Case (Batch 6)",
     "slug": "tws-wireless-bluetooth-5-3-earbuds-with-digital-led-case-044",
     "description": "True wireless earbuds featuring advanced Bluetooth 5.3 chip, deep bass hi-fi sound, and crisp call clarity. Compact charging case features a smart LED battery percentage screen. Ergonomic comfortable fit with sweatproof IPX4 design.",
-    "categoryId": "cat_mob_acc",
+    "categoryId": "60c72b2f9b1d8e001c8e1a18",
     "rating": 4,
     "reviewCount": 161,
     "tags": [
@@ -5403,11 +5403,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_045",
+    "_id": "60c72b2f9b1d8e001c8e1045",
     "title": "10-inch LED Ring Light with Dynamic Tripod Stand (Batch 6)",
     "slug": "10-inch-led-ring-light-with-dynamic-tripod-stand-045",
     "description": "Professional ring light with 3 light modes (warm, natural, cool) and 10 levels of brightness adjustment. Includes an adjustable smartphone holder and a stable metal tripod stand extending up to 6 feet. Ideal for content creators, influencers, and online sellers.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 4.2,
     "reviewCount": 139,
     "tags": [
@@ -5476,11 +5476,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_046",
+    "_id": "60c72b2f9b1d8e001c8e1046",
     "title": "Dynamic Smart Watch with Full Touch SpO2 Monitor (Batch 6)",
     "slug": "dynamic-smart-watch-with-full-touch-spo2-monitor-046",
     "description": "Premium fitness tracker featuring a 1.69\" HD color touch screen, real-time heart rate monitoring, SpO2 blood oxygen measurement, and 12 sports tracking modes. Receive smart notifications from WhatsApp, Instagram, and calls with a 7-day long-lasting battery.",
-    "categoryId": "cat_smart_devices",
+    "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 4.8,
     "reviewCount": 159,
     "tags": [
@@ -5613,11 +5613,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_047",
+    "_id": "60c72b2f9b1d8e001c8e1047",
     "title": "5-in-1 Electric Facial Cleaning Brush Set (Batch 6)",
     "slug": "5-in-1-electric-facial-cleaning-brush-set-047",
     "description": "Bring the spa experience home. Waterproof face cleanser brush featuring 5 interchangeable attachments: scrubbing brush, pumice stone, makeup sponge, massage head, and exfoliating buffer. Cleanses 6x better than manual washing.",
-    "categoryId": "cat_skincare",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1a",
     "rating": 4.5,
     "reviewCount": 197,
     "tags": [
@@ -5723,11 +5723,11 @@ export const products: Product[] = [
     }
   },
   {
-    "_id": "prod_048",
+    "_id": "60c72b2f9b1d8e001c8e1048",
     "title": "Waterproof Anti-Theft Laptop Backpack with USB Port (Batch 6)",
     "slug": "waterproof-anti-theft-laptop-backpack-with-usb-port-048",
     "description": "Spacious business laptop backpack built from waterproof premium oxford nylon. Features a hidden anti-theft zipper pocket, padded sleeve fitting up to 15.6\" laptops, and a convenient built-in USB charging port for on-the-go power.",
-    "categoryId": "cat_bags",
+    "categoryId": "60c72b2f9b1d8e001c8e1a1b",
     "rating": 5,
     "reviewCount": 164,
     "tags": [

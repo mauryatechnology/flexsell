@@ -59,9 +59,12 @@ export const productService = {
     if (isMockMode) {
       await delay();
       const products = getMockProducts();
+      const randomObjectId = Array.from({ length: 24 }, () =>
+        Math.floor(Math.random() * 16).toString(16)
+      ).join("");
       const newProduct: Product = {
         ...productData,
-        _id: `prod_${(products.length + 1).toString().padStart(3, "0")}`,
+        _id: randomObjectId,
         isActive: true,
         createdAt: new Date().toISOString(),
       };

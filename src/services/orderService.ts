@@ -18,10 +18,16 @@ function getMockOrders(): Order[] {
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
-      if (parsed?.state?.orders) {
-        return parsed.state.orders;
+      const ordersList = (parsed?.state?.orders || (Array.isArray(parsed) ? parsed : null)) as Order[];
+      if (ordersList) {
+        // Clear cached orders that use the old 'prod_' string IDs
+        const hasOldId = ordersList.some((o: Order) => o.items?.some((i) => i.id.startsWith("prod_")));
+        if (hasOldId) {
+          localStorage.removeItem(MOCK_STORAGE_KEY);
+        } else {
+          return ordersList;
+        }
       }
-      if (Array.isArray(parsed)) return parsed;
     } catch (e) {
       console.error("Error parsing mock orders", e);
     }
@@ -50,7 +56,7 @@ function getMockOrders(): Order[] {
       },
       items: [
         {
-          id: "prod_001-Forest Green-Standard 1.2L-250g",
+          id: `${products[0]._id}-Forest Green-Standard 1.2L-250g`,
           product: products[0],
           selectedVariants: {
             Color: "Forest Green",
@@ -95,7 +101,7 @@ function getMockOrders(): Order[] {
       },
       items: [
         {
-          id: "prod_001-Slate Gray-Standard 1.2L-250g",
+          id: `${products[0]._id}-Slate Gray-Standard 1.2L-250g`,
           product: products[0],
           selectedVariants: {
             Color: "Slate Gray",
@@ -153,7 +159,7 @@ function getMockOrders(): Order[] {
       },
       items: [
         {
-          id: "prod_001-Forest Green-Pro 2.0L-500g",
+          id: `${products[0]._id}-Forest Green-Pro 2.0L-500g`,
           product: products[0],
           selectedVariants: {
             Color: "Forest Green",

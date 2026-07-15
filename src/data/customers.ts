@@ -1,5 +1,5 @@
 export interface Customer {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   company?: string;
@@ -14,7 +14,7 @@ export interface Customer {
 
 export const customers: Customer[] = [
   {
-    id: "cust_001",
+    _id: "60c72b2f9b1d8e001c8e2001",
     name: "John Doe",
     email: "john@doeent.com",
     company: "Doe Ent.",
@@ -27,7 +27,7 @@ export const customers: Customer[] = [
     gstin: "24AAACD4521D1Z1"
   },
   {
-    id: "cust_002",
+    _id: "60c72b2f9b1d8e001c8e2002",
     name: "Jane Smith",
     email: "jane@smithretail.in",
     company: "Smith Retail Group",
@@ -40,7 +40,7 @@ export const customers: Customer[] = [
     gstin: "24AAACS9823S2Z5"
   },
   {
-    id: "cust_003",
+    _id: "60c72b2f9b1d8e001c8e2003",
     name: "Amit Patel",
     email: "amit@pateldistributors.com",
     company: "Patel Distributors",

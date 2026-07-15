@@ -38,7 +38,7 @@ export default function AdminCustomerDetailPage({ params }: PageProps) {
     loadData();
   }, [initializeOrders]);
 
-  const customer = React.useMemo(() => customers.find(c => c.id === customerId), [customers, customerId]);
+  const customer = React.useMemo(() => customers.find(c => c._id === customerId), [customers, customerId]);
 
   const customerOrders = React.useMemo(() => {
     if (!customer) return [];
@@ -87,7 +87,7 @@ export default function AdminCustomerDetailPage({ params }: PageProps) {
             <Avatar initials={customer.initials} className="h-12 w-12 text-lg bg-primary text-primary-foreground border" />
             <div>
               <h1 className="text-2xl font-bold tracking-tight">{customer.name}</h1>
-              <p className="text-xs text-muted-foreground">ID: {customer.id} | Company: {customer.company || "Individual"}</p>
+              <p className="text-xs text-muted-foreground">ID: {customer._id} | Company: {customer.company || "Individual"}</p>
             </div>
           </div>
         </div>

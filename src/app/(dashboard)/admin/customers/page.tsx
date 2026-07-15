@@ -85,7 +85,7 @@ export default function AdminCustomersPage() {
                   </tr>
                 ) : (
                   customerStats.map((cust) => (
-                    <tr key={cust.id} className="hover:bg-secondary/15 transition-colors">
+                    <tr key={cust._id} className="hover:bg-secondary/15 transition-colors">
                       <td className="px-6 py-4 flex items-center gap-3">
                         <Avatar initials={cust.initials} className="bg-primary text-primary-foreground border" />
                         <div>
@@ -106,7 +106,7 @@ export default function AdminCustomersPage() {
                         {formatPrice(cust.totalSpend)}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link href={`/admin/customers/${cust.id}`}>
+                        <Link href={`/admin/customers/${cust._id}`}>
                           <Button variant="outline" size="sm" className="font-semibold">
                             View Profile <Eye className="h-3.5 w-3.5 ml-1.5" />
                           </Button>

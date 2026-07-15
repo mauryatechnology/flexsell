@@ -48,9 +48,12 @@ export const categoryService = {
     if (isMockMode) {
       await delay();
       const categories = getMockCategories();
+      const randomObjectId = Array.from({ length: 24 }, () =>
+        Math.floor(Math.random() * 16).toString(16)
+      ).join("");
       const newCategory: Category = {
         ...categoryData,
-        _id: `cat_${(categories.length + 1).toString().padStart(3, "0")}`,
+        _id: randomObjectId,
         isActive: true,
       };
       saveMockCategories([...categories, newCategory]);

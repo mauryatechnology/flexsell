@@ -2,7 +2,7 @@ import { Category } from "@/types";
 
 export const categories: Category[] = [
   {
-    "_id": "cat_home",
+    "_id": "60c72b2f9b1d8e001c8e1a10",
     "name": "Home & Kitchen",
     "slug": "home-and-kitchen",
     "image": "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=400&q=80",
@@ -11,7 +11,7 @@ export const categories: Category[] = [
     "order": 1
   },
   {
-    "_id": "cat_electronics",
+    "_id": "60c72b2f9b1d8e001c8e1a11",
     "name": "Electronics & Gadgets",
     "slug": "electronics",
     "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80",
@@ -20,7 +20,7 @@ export const categories: Category[] = [
     "order": 2
   },
   {
-    "_id": "cat_beauty",
+    "_id": "60c72b2f9b1d8e001c8e1a12",
     "name": "Beauty & Personal Care",
     "slug": "beauty",
     "image": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80",
@@ -29,7 +29,7 @@ export const categories: Category[] = [
     "order": 3
   },
   {
-    "_id": "cat_fashion",
+    "_id": "60c72b2f9b1d8e001c8e1a13",
     "name": "Fashion & Accessories",
     "slug": "fashion",
     "image": "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=400&q=80",
@@ -38,7 +38,7 @@ export const categories: Category[] = [
     "order": 4
   },
   {
-    "_id": "cat_hardware",
+    "_id": "60c72b2f9b1d8e001c8e1a14",
     "name": "Hardware & Utility",
     "slug": "hardware",
     "image": "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=400&q=80",
@@ -47,7 +47,7 @@ export const categories: Category[] = [
     "order": 5
   },
   {
-    "_id": "cat_toys",
+    "_id": "60c72b2f9b1d8e001c8e1a15",
     "name": "Toys & Baby Care",
     "slug": "toys",
     "image": "https://images.unsplash.com/photo-1537655780520-1e392edd816a?auto=format&fit=crop&w=400&q=80",
@@ -56,91 +56,91 @@ export const categories: Category[] = [
     "order": 6
   },
   {
-    "_id": "cat_kitchen_tools",
+    "_id": "60c72b2f9b1d8e001c8e1a16",
     "name": "Kitchen Tools",
     "slug": "kitchen-tools",
-    "parentId": "cat_home",
+    "parentId": "60c72b2f9b1d8e001c8e1a10",
     "image": "",
     "isActive": true,
     "order": 1
   },
   {
-    "_id": "cat_home_cleaning",
+    "_id": "60c72b2f9b1d8e001c8e1a17",
     "name": "Cleaning & Utility",
     "slug": "cleaning-and-utility",
-    "parentId": "cat_home",
+    "parentId": "60c72b2f9b1d8e001c8e1a10",
     "image": "",
     "isActive": true,
     "order": 2
   },
   {
-    "_id": "cat_mob_acc",
+    "_id": "60c72b2f9b1d8e001c8e1a18",
     "name": "Mobile Accessories",
     "slug": "mobile-accessories",
-    "parentId": "cat_electronics",
+    "parentId": "60c72b2f9b1d8e001c8e1a11",
     "image": "",
     "isActive": true,
     "order": 1
   },
   {
-    "_id": "cat_smart_devices",
+    "_id": "60c72b2f9b1d8e001c8e1a19",
     "name": "Smart Devices",
     "slug": "smart-devices",
-    "parentId": "cat_electronics",
+    "parentId": "60c72b2f9b1d8e001c8e1a11",
     "image": "",
     "isActive": true,
     "order": 2
   },
   {
-    "_id": "cat_skincare",
+    "_id": "60c72b2f9b1d8e001c8e1a1a",
     "name": "Skincare Tools",
     "slug": "skincare-tools",
-    "parentId": "cat_beauty",
+    "parentId": "60c72b2f9b1d8e001c8e1a12",
     "image": "",
     "isActive": true,
     "order": 1
   },
   {
-    "_id": "cat_bags",
+    "_id": "60c72b2f9b1d8e001c8e1a1b",
     "name": "Bags & Luggage",
     "slug": "bags-luggage",
-    "parentId": "cat_fashion",
+    "parentId": "60c72b2f9b1d8e001c8e1a13",
     "image": "",
     "isActive": true,
     "order": 1
   },
   {
-    "_id": "cat_hand_tools",
+    "_id": "60c72b2f9b1d8e001c8e1a1c",
     "name": "Handy & Power Tools",
     "slug": "handy-power-tools",
-    "parentId": "cat_hardware",
+    "parentId": "60c72b2f9b1d8e001c8e1a14",
     "image": "",
     "isActive": true,
     "order": 1
   },
   {
-    "_id": "cat_flashlights",
+    "_id": "60c72b2f9b1d8e001c8e1a1d",
     "name": "Flashlights & Torch",
     "slug": "flashlights-torch",
-    "parentId": "cat_hardware",
+    "parentId": "60c72b2f9b1d8e001c8e1a14",
     "image": "",
     "isActive": true,
     "order": 2
   },
   {
-    "_id": "cat_edu_toys",
+    "_id": "60c72b2f9b1d8e001c8e1a1e",
     "name": "Educational Toys",
     "slug": "educational-toys",
-    "parentId": "cat_toys",
+    "parentId": "60c72b2f9b1d8e001c8e1a15",
     "image": "",
     "isActive": true,
     "order": 1
   },
   {
-    "_id": "cat_baby_utility",
+    "_id": "60c72b2f9b1d8e001c8e1a1f",
     "name": "Baby Care & Security",
     "slug": "baby-care-security",
-    "parentId": "cat_toys",
+    "parentId": "60c72b2f9b1d8e001c8e1a15",
     "image": "",
     "isActive": true,
     "order": 2
