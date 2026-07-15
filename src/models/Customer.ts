@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { Customer as CustomerType } from "@/data/customers";
+import { Customer as CustomerType } from "@/types";
 
 const CustomerSchema = new Schema<CustomerType & Document>(
   {

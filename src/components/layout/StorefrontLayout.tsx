@@ -1,16 +1,15 @@
 import * as React from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
-import { categories } from "@/data/categories";
-import { pagesContent } from "@/data/pagesContent";
+import { pagesContent } from "@/config/pagesContent";
+import { categoryService } from "@/services/categoryService";
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
 }
 
-export function StorefrontLayout({ children }: StorefrontLayoutProps) {
-  // In a real app, this would be an async fetch from DB/API
-  const allCategories = categories;
+export async function StorefrontLayout({ children }: StorefrontLayoutProps) {
+  const allCategories = await categoryService.getCategories();
 
   return (
     <div className="min-h-screen flex flex-col">

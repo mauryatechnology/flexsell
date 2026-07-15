@@ -27,9 +27,7 @@ import Customer from "../src/models/Customer";
 import HsnRecord from "../src/models/HsnRecord";
 import Order from "../src/models/Order";
 
-import { categories } from "../src/data/categories";
-import { products } from "../src/data/products";
-import { customers } from "../src/data/customers";
+import { categories, products, customers } from "./seedData";
 
 const defaultHsns = [
   {

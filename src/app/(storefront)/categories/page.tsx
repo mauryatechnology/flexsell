@@ -1,11 +1,13 @@
 import * as React from "react";
 import Link from "next/link";
-import { categories } from "@/data/categories";
+import { categoryService } from "@/services/categoryService";
 import { Card } from "@/components/ui/Card";
 
 import Image from "next/image";
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const categoriesList = await categoryService.getCategories();
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 text-center">
@@ -14,7 +16,7 @@ export default function CategoriesPage() {
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-        {categories.filter(c => !c.parentId).map((category) => (
+        {categoriesList.filter(c => !c.parentId).map((category) => (
           <Link key={category._id} href={`/categories/${category.slug}`}>
             <Card className="hover:border-primary transition-all hover:shadow-md cursor-pointer text-center overflow-hidden h-full flex flex-col group">
               <div className="aspect-video relative bg-secondary overflow-hidden">

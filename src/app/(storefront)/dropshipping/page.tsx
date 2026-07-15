@@ -2,7 +2,7 @@ import * as React from "react";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/Button";
 import { Package, Truck, Handshake, IndianRupee } from "lucide-react";
-import { pagesContent } from "@/data/pagesContent";
+import { pagesContent } from "@/config/pagesContent";
 
 export const metadata: Metadata = {
   title: "B2B Dropshipping & Franchise Programs",

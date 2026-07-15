@@ -1,6 +1,7 @@
 import { Category } from "@/types";
-import { categories as staticCategories } from "@/data/categories";
 import { apiClient, isMockMode, delay } from "@/lib/apiClient";
+
+const staticCategories: Category[] = [];
 
 const MOCK_STORAGE_KEY = "flexsell-categories-storage";
 

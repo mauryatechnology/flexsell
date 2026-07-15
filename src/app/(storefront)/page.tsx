@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { categoryService } from "@/services/categoryService";
 import { productService } from "@/services/productService";
-import { pagesContent } from "@/data/pagesContent";
+import { pagesContent } from "@/config/pagesContent";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PriceDisplay } from "@/components/ui/PriceDisplay";

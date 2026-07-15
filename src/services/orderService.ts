@@ -1,6 +1,4 @@
-import { Order, ShipmentDetails, CartItem } from "@/types";
-import { customers } from "@/data/customers";
-import { products } from "@/data/products";
+import { Order, ShipmentDetails, CartItem, Product } from "@/types";
 import { apiClient, isMockMode, delay } from "@/lib/apiClient";
 import { productService } from "@/services/productService";
 import { useInventoryHistoryStore } from "@/stores/inventoryHistoryStore";
@@ -12,6 +10,20 @@ const statusClasses: Record<Order["status"], string> = {
   Shipped: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-500",
   Delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500",
   Cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500"
+};
+
+const dummyProduct: Product = {
+  _id: "60c72b2f9b1d8e001c8e1001",
+  title: "Multi-Functional 12-in-1 Vegetable Chopper & Slicer",
+  slug: "multi-functional-12-in-1-vegetable-chopper-slicer",
+  description: "Effortlessly chop, slice, grate, and dice vegetables with our ultimate kitchen utility helper.",
+  categoryId: "60c72b2f9b1d8e001c8e1a16",
+  rating: 4.5,
+  reviewCount: 120,
+  tags: ["bestseller", "wholesale"],
+  isActive: true,
+  totalStock: 500,
+  colorVariants: []
 };
 
 function getMockOrders(): Order[] {
@@ -44,22 +56,22 @@ function getMockOrders(): Order[] {
       status: "Processing",
       statusClass: statusClasses["Processing"],
       itemsCount: 18,
-      customerName: `${customers[0].name} (${customers[0].company})`,
+      customerName: "John Doe (Doe Ent.)",
       shippingAddress: {
-        firstName: customers[0].name.split(" ")[0],
-        lastName: customers[0].name.split(" ").slice(1).join(" "),
-        email: customers[0].email,
-        company: customers[0].company,
-        address: customers[0].address,
-        city: customers[0].city,
-        state: customers[0].state,
-        pinCode: customers[0].pinCode,
-        phone: customers[0].phone
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@doeent.com",
+        company: "Doe Ent.",
+        address: "45 Textile Market, Ring Road",
+        city: "Surat",
+        state: "Gujarat",
+        pinCode: "395002",
+        phone: "+91 98765 43210"
       },
       items: [
         {
-          id: `${products[0]._id}-Forest Green-Standard 1.2L-250g`,
-          product: products[0],
+          id: "60c72b2f9b1d8e001c8e1001-Forest Green-Standard 1.2L-250g",
+          product: dummyProduct,
           selectedVariants: {
             Color: "Forest Green",
             Size: "Standard 1.2L",
@@ -89,22 +101,22 @@ function getMockOrders(): Order[] {
       status: "Shipped",
       statusClass: statusClasses["Shipped"],
       itemsCount: 3,
-      customerName: `${customers[1].name} (${customers[1].company})`,
+      customerName: "Jane Smith (Smith Retail Group)",
       shippingAddress: {
-        firstName: customers[1].name.split(" ")[0],
-        lastName: customers[1].name.split(" ").slice(1).join(" "),
-        email: customers[1].email,
-        company: customers[1].company,
-        address: customers[1].address,
-        city: customers[1].city,
-        state: customers[1].state,
-        pinCode: customers[1].pinCode,
-        phone: customers[1].phone
+        firstName: "Jane",
+        lastName: "Smith",
+        email: "jane@smithretail.in",
+        company: "Smith Retail Group",
+        address: "GIDC Electronic Zone, Sector 26",
+        city: "Gandhinagar",
+        state: "Gujarat",
+        pinCode: "382010",
+        phone: "+91 88877 66655"
       },
       items: [
         {
-          id: `${products[0]._id}-Slate Gray-Standard 1.2L-250g`,
-          product: products[0],
+          id: "60c72b2f9b1d8e001c8e1001-Slate Gray-Standard 1.2L-250g",
+          product: dummyProduct,
           selectedVariants: {
             Color: "Slate Gray",
             Size: "Standard 1.2L",
@@ -147,22 +159,22 @@ function getMockOrders(): Order[] {
       status: "Delivered",
       statusClass: statusClasses["Delivered"],
       itemsCount: 50,
-      customerName: `${customers[2].name} (${customers[2].company})`,
+      customerName: "Amit Patel (Patel Distributors)",
       shippingAddress: {
-        firstName: customers[2].name.split(" ")[0],
-        lastName: customers[2].name.split(" ").slice(1).join(" "),
-        email: customers[2].email,
-        company: customers[2].company,
-        address: customers[2].address,
-        city: customers[2].city,
-        state: customers[2].state,
-        pinCode: customers[2].pinCode,
-        phone: customers[2].phone
+        firstName: "Amit",
+        lastName: "Patel",
+        email: "amit@pateldistributors.com",
+        company: "Patel Distributors",
+        address: "Industrial Area Phase 2",
+        city: "Ahmedabad",
+        state: "Gujarat",
+        pinCode: "380001",
+        phone: "+91 99988 77766"
       },
       items: [
         {
-          id: `${products[0]._id}-Forest Green-Pro 2.0L-500g`,
-          product: products[0],
+          id: "60c72b2f9b1d8e001c8e1001-Forest Green-Pro 2.0L-500g",
+          product: dummyProduct,
           selectedVariants: {
             Color: "Forest Green",
             Size: "Pro 2.0L",

@@ -55,7 +55,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
   // B2B GST, HSN & MOQ States
   const [hsnCode, setHsnCode] = React.useState("3924");
   const [priceIncludesGst, setPriceIncludesGst] = React.useState(true);
-  const [moq, setMoq] = React.useState(5);
+  const [moq, setMoq] = React.useState(1);
 
   // SEO States
   const [seoTitle, setSeoTitle] = React.useState("");
@@ -113,7 +113,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
 
       setHsnCode(existingProduct.hsnCode || "3924");
       setPriceIncludesGst(existingProduct.priceIncludesGst ?? true);
-      setMoq(existingProduct.moq ?? 5);
+      setMoq(existingProduct.moq ?? 1);
       setSeoTitle(existingProduct.seoTitle || "");
       setSeoDescription(existingProduct.seoDescription || "");
       setSeoKeywords(existingProduct.seoKeywords || "");

@@ -409,7 +409,7 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
                         />
                       </Link>
                       <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-mono px-1 rounded">
-                        MOQ: 5 pcs
+                        MOQ: {product.moq || 1} pcs
                       </div>
                     </div>
 
@@ -545,7 +545,7 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
                             Out of Stock
                           </span>
                         )}
-                        <span className="text-xs text-muted-foreground">MOQ: 5 units</span>
+                        <span className="text-xs text-muted-foreground">MOQ: {product.moq || 1} units</span>
                       </div>
                     </div>
 

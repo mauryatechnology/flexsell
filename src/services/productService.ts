@@ -1,6 +1,7 @@
 import { Product } from "@/types";
-import { products as staticProducts } from "@/data/products";
 import { apiClient, isMockMode, delay } from "@/lib/apiClient";
+
+const staticProducts: Product[] = [];
 
 const MOCK_STORAGE_KEY = "flexsell-products-storage";
 

@@ -5,10 +5,12 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Avatar } from "@/components/ui/Avatar";
 
-import { categories } from "@/data/categories";
-import { activeCustomer } from "@/data/customers";
+import { customerService } from "@/services/customerService";
+import { categoryService } from "@/services/categoryService";
 
-export default function ClientDashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function ClientDashboardLayout({ children }: { children: React.ReactNode }) {
+  const activeCustomer = await customerService.getActiveCustomer();
+  const allCategories = await categoryService.getCategories();
   const sidebarLinks = [
     { name: "Dashboard", href: "/client", icon: User },
     { name: "My Orders", href: "/client/orders", icon: Package },
@@ -22,7 +24,7 @@ export default function ClientDashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen flex flex-col bg-secondary/20">
-      <Header categories={categories} />
+      <Header categories={allCategories} />
       
       <div className="flex-1 container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
         {/* Sidebar */}

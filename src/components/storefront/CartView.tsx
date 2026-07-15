@@ -296,7 +296,7 @@ export function CartView() {
             ) || activeVariant?.subVariants?.[0];
             const imgUrl = activeVariant?.images?.[0] || "";
             const sku = activeSubVariant?.sku || "NO SKU";
-            const moq = item.product.moq || 5;
+            const moq = item.product.moq || 1;
             const maxStock = activeSubVariant?.stock || 0;
 
             return (

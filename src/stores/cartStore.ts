@@ -86,7 +86,7 @@ export const useCartStore = create<CartState>()(
 
         const calculatedPrice = matchedVariant.price;
         const availableStock = matchedVariant.stock;
-        const moq = liveProduct.moq ?? 5;
+        const moq = liveProduct.moq ?? 1;
 
         // Check if item exists in cart
         const existingItem = get().items.find(item => item.id === itemId);
@@ -169,7 +169,7 @@ export const useCartStore = create<CartState>()(
         if (!matchedVariant) return;
 
         const availableStock = matchedVariant.stock;
-        const moq = liveProduct.moq ?? 5;
+        const moq = liveProduct.moq ?? 1;
 
         let targetQty = qty;
 

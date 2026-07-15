@@ -139,3 +139,18 @@ export interface Order extends BaseDocument {
   history: HistoryEvent[];
 }
 
+export interface Customer {
+  _id: string;
+  name: string;
+  email: string;
+  company?: string;
+  address: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  phone: string;
+  initials: string;
+  gstin?: string;
+}
+
+

@@ -574,7 +574,7 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
                             <div>
                               <p className="font-bold line-clamp-1">{product.title}</p>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                Category: {getCategoryName(product.categoryId)} | {variantsCount} variants | MOQ: {product.moq || 5}
+                                Category: {getCategoryName(product.categoryId)} | {variantsCount} variants | MOQ: {product.moq || 1}
                               </p>
                             </div>
                           </div>

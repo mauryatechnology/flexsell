@@ -54,7 +54,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
 
   const handleBulkQtyChange = (subVariantId: string, valStr: string, svStock: number) => {
     const val = parseInt(valStr, 10);
-    const moqLimit = product?.moq ?? 5;
+    const moqLimit = product?.moq ?? 1;
     
     if (isNaN(val) || val <= 0) {
       setBulkQuantities(prev => {
@@ -145,7 +145,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
     if (uniqueSizes.length > 0) setSelectedSize(uniqueSizes[0]);
     if (uniqueWeights.length > 0) setSelectedWeight(uniqueWeights[0]);
     setActiveImageIdx(0);
-    setQty(product?.moq || 5);
+    setQty(product?.moq || 1);
   }, [selectedColorIdx, activeVariant, product]);
 
   // Synchronize size and weight selection to ensure it corresponds to a valid sub-variant
@@ -197,7 +197,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
 
   const favorited = isInWishlist(product._id);
   const colorVariants = product.colorVariants || [];
-  const moq = product.moq ?? 5;
+  const moq = product.moq ?? 1;
   const visibility = product.fieldVisibility || {
     showDescription: true,
     showSizes: true,

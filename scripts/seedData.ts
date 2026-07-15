@@ -1,6 +1,193 @@
-import { Product } from "@/types";
+export const categories = [
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a10",
+    "name": "Home & Kitchen",
+    "slug": "home-and-kitchen",
+    "image": "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=400&q=80",
+    "description": "Smart kitchen tools, organization, and home decor.",
+    "isActive": true,
+    "order": 1
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a11",
+    "name": "Electronics & Gadgets",
+    "slug": "electronics",
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80",
+    "description": "Smart watches, accessories, chargers, and lights.",
+    "isActive": true,
+    "order": 2
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a12",
+    "name": "Beauty & Personal Care",
+    "slug": "beauty",
+    "image": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80",
+    "description": "Skincare, makeup tools, massage devices, and health.",
+    "isActive": true,
+    "order": 3
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a13",
+    "name": "Fashion & Accessories",
+    "slug": "fashion",
+    "image": "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=400&q=80",
+    "description": "Wholesale bags, watches, socks, and jewelry.",
+    "isActive": true,
+    "order": 4
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a14",
+    "name": "Hardware & Utility",
+    "slug": "hardware",
+    "image": "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=400&q=80",
+    "description": "Handy tools, flashlights, tape, and utility items.",
+    "isActive": true,
+    "order": 5
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a15",
+    "name": "Toys & Baby Care",
+    "slug": "toys",
+    "image": "https://images.unsplash.com/photo-1537655780520-1e392edd816a?auto=format&fit=crop&w=400&q=80",
+    "description": "Kids educational toys, baby care, and security items.",
+    "isActive": true,
+    "order": 6
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a16",
+    "name": "Kitchen Tools",
+    "slug": "kitchen-tools",
+    "parentId": "60c72b2f9b1d8e001c8e1a10",
+    "image": "",
+    "isActive": true,
+    "order": 1
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a17",
+    "name": "Cleaning & Utility",
+    "slug": "cleaning-and-utility",
+    "parentId": "60c72b2f9b1d8e001c8e1a10",
+    "image": "",
+    "isActive": true,
+    "order": 2
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a18",
+    "name": "Mobile Accessories",
+    "slug": "mobile-accessories",
+    "parentId": "60c72b2f9b1d8e001c8e1a11",
+    "image": "",
+    "isActive": true,
+    "order": 1
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a19",
+    "name": "Smart Devices",
+    "slug": "smart-devices",
+    "parentId": "60c72b2f9b1d8e001c8e1a11",
+    "image": "",
+    "isActive": true,
+    "order": 2
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a1a",
+    "name": "Skincare Tools",
+    "slug": "skincare-tools",
+    "parentId": "60c72b2f9b1d8e001c8e1a12",
+    "image": "",
+    "isActive": true,
+    "order": 1
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a1b",
+    "name": "Bags & Luggage",
+    "slug": "bags-luggage",
+    "parentId": "60c72b2f9b1d8e001c8e1a13",
+    "image": "",
+    "isActive": true,
+    "order": 1
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a1c",
+    "name": "Handy & Power Tools",
+    "slug": "handy-power-tools",
+    "parentId": "60c72b2f9b1d8e001c8e1a14",
+    "image": "",
+    "isActive": true,
+    "order": 1
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a1d",
+    "name": "Flashlights & Torch",
+    "slug": "flashlights-torch",
+    "parentId": "60c72b2f9b1d8e001c8e1a14",
+    "image": "",
+    "isActive": true,
+    "order": 2
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a1e",
+    "name": "Educational Toys",
+    "slug": "educational-toys",
+    "parentId": "60c72b2f9b1d8e001c8e1a15",
+    "image": "",
+    "isActive": true,
+    "order": 1
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e1a1f",
+    "name": "Baby Care & Security",
+    "slug": "baby-care-security",
+    "parentId": "60c72b2f9b1d8e001c8e1a15",
+    "image": "",
+    "isActive": true,
+    "order": 2
+  }
+];
 
-export const products: Product[] = [
+export const customers = [
+  {
+    "_id": "60c72b2f9b1d8e001c8e2001",
+    "name": "John Doe",
+    "email": "john@doeent.com",
+    "company": "Doe Ent.",
+    "address": "45 Textile Market, Ring Road",
+    "city": "Surat",
+    "state": "Gujarat",
+    "pinCode": "395002",
+    "phone": "+91 98765 43210",
+    "initials": "JD",
+    "gstin": "24AAACD4521D1Z1"
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e2002",
+    "name": "Jane Smith",
+    "email": "jane@smithretail.in",
+    "company": "Smith Retail Group",
+    "address": "GIDC Electronic Zone, Sector 26",
+    "city": "Gandhinagar",
+    "state": "Gujarat",
+    "pinCode": "382010",
+    "phone": "+91 88877 66655",
+    "initials": "JS",
+    "gstin": "24AAACS9823S2Z5"
+  },
+  {
+    "_id": "60c72b2f9b1d8e001c8e2003",
+    "name": "Amit Patel",
+    "email": "amit@pateldistributors.com",
+    "company": "Patel Distributors",
+    "address": "Industrial Area Phase 2",
+    "city": "Ahmedabad",
+    "state": "Gujarat",
+    "pinCode": "380001",
+    "phone": "+91 99988 77766",
+    "initials": "AP",
+    "gstin": "24AAACP4512P1ZA"
+  }
+];
+
+export const products = [
   {
     "_id": "60c72b2f9b1d8e001c8e1001",
     "title": "Multi-Functional 12-in-1 Vegetable Chopper & Slicer",

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { notFound } from "next/navigation";
-import { pagesContent } from "@/data/pagesContent";
+import { pagesContent } from "@/config/pagesContent";
 
 export default async function PolicyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

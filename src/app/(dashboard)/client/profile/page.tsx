@@ -4,11 +4,29 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { activeCustomer } from "@/data/customers";
+import { customerService } from "@/services/customerService";
+import { Customer } from "@/types";
 
 export default function ClientProfilePage() {
-  const firstName = activeCustomer.name.split(" ")[0] || "";
-  const lastName = activeCustomer.name.split(" ").slice(1).join(" ") || "";
+  const [activeCustomer, setActiveCustomer] = React.useState<Customer | null>(null);
+  const [firstName, setFirstName] = React.useState("");
+  const [lastName, setLastName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [phone, setPhone] = React.useState("");
+  const [company, setCompany] = React.useState("");
+  const [gstin, setGstin] = React.useState("");
+
+  React.useEffect(() => {
+    customerService.getActiveCustomer().then((cust) => {
+      setActiveCustomer(cust);
+      setFirstName(cust.name.split(" ")[0] || "");
+      setLastName(cust.name.split(" ").slice(1).join(" ") || "");
+      setEmail(cust.email);
+      setPhone(cust.phone);
+      setCompany(cust.company || "");
+      setGstin(cust.gstin || "24AAACD0000D1Z0");
+    }).catch(console.error);
+  }, []);
 
   const handleSavePersonal = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +37,10 @@ export default function ClientProfilePage() {
     e.preventDefault();
     alert("B2B wholesale credentials verified and saved!");
   };
+
+  if (!activeCustomer) {
+    return <div className="text-center py-10 text-muted-foreground">Loading profile...</div>;
+  }
 
   return (
     <div className="space-y-6 text-foreground">

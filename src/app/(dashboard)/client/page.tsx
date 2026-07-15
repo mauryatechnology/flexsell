@@ -6,22 +6,26 @@ import { Button } from "@/components/ui/Button";
 import { Package, Clock, Truck, CheckCircle2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useOrderStore } from "@/stores/orderStore";
-import { activeCustomer } from "@/data/customers";
+import { customerService } from "@/services/customerService";
+import { Customer } from "@/types";
 import { formatPrice } from "@/lib/utils";
 
 export default function ClientDashboardPage() {
   const { orders, initializeOrders } = useOrderStore();
+  const [activeCustomer, setActiveCustomer] = React.useState<Customer | null>(null);
 
   React.useEffect(() => {
     initializeOrders();
+    customerService.getActiveCustomer().then(setActiveCustomer).catch(console.error);
   }, [initializeOrders]);
 
   // Filter orders by active customer's email
   const customerOrders = React.useMemo(() => {
+    if (!activeCustomer) return [];
     return orders.filter(
       (o) => o.shippingAddress.email.toLowerCase() === activeCustomer.email.toLowerCase()
     );
-  }, [orders]);
+  }, [orders, activeCustomer]);
 
   // Compute live stats
   const totalCount = customerOrders.length;
@@ -33,6 +37,10 @@ export default function ClientDashboardPage() {
   const recentOrders = React.useMemo(() => {
     return customerOrders.slice(0, 5);
   }, [customerOrders]);
+
+  if (!activeCustomer) {
+    return <div className="text-center py-10 text-muted-foreground">Loading dashboard...</div>;
+  }
 
   return (
     <div className="space-y-6 text-foreground">

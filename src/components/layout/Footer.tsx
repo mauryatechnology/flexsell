@@ -1,7 +1,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { Globe, Mail, MessageCircle, Phone } from "lucide-react";
-import { pagesContent } from "@/data/pagesContent";
+import { pagesContent } from "@/config/pagesContent";
 
 import Image from "next/image";
 
