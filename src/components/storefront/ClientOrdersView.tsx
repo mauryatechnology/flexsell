@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Search, Filter, Eye, Download, Info } from "lucide-react";
+import { Search, Filter, Eye, Download, Info, FileText } from "lucide-react";
 import { useOrderStore, Order } from "@/stores/orderStore";
 import { formatPrice } from "@/lib/utils";
 import { Pagination } from "@/components/ui/Pagination";
@@ -121,11 +122,20 @@ export function ClientOrdersView() {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              title="View Details"
+                              title="Quick Preview"
                               onClick={() => setSelectedOrder(order)}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
+                            <Link href={`/client/orders/${order._id}`}>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                title="Open Tax Invoice"
+                              >
+                                <FileText className="h-4 w-4 text-primary" />
+                              </Button>
+                            </Link>
                           </td>
                         </tr>
                       ))

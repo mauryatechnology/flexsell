@@ -17,9 +17,9 @@ export interface ApiResponse<T> {
 
 export class ApiError extends Error {
   status: number;
-  info?: any;
+  info?: unknown;
 
-  constructor(message: string, status: number, info?: any) {
+  constructor(message: string, status: number, info?: unknown) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -46,7 +46,7 @@ async function request<T>(
   try {
     const response = await fetch(url, config);
     
-    let data: any;
+    let data: unknown;
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
       data = await response.json();
@@ -55,8 +55,9 @@ async function request<T>(
     }
 
     if (!response.ok) {
+      const errorData = data as Record<string, any> | null;
       throw new ApiError(
-        data?.message || `HTTP error! Status: ${response.status}`,
+        errorData?.message || `HTTP error! Status: ${response.status}`,
         response.status,
         data
       );
@@ -78,14 +79,14 @@ export const apiClient = {
   get: <T>(path: string, options?: RequestInit) => 
     request<T>(path, { ...options, method: "GET" }),
     
-  post: <T>(path: string, body?: any, options?: RequestInit) => 
+  post: <T>(path: string, body?: unknown, options?: RequestInit) => 
     request<T>(path, { 
       ...options, 
       method: "POST", 
       body: body ? JSON.stringify(body) : undefined 
     }),
     
-  put: <T>(path: string, body?: any, options?: RequestInit) => 
+  put: <T>(path: string, body?: unknown, options?: RequestInit) => 
     request<T>(path, { 
       ...options, 
       method: "PUT", 

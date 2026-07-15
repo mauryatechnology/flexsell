@@ -176,12 +176,12 @@ export default function ClientOrderDetailPage({ params }: PageProps) {
               </div>
 
               {/* Pricing breakdown */}
-              <div className="flex justify-between items-start pt-4 border-t">
+              <div className="flex flex-col md:flex-row md:justify-between items-start gap-6 pt-4 border-t">
                 <div className="text-[10px] text-muted-foreground max-w-sm">
                   <p className="font-semibold uppercase text-foreground mb-0.5">Note:</p>
                   <p>Invoices are inclusive of standard 18% GST (9% CGST + 9% SGST). GSTIN claims are processed during invoice download validation.</p>
                 </div>
-                <div className="w-56 space-y-1.5 text-xs">
+                <div className="w-full md:w-56 space-y-1.5 text-xs">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Taxable Base Value:</span>
                     <span>{formatPrice(order.amount / 1.18)}</span>
@@ -193,6 +193,40 @@ export default function ClientOrderDetailPage({ params }: PageProps) {
                   <div className="flex justify-between font-bold text-base text-foreground border-t pt-2 mt-2">
                     <span>Total (incl. GST):</span>
                     <span>{formatPrice(order.amount)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment & Authorized Signatory Block (Premium B2B Invoice style) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-dashed">
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <h4 className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Bank Transfer Details for B2B Payments:</h4>
+                    <div className="bg-secondary/20 p-3 rounded-lg border font-mono text-[11px] text-foreground space-y-1">
+                      <p><span className="text-muted-foreground font-sans">Beneficiary:</span> FlexSell B2B Private Limited</p>
+                      <p><span className="text-muted-foreground font-sans">Bank Name:</span> HDFC Bank</p>
+                      <p><span className="text-muted-foreground font-sans">Account No:</span> 50200084729104</p>
+                      <p><span className="text-muted-foreground font-sans">IFSC Code:</span> HDFC0000024</p>
+                      <p><span className="text-muted-foreground font-sans">Branch:</span> Sachin GIDC, Surat</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Terms of Payment:</h4>
+                    <p className="text-muted-foreground italic">100% advance wire transfer or credit terms subject to credit limit approval.</p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col justify-between items-end h-full pt-4 md:pt-0">
+                  <div className="text-center w-56 border border-border/85 p-3 rounded-lg bg-secondary/10 relative">
+                    <div className="border border-primary/25 border-dashed rounded text-[9px] font-bold text-primary px-2 py-1 rotate-[-4deg] absolute left-2 top-2 opacity-80 uppercase tracking-widest no-print">
+                      FlexSell B2B Verified
+                    </div>
+                    <div className="h-16 flex items-center justify-center">
+                      <span className="text-[10px] text-muted-foreground italic font-serif">Authorized Signatory</span>
+                    </div>
+                    <div className="border-t border-border pt-1.5 font-bold text-[10px] text-foreground uppercase tracking-wider">
+                      For FlexSell Wholesale
+                    </div>
                   </div>
                 </div>
               </div>

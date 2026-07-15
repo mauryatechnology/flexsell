@@ -28,8 +28,7 @@ export function findMany<T>(
 
   return collection.filter((item) => {
     return Object.entries(filter).every(([key, value]) => {
-      // @ts-ignore
-      return item[key] === value;
+      return item[key as keyof T] === value;
     });
   });
 }

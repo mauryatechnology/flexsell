@@ -18,7 +18,7 @@ interface OrderStoreState {
   shipOrder: (id: string, shipmentDetails: ShipmentDetails) => Promise<void>;
 }
 
-export const useOrderStore = create<OrderStoreState>()((set, get) => ({
+export const useOrderStore = create<OrderStoreState>()((set) => ({
   orders: [],
   isLoading: false,
   error: null,

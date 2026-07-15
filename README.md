@@ -17,9 +17,10 @@ Automated computation of Indian goods and services taxation:
 - **Inclusive vs. Exclusive Pricing:** Dynamic toggle calculations based on product configuration schemas.
 
 ### 3. Commercial Tax Invoices & Dispatch Logs
-- **Commercial PDF Invoicing:** Generates print-ready commercial tax invoices in both admin and client portals.
-- **Fulfillment Timeline:** Live visual tracker showing shipping logs, logistics dispatch status, courier carrier information, and AWB tracking URLs.
-- **Print Stylesheets:** Automatically hides navigation panels, actions, and controls when printing invoice records.
+- **Commercial PDF Invoicing:** Generates print-ready commercial tax invoices in both admin and client portals, complete with detailed billing/shipping breakdowns, HSN-wise tax slabs, Payment Terms, and B2B bank wire transfer coordinates.
+- **Fulfillment Timeline:** Live visual tracker showing shipping logs, logistics dispatch status, carrier information, and tracking numbers/AWB tracking URLs.
+- **Fulfillment Workflows:** Admins can transition order statuses (Processing ➔ Shipped ➔ Delivered) and configure courier/third-party courier shipment details.
+- **Print Stylesheets:** Automatically cleans up the viewport (hiding navigation headers/footers and interface controls) when printing invoice documents, ensuring a clean physical file output.
 
 ### 4. Export B2B Commercial Quotes (PDF)
 A dedicated quote generator in the cart compiled as a clean HTML invoice layout. It opens in a new print-ready popup window, enabling clients to download premium PDF summaries for commercial approvals without requiring heavy external PDF compilation library packages.
@@ -32,10 +33,17 @@ A dedicated quote generator in the cart compiled as a clean HTML invoice layout.
 A custom configuration editor inside the admin panel. Adjust primary brand colors, border radius parameters, and active logo URLs. These settings dynamically override active CSS variables at the root document level at runtime and are persisted in local storage.
 
 ### 7. Search Engine Optimization (SEO) & Performance
-- **Dynamic JSON-LD Product Schema:** Injects search engine indexable metadata (Product, AggregateOffer, and AggregateRating schemas) on detail pages for rich search result snippets.
+- **Dynamic JSON-LD Product Schema:** Injects search engine indexable metadata (Product, AggregateOffer, and AggregateRating schemas) on detail pages, plus BreadcrumbList and Organization schemas for full search engine visibility.
 - **XML Sitemap:** Dynamic generation of `sitemap.xml` mapping categories, products, and static landing links.
 - **Robots Policies:** `robots.txt` crawler policies separating public store pages from admin/client portal routes.
 - **Optimized Image Pipeline:** Migrated standard img tags to Next.js `<Image>` components, achieving automatic LCP reduction, responsive sizes, and WebP generation.
+
+### 8. Warehouse Inventory & Audit Ledger
+- **Quick Stock Update Grid:** Admin interface listing all variants (SKU, Color, Size, Weight, Stock Level) with fast inline increment/decrement/set controls.
+- **Automatic Stock Deductions:** Order placement automatically deducts matching variant quantities from the warehouse stock levels in real-time.
+- **Safety Margin Badging:** Highlights low stock (<15 units) or out-of-stock variants with clear warning tags.
+- **Stock Log Ledger:** A persisted audit trail logging every inventory change (manual adjustments, barcode scanner adjustments, order sales, CSV bulk imports) for warehouse transparency.
+- **CSV Bulk Import/Export:** Warehouse managers can export their current stock levels to CSV, edit values in any spreadsheet editor, and upload the CSV to bulk update stock counts.
 
 ---
 

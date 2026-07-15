@@ -6,7 +6,7 @@ import { Product } from "@/types";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PriceDisplay } from "@/components/ui/PriceDisplay";
-import { ShoppingCart, Trash2, Heart } from "lucide-react";
+import { ShoppingCart, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { useCartStore } from "@/stores/cartStore";

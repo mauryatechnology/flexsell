@@ -16,6 +16,7 @@ import { BarcodeScanner } from "./BarcodeScanner";
 import { Barcode } from "@/components/ui/Barcode";
 import { Pagination } from "@/components/ui/Pagination";
 import { getBarcodeSvgString } from "@/lib/barcodeHelper";
+import { InventoryManager } from "./InventoryManager";
 
 interface AdminProductsManagerProps {
   initialProducts: Product[];
@@ -37,6 +38,7 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
 
   const [isScannerOpen, setIsScannerOpen] = React.useState(false);
   const [barcodePrintProduct, setBarcodePrintProduct] = React.useState<Product | null>(null);
+  const [activePanel, setActivePanel] = React.useState<"catalog" | "inventory">("catalog");
 
   // Multi-select bulk state
   const [selectedProductIds, setSelectedProductIds] = React.useState<string[]>([]);
@@ -391,7 +393,29 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
         </div>
       </div>
 
-      {/* Bulk Action Bar */}
+      {/* Panel Tab Switcher */}
+      <div className="flex border-b border-border mb-6">
+        <button
+          onClick={() => setActivePanel("catalog")}
+          className={`px-5 py-3 text-sm font-bold border-b-2 transition-colors ${
+            activePanel === "catalog" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Product Catalog List
+        </button>
+        <button
+          onClick={() => setActivePanel("inventory")}
+          className={`px-5 py-3 text-sm font-bold border-b-2 transition-colors ${
+            activePanel === "inventory" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Warehouse Inventory & Ledger (10/10)
+        </button>
+      </div>
+
+      {activePanel === "catalog" ? (
+        <>
+          {/* Bulk Action Bar */}
       {selectedProductIds.length > 0 && (
         <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top duration-300">
           <div className="text-sm font-bold text-primary">
@@ -630,6 +654,10 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
           </div>
         </CardContent>
       </Card>
+        </>
+      ) : (
+        <InventoryManager />
+      )}
 
       {/* Barcode print modal dialogue */}
       {barcodePrintProduct && (

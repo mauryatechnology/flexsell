@@ -2,6 +2,8 @@ import { Order, ShipmentDetails, CartItem } from "@/types";
 import { customers } from "@/data/customers";
 import { products } from "@/data/products";
 import { apiClient, isMockMode, delay } from "@/lib/apiClient";
+import { productService } from "@/services/productService";
+import { useInventoryHistoryStore } from "@/stores/inventoryHistoryStore";
 
 const MOCK_STORAGE_KEY = "flexsell-orders-storage";
 
@@ -235,7 +237,58 @@ export const orderService = {
       const orders = getMockOrders();
       const nextIdNum = 10026 + orders.length;
       const orderId = `FS-${nextIdNum}`;
-      
+
+      // Deduct stock for each ordered item in mock storage
+      for (const item of items) {
+        try {
+          const liveProduct = await productService.getProductById(item.product._id);
+          
+          const selectedColor = item.selectedVariants["Color"] || item.selectedVariants["color"] || "Default";
+          const selectedSize = item.selectedVariants["Pack Sizing"] || item.selectedVariants["Size"] || item.selectedVariants["size"];
+          const selectedWeight = item.selectedVariants["Weight Unit"] || item.selectedVariants["Weight"] || item.selectedVariants["weight"];
+
+          const cv = liveProduct.colorVariants?.find(
+            c => c.color.toLowerCase() === selectedColor.toLowerCase()
+          ) || liveProduct.colorVariants?.[0];
+
+          if (cv && cv.subVariants) {
+            const sv = cv.subVariants.find(s => 
+              (!selectedSize || s.size.toLowerCase() === selectedSize.toLowerCase()) && 
+              (!selectedWeight || s.weight.toLowerCase() === selectedWeight.toLowerCase())
+            ) || cv.subVariants[0];
+
+            if (sv) {
+              const prevStock = sv.stock;
+              const newStock = Math.max(0, sv.stock - item.quantity);
+              sv.stock = newStock;
+              
+              // Recalculate totalStock of product
+              const totalStock = liveProduct.colorVariants.reduce((sum, c) => 
+                sum + (c.subVariants?.reduce((sSum, s) => sSum + s.stock, 0) || 0)
+              , 0);
+              liveProduct.totalStock = totalStock;
+
+              // Save the updated product back to mock storage
+              await productService.updateProduct(liveProduct._id, liveProduct);
+
+              // Add inventory history log
+              const variantDetails = `${cv.color} • ${sv.size || "Standard"} • ${sv.weight || "250g"}`;
+              useInventoryHistoryStore.getState().addLog({
+                sku: sv.sku,
+                productName: liveProduct.title,
+                variantDetails,
+                actionType: "Order Deduction",
+                change: -item.quantity,
+                prevStock,
+                newStock
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Failed to deduct stock for item during mock order creation:", item, err);
+        }
+      }
+
       const newOrder: Order = {
         _id: orderId,
         date: new Date().toLocaleDateString("en-US", {

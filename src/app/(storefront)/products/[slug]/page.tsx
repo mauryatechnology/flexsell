@@ -40,7 +40,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     const highPrice = prices.length > 0 ? Math.max(...prices) : 0;
     const offerCount = product.colorVariants?.flatMap(cv => cv.subVariants || []).length || 1;
 
-    const jsonLd = {
+    const productJsonLd = {
       "@context": "https://schema.org",
       "@type": "Product",
       "name": product.title,
@@ -72,11 +72,60 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       }
     };
 
+    const breadcrumbJsonLd = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://flexsellwholesale.in"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Products",
+          "item": "https://flexsellwholesale.in/products"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": product.title,
+          "item": `https://flexsellwholesale.in/products/${product.slug}`
+        }
+      ]
+    };
+
+    const orgJsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "FlexSell Wholesale",
+      "url": "https://flexsellwholesale.in",
+      "logo": "https://flexsellwholesale.in/images/logo/logo-light.svg",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+91-261-2409000",
+        "contactType": "customer service",
+        "email": "wholesale@flexsell.in",
+        "areaServed": "IN",
+        "availableLanguage": "en"
+      }
+    };
+
     return (
       <>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
         <ProductDetailView slug={slug} initialProducts={products} />
       </>

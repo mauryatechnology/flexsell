@@ -37,6 +37,49 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var stored = localStorage.getItem('flexsell-theme-storage');
+                  if (stored) {
+                    var parsed = JSON.parse(stored);
+                    if (parsed && parsed.state && parsed.state.activeTheme) {
+                      var theme = parsed.state.activeTheme;
+                      var root = document.documentElement;
+                      var colors = theme.colors || {};
+                      var vars = {
+                        '--primary': colors.primary,
+                        '--primary-foreground': colors.primaryForeground,
+                        '--secondary': colors.secondary,
+                        '--secondary-foreground': colors.secondaryForeground,
+                        '--accent': colors.accent,
+                        '--accent-foreground': colors.accentForeground,
+                        '--background': colors.background,
+                        '--foreground': colors.foreground,
+                        '--muted': colors.muted,
+                        '--muted-foreground': colors.mutedForeground,
+                        '--card': colors.card,
+                        '--card-foreground': colors.cardForeground,
+                        '--border': colors.border,
+                        '--destructive': colors.destructive,
+                        '--radius': theme.borderRadius
+                      };
+                      for (var key in vars) {
+                        if (vars[key]) {
+                          root.style.setProperty(key, vars[key]);
+                        }
+                      }
+                    }
+                  }
+                } catch (e) {}
+              })()
+            `,
+          }}
+        />
+      </head>
       <body className={`${inter.className} antialiased`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"

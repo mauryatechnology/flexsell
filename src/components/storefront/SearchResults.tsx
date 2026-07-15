@@ -44,6 +44,13 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = 12;
 
+  // Track query prop change and reset page index during render
+  const [prevQuery, setPrevQuery] = React.useState(query);
+  if (query !== prevQuery) {
+    setPrevQuery(query);
+    setCurrentPage(1);
+  }
+
   // Filter States
   const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]);
   const [minPrice, setMinPrice] = React.useState<number | "">("");
@@ -86,15 +93,11 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
     );
   }, [activeProducts, lowercaseQuery]);
 
-  // Reset page index on query, sorting, or filter changes
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [query, sortBy, selectedCategories, minPrice, maxPrice, inStockOnly, minDiscount]);
-
   const handleCategoryToggle = (catId: string) => {
     setSelectedCategories(prev => 
       prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
     );
+    setCurrentPage(1);
   };
 
   const handleClearFilters = () => {
@@ -103,6 +106,7 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
     setMaxPrice("");
     setInStockOnly(false);
     setMinDiscount(0);
+    setCurrentPage(1);
   };
 
   // Filter Logic
@@ -194,7 +198,7 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b pb-6 border-border/60">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Search Results</h1>
-          <p className="text-muted-foreground mt-1">Showing cargo matches for query: <span className="font-semibold text-primary">"{query}"</span></p>
+          <p className="text-muted-foreground mt-1">Showing cargo matches for query: <span className="font-semibold text-primary">&quot;{query}&quot;</span></p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           {/* Mobile Filter toggle */}
@@ -228,7 +232,7 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
 
           <select 
             value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
             className="border-input border rounded-md px-3 py-2 text-sm bg-background text-foreground flex-1 sm:flex-none h-10"
           >
             <option value="recommended">Sort by: Recommended</option>
@@ -288,7 +292,7 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
                 placeholder="Min"
                 className="h-8 text-xs text-center"
                 value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                onChange={(e) => { setMinPrice(e.target.value === "" ? "" : Number(e.target.value)); setCurrentPage(1); }}
               />
               <span className="text-muted-foreground text-xs">—</span>
               <Input 
@@ -296,7 +300,7 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
                 placeholder="Max"
                 className="h-8 text-xs text-center"
                 value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                onChange={(e) => { setMaxPrice(e.target.value === "" ? "" : Number(e.target.value)); setCurrentPage(1); }}
               />
             </div>
           </div>
@@ -308,7 +312,7 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
               <input 
                 type="checkbox" 
                 checked={inStockOnly} 
-                onChange={(e) => setInStockOnly(e.target.checked)}
+                onChange={(e) => { setInStockOnly(e.target.checked); setCurrentPage(1); }}
                 className="rounded border-input text-primary focus:ring-primary w-4 h-4 bg-background"
               />
               <span>In Stock Only</span>
@@ -325,7 +329,7 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
                     type="radio" 
                     name="minDiscount"
                     checked={minDiscount === disc}
-                    onChange={() => setMinDiscount(disc)}
+                    onChange={() => { setMinDiscount(disc); setCurrentPage(1); }}
                     className="text-primary focus:ring-primary w-4 h-4 bg-background"
                   />
                   <span>{disc === 0 ? "All Offers" : `${disc}% OFF & higher`}</span>
@@ -345,7 +349,7 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
             <div className="text-center py-20 bg-secondary/25 rounded-xl border border-dashed flex flex-col items-center justify-center">
               <SearchX className="h-10 w-10 text-muted-foreground/60 mb-3 animate-pulse" />
               <p className="font-bold text-foreground text-base">No matches found</p>
-              <p className="text-sm text-muted-foreground max-w-xs mt-1">We couldn't find any products matching your search criteria or active filters.</p>
+              <p className="text-sm text-muted-foreground max-w-xs mt-1">We couldn&apos;t find any products matching your search criteria or active filters.</p>
               <Button size="sm" onClick={handleClearFilters} className="mt-4">Reset Filters</Button>
             </div>
           ) : viewMode === "grid" ? (
