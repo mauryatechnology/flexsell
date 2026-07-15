@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { useCartStore } from "@/stores/cartStore";
 import { useOrderStore } from "@/stores/orderStore";
 import { formatPrice } from "@/lib/utils";
+import { activeCustomer } from "@/data/customers";
 
 const INDIAN_STATES = [
   "Madhya Pradesh",
@@ -54,17 +55,22 @@ export function CheckoutView() {
 
   const { isIntrastate, baseSubtotal, totalCgst, totalSgst, totalIgst, grandTotal, hsnBreakdown } = taxDetails;
 
-  // Form states
-  const [email, setEmail] = React.useState("");
-  const [firstName, setFirstName] = React.useState("");
-  const [lastName, setLastName] = React.useState("");
-  const [company, setCompany] = React.useState("");
-  const [address, setAddress] = React.useState("");
+  // Form states initialized with activeCustomer data
+  const [email, setEmail] = React.useState(activeCustomer.email);
+  const [firstName, setFirstName] = React.useState(activeCustomer.name.split(" ")[0] || "");
+  const [lastName, setLastName] = React.useState(activeCustomer.name.split(" ").slice(1).join(" ") || "");
+  const [company, setCompany] = React.useState(activeCustomer.company || "");
+  const [address, setAddress] = React.useState(activeCustomer.address);
   const [apartment, setApartment] = React.useState("");
-  const [city, setCity] = React.useState("");
-  const [state, setState] = React.useState(buyerState);
-  const [pinCode, setPinCode] = React.useState("");
-  const [phone, setPhone] = React.useState("");
+  const [city, setCity] = React.useState(activeCustomer.city);
+  const [state, setState] = React.useState(activeCustomer.state);
+  const [pinCode, setPinCode] = React.useState(activeCustomer.pinCode);
+  const [phone, setPhone] = React.useState(activeCustomer.phone);
+
+  // Sync state on mount
+  React.useEffect(() => {
+    setBuyerState(activeCustomer.state);
+  }, [setBuyerState]);
 
   // Sync state dropdown with store POS
   const handleStateChange = (val: string) => {
