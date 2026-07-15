@@ -3,12 +3,22 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const RichTextEditor = dynamic(() => import("./RichTextEditor"), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-[220px] bg-secondary/10 border border-input rounded-md flex items-center justify-center text-muted-foreground text-sm">
+      Loading editor...
+    </div>
+  ),
+});
+
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
-  ArrowLeft, Plus, Trash2, Bold, Italic, Underline,
-  Heading3, List, ListOrdered, Eye, Code, Upload, Sparkles, Percent, Download
+  ArrowLeft, Plus, Trash2, Eye, Code, Upload, Sparkles, Percent, Download
 } from "lucide-react";
 import { useProductStore } from "@/stores/productStore";
 import { useCategoryStore } from "@/stores/categoryStore";
@@ -97,7 +107,6 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
 
   // Editor states
   const [editorMode, setEditorMode] = React.useState<"edit" | "preview">("edit");
-  const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
 
   // Dynamic A+ Content blocks
   const [aPlusBlocks, setAPlusBlocks] = React.useState<APlusBlock[]>([]);
@@ -152,27 +161,6 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
       }
     }
   }, [existingProduct, activeCategories]);
-
-  // Insert Rich Text Formatting helper
-  const insertFormatting = (before: string, after: string = "") => {
-    const textarea = descriptionRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selected = text.substring(start, end);
-    const replacement = before + (selected || "text") + after;
-
-    setDescription(
-      text.substring(0, start) + replacement + text.substring(end)
-    );
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + before.length, start + before.length + (selected || "text").length);
-    }, 0);
-  };
 
   // Add / Remove variant controls
   const addVariant = () => {
@@ -489,67 +477,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
               </div>
 
               {editorMode === "edit" ? (
-                <div className="border rounded-md overflow-hidden bg-background">
-                  {/* Rich Text Toolbar */}
-                  <div className="flex items-center gap-1 p-2 bg-secondary/30 border-b flex-wrap">
-                    <button
-                      type="button"
-                      title="Bold"
-                      onClick={() => insertFormatting("<strong>", "</strong>")}
-                      className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"
-                    >
-                      <Bold className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Italic"
-                      onClick={() => insertFormatting("<em>", "</em>")}
-                      className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"
-                    >
-                      <Italic className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Underline"
-                      onClick={() => insertFormatting("<u>", "</u>")}
-                      className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"
-                    >
-                      <Underline className="h-4 w-4" />
-                    </button>
-                    <span className="w-px h-5 bg-border mx-1" />
-                    <button
-                      type="button"
-                      title="Heading"
-                      onClick={() => insertFormatting("<h3>", "</h3>")}
-                      className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"
-                    >
-                      <Heading3 className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Bullet List"
-                      onClick={() => insertFormatting("<ul>\n  <li>", "</li>\n</ul>")}
-                      className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"
-                    >
-                      <List className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Numbered List"
-                      onClick={() => insertFormatting("<ol>\n  <li>", "</li>\n</ol>")}
-                      className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"
-                    >
-                      <ListOrdered className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <textarea
-                    ref={descriptionRef}
-                    className="w-full min-h-[160px] p-3 text-sm focus:outline-none bg-background text-foreground"
-                    placeholder="Describe the product features using HTML tags..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </div>
+                <RichTextEditor value={description} onChange={setDescription} />
               ) : (
                 <div
                   className="border rounded-md p-4 min-h-[210px] bg-secondary/10 prose prose-sm max-w-none text-foreground overflow-y-auto"
