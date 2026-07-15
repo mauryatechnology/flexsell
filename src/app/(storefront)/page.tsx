@@ -42,11 +42,12 @@ export default async function HomePage() {
             <Link key={category._id} href={`/categories/${category.slug}`}>
               <Card className="hover:border-primary transition-colors cursor-pointer text-center overflow-hidden h-full flex flex-col">
                 <div className="aspect-square relative bg-secondary">
-                  {/* Using standard img for placeholder since domains aren't configured for next/image */}
-                  <img
+                  <Image
                     src={category.image || `https://placehold.co/400x400/10b981/ffffff?text=${encodeURIComponent(category.name)}`}
                     alt={category.name}
-                    className="object-cover w-full h-full"
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                    className="object-cover"
                   />
                 </div>
                 <div className="p-3 mt-auto">

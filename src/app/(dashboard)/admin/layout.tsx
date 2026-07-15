@@ -1,5 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { 
   LayoutDashboard, ShoppingBag, FolderTree, Users, 
   Settings, Palette, Tags, CreditCard, Menu, Percent 
@@ -25,7 +26,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       <aside className="w-64 bg-card border-r hidden md:flex flex-col sticky top-0 h-screen">
         <div className="p-6 border-b">
           <Link href="/admin" className="flex flex-col gap-1 items-start">
-            <img src="/Flexsell%20Logo.png" alt="Flexsell Logo" className="h-8 md:h-10 w-auto object-contain" />
+            <Image src="/Flexsell%20Logo.png" alt="Flexsell Logo" width={150} height={40} className="h-8 md:h-10 w-auto object-contain" />
             <span className="text-xs text-muted-foreground uppercase tracking-widest ml-1">Admin Panel</span>
           </Link>
         </div>

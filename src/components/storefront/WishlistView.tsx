@@ -10,6 +10,7 @@ import { ShoppingCart, Trash2, Heart } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { useCartStore } from "@/stores/cartStore";
+import Image from "next/image";
 
 export function WishlistView() {
   const { items, toggleWishlist } = useWishlistStore();
@@ -68,10 +69,12 @@ export function WishlistView() {
                 </Button>
                 <div className="aspect-square relative bg-secondary overflow-hidden rounded-t-lg">
                   <Link href={`/products/${product.slug}`}>
-                    <img
-                      src={imgUrl}
+                    <Image
+                      src={imgUrl || "https://placehold.co/400x400/10b981/ffffff?text=Product"}
                       alt={product.title}
-                      className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
+                      fill
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                      className="object-cover hover:scale-105 transition-transform duration-300"
                     />
                   </Link>
                 </div>

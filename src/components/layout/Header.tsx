@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, ShoppingCart, Heart, User, Menu } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Drawer } from "@/components/ui/Drawer";
@@ -56,7 +57,7 @@ export function Header({ categories }: HeaderProps) {
             <Menu className="h-6 w-6 text-foreground" />
           </Button>
           <Link href="/" className="flex items-center">
-            <img src="/Flexsell%20Logo.png" alt="Flexsell Logo" className="h-8 md:h-10 w-auto object-contain" />
+            <Image src="/Flexsell%20Logo.png" alt="Flexsell Logo" width={150} height={40} className="h-8 md:h-10 w-auto object-contain" priority />
           </Link>
         </div>
 
@@ -117,7 +118,7 @@ export function Header({ categories }: HeaderProps) {
       <Drawer isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} side="left">
         <div className="flex flex-col h-full space-y-6 pt-4">
           <Link href="/" className="flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
-            <img src="/Flexsell%20Logo.png" alt="Flexsell Logo" className="h-8 w-auto object-contain" />
+            <Image src="/Flexsell%20Logo.png" alt="Flexsell Logo" width={120} height={32} className="h-8 w-auto object-contain" />
           </Link>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

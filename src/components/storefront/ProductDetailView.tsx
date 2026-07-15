@@ -21,6 +21,7 @@ import {
   Maximize2
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import Image from "next/image";
 
 interface ProductDetailViewProps {
   slug: string;
@@ -46,6 +47,69 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
   const [selectedWeight, setSelectedWeight] = React.useState("");
   const [qty, setQty] = React.useState(1);
   const [activeImageIdx, setActiveImageIdx] = React.useState(0);
+
+  // B2B Bulk Mode States
+  const [orderMode, setOrderMode] = React.useState<"single" | "bulk">("single");
+  const [bulkQuantities, setBulkQuantities] = React.useState<Record<string, number>>({});
+
+  const handleBulkQtyChange = (subVariantId: string, valStr: string, svStock: number) => {
+    const val = parseInt(valStr, 10);
+    const moqLimit = product?.moq ?? 5;
+    
+    if (isNaN(val) || val <= 0) {
+      setBulkQuantities(prev => {
+        const copy = { ...prev };
+        delete copy[subVariantId];
+        return copy;
+      });
+      return;
+    }
+
+    let target = val;
+    // Enforce MOQ
+    if (target < moqLimit) {
+      target = moqLimit;
+    }
+    // Enforce stock ceiling
+    if (target > svStock) {
+      target = svStock;
+    }
+
+    setBulkQuantities(prev => ({
+      ...prev,
+      [subVariantId]: target
+    }));
+  };
+
+  const handleAddBulkToCart = () => {
+    if (!product) return;
+    let addedCount = 0;
+    
+    product.colorVariants?.forEach(cv => {
+      cv.subVariants?.forEach(sv => {
+        const targetQty = bulkQuantities[sv.id] || 0;
+        if (targetQty > 0) {
+          addItem(
+            product,
+            {
+              Color: cv.color,
+              Size: sv.size,
+              Weight: sv.weight
+            },
+            targetQty
+          );
+          addedCount++;
+        }
+      });
+    });
+
+    if (addedCount > 0) {
+      addToast(`Successfully added ${addedCount} variant combinations to wholesale cart!`, "success");
+      setBulkQuantities({});
+    } else {
+      addToast("Please input valid order quantities above MOQ constraints.", "warning");
+    }
+  };
 
   // Quantity input element ref for auto-focusing
   const qtyInputRef = React.useRef<HTMLInputElement>(null);
@@ -220,10 +284,13 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
         {/* Left: Interactive Image Slider */}
         <div className="space-y-4">
           <div className="aspect-square bg-card rounded-xl overflow-hidden border border-border shadow-sm flex items-center justify-center relative">
-            <img
+            <Image
               src={mainImage}
               alt={product.title}
-              className="w-full h-full object-cover hover:scale-102 transition-transform duration-300"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              priority
+              className="object-cover hover:scale-102 transition-transform duration-300"
             />
             {activeSubVariant && activeSubVariant.discount > 0 && (
               <span className="absolute top-4 left-4 bg-destructive text-destructive-foreground text-xs font-black px-2.5 py-1 rounded shadow animate-pulse">
@@ -239,11 +306,11 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                 <button 
                   key={i} 
                   onClick={() => setActiveImageIdx(i)}
-                  className={`w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0 bg-secondary transition-all ${
+                  className={`w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0 bg-secondary transition-all relative ${
                     activeImageIdx === i ? "border-primary scale-95 shadow-sm" : "border-border hover:border-primary/50"
                   }`}
                 >
-                  <img src={img} alt={`Thumbnail ${i}`} className="w-full h-full object-cover" />
+                  <Image src={img} alt={`Thumbnail ${i}`} fill sizes="80px" className="object-cover" />
                 </button>
               ))}
             </div>
@@ -303,154 +370,252 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
             </div>
           )}
 
-          {/* Color Selection Swatches */}
-          {colorVariants.length > 0 && (
-            <div className="space-y-3">
+          {/* B2B Ordering Mode Selection Tabs */}
+          <div className="flex border-b border-border mb-4">
+            <button
+              onClick={() => setOrderMode("single")}
+              className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                orderMode === "single"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Standard Selector
+            </button>
+            <button
+              onClick={() => setOrderMode("bulk")}
+              className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                orderMode === "bulk"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              B2B Bulk Purchase Matrix
+            </button>
+          </div>
+
+          {orderMode === "single" ? (
+            <>
+              {/* Color Selection Swatches */}
+              {colorVariants.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">
+                    Select Option / Color: 
+                    <span className="text-primary font-semibold ml-2">{activeVariant?.color}</span>
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {colorVariants.map((v, idx) => {
+                      const isSelected = selectedColorIdx === idx;
+                      const isOutOfStock = v.subVariants?.every(sv => sv.stock === 0);
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedColorIdx(idx)}
+                          className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+                            isSelected 
+                              ? "border-primary bg-primary/10 text-primary font-bold shadow-sm" 
+                              : "border-border hover:border-primary/50 text-muted-foreground bg-card"
+                          } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
+                          title={isOutOfStock ? "This option is currently out of stock" : ""}
+                        >
+                          {v.color}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Size Selection Swatches */}
+              {visibility.showSizes && uniqueSizes.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  <h4 className="font-bold text-sm text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Maximize2 className="h-4.5 w-4.5 text-muted-foreground" />
+                    Select Pack Sizing: 
+                    <span className="text-primary font-semibold ml-2">{selectedSize}</span>
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueSizes.map((size) => {
+                      const isSelected = selectedSize === size;
+                      const isOutOfStock = activeVariant?.subVariants
+                        ?.filter(sv => sv.size === size)
+                        .every(sv => sv.stock === 0);
+                      
+                      return (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedSize(size)}
+                          className={`px-3.5 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer relative ${
+                            isSelected 
+                              ? "border-primary bg-primary/10 text-primary font-bold shadow-sm" 
+                              : "border-border hover:border-primary/50 text-muted-foreground bg-card"
+                          } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
+                          title={isOutOfStock ? "This pack size option is currently out of stock" : ""}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Weight Selection Swatches */}
+              {visibility.showWeights && uniqueWeights.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  <h4 className="font-bold text-sm text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Scale className="h-4.5 w-4.5 text-muted-foreground" />
+                    Select Weight Unit: 
+                    <span className="text-primary font-semibold ml-2">{selectedWeight}</span>
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueWeights.map((weight) => {
+                      const isSelected = selectedWeight === weight;
+                      const isOutOfStock = activeVariant?.subVariants
+                        ?.filter(sv => sv.weight === weight)
+                        .every(sv => sv.stock === 0);
+
+                      return (
+                        <button
+                          key={weight}
+                          onClick={() => setSelectedWeight(weight)}
+                          className={`px-3.5 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer relative ${
+                            isSelected 
+                              ? "border-primary bg-primary/10 text-primary font-bold shadow-sm" 
+                              : "border-border hover:border-primary/50 text-muted-foreground bg-card"
+                          } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
+                          title={isOutOfStock ? "This weight option is currently out of stock" : ""}
+                        >
+                          {weight}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Quantity Selector & Action buttons */}
+              {activeVariant && (
+                <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t items-stretch">
+                  <div className="flex items-center gap-2 border border-border rounded-lg p-1 bg-secondary/10 justify-between px-3 w-full sm:w-36">
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      onClick={() => setQty(prev => Math.max(moq, prev - 1))}
+                      className="p-1 h-8 w-8 text-foreground"
+                      disabled={qty <= moq}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    
+                    {/* Quantity Input Box */}
+                    <input
+                      ref={qtyInputRef}
+                      type="number"
+                      className="w-12 text-center text-sm font-extrabold bg-transparent text-foreground focus:outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      value={qty}
+                      min={moq}
+                      max={activeSubVariant?.stock || 0}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val)) setQty(val);
+                      }}
+                      onBlur={() => {
+                        if (qty < moq) setQty(moq);
+                        if (qty > (activeSubVariant?.stock || 0)) setQty(activeSubVariant?.stock || 0);
+                      }}
+                    />
+
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      onClick={() => setQty(prev => Math.min(activeSubVariant?.stock || 0, prev + 1))}
+                      className="p-1 h-8 w-8 text-foreground"
+                      disabled={qty >= (activeSubVariant?.stock || 0)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <Button 
+                    size="lg" 
+                    className="flex-1 font-bold flex items-center justify-center gap-2 shadow" 
+                    onClick={handleAddToCart}
+                    disabled={(activeSubVariant?.stock || 0) <= 0}
+                  >
+                    <ShoppingCart className="h-5 w-5" /> Add to Cart
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="space-y-4 pt-2">
               <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">
-                Select Option / Color: 
-                <span className="text-primary font-semibold ml-2">{activeVariant?.color}</span>
+                B2B Bulk Variant Purchase Grid:
               </h4>
-              <div className="flex flex-wrap gap-2">
-                {colorVariants.map((v, idx) => {
-                  const isSelected = selectedColorIdx === idx;
-                  const isOutOfStock = v.subVariants?.every(sv => sv.stock === 0);
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedColorIdx(idx)}
-                      className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
-                        isSelected 
-                          ? "border-primary bg-primary/10 text-primary font-bold shadow-sm" 
-                          : "border-border hover:border-primary/50 text-muted-foreground bg-card"
-                      } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
-                      title={isOutOfStock ? "This option is currently out of stock" : ""}
-                    >
-                      {v.color}
-                    </button>
-                  );
-                })}
+              <div className="overflow-x-auto border border-border rounded-xl bg-card">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-muted-foreground uppercase tracking-wider text-[10px] font-bold border-b border-border">
+                    <tr>
+                      <th className="px-3 py-2.5">Color</th>
+                      <th className="px-3 py-2.5">Size</th>
+                      <th className="px-3 py-2.5">Weight</th>
+                      <th className="px-3 py-2.5 text-right">Wholesale Price</th>
+                      <th className="px-3 py-2.5 text-center">Stock</th>
+                      <th className="px-3 py-2.5 text-right w-24">Order Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {product.colorVariants?.flatMap(cv => 
+                      cv.subVariants?.map(sv => {
+                        const rate = product.gstRate ?? 18;
+                        const isIncl = product.priceIncludesGst ?? true;
+                        const totalPrice = isIncl ? sv.price : sv.price * (1 + rate / 100);
+                        const qtyVal = bulkQuantities[sv.id] || "";
+                        
+                        return (
+                          <tr key={sv.id} className="hover:bg-secondary/10">
+                            <td className="px-3 py-2.5 font-semibold">{cv.color}</td>
+                            <td className="px-3 py-2.5 font-mono">{sv.size || "-"}</td>
+                            <td className="px-3 py-2.5 font-mono">{sv.weight || "-"}</td>
+                            <td className="px-3 py-2.5 text-right font-bold text-primary">
+                              {formatPrice(totalPrice)}
+                              <span className="text-[9px] text-muted-foreground block font-normal">
+                                {isIncl ? "incl. GST" : "excl. GST"}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2.5 text-center">
+                              {sv.stock > moq * 2 ? (
+                                <Badge variant="success">{sv.stock}</Badge>
+                              ) : sv.stock > 0 ? (
+                                <Badge variant="warning">{sv.stock}</Badge>
+                              ) : (
+                                <Badge variant="destructive">0</Badge>
+                              )}
+                            </td>
+                            <td className="px-3 py-2.5 text-right">
+                              <input
+                                type="number"
+                                placeholder={`Min ${moq}`}
+                                className="w-20 text-center text-xs font-bold border border-border rounded p-1 bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                disabled={sv.stock <= 0}
+                                value={qtyVal}
+                                onChange={(e) => handleBulkQtyChange(sv.id, e.target.value, sv.stock)}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          )}
-
-          {/* Size Selection Swatches */}
-          {visibility.showSizes && uniqueSizes.length > 0 && (
-            <div className="space-y-3 pt-2">
-              <h4 className="font-bold text-sm text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Maximize2 className="h-4.5 w-4.5 text-muted-foreground" />
-                Select Pack Sizing: 
-                <span className="text-primary font-semibold ml-2">{selectedSize}</span>
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {uniqueSizes.map((size) => {
-                  const isSelected = selectedSize === size;
-                  const isOutOfStock = activeVariant?.subVariants
-                    ?.filter(sv => sv.size === size)
-                    .every(sv => sv.stock === 0);
-                  
-                  return (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`px-3.5 py-1.5 rounded-lg border text-xs font-semibold transition-all relative ${
-                        isSelected 
-                          ? "border-primary bg-primary/10 text-primary font-bold shadow-sm" 
-                          : "border-border hover:border-primary/50 text-muted-foreground bg-card"
-                      } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
-                      title={isOutOfStock ? "This pack size option is currently out of stock" : ""}
-                    >
-                      {size}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Weight Selection Swatches */}
-          {visibility.showWeights && uniqueWeights.length > 0 && (
-            <div className="space-y-3 pt-2">
-              <h4 className="font-bold text-sm text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Scale className="h-4.5 w-4.5 text-muted-foreground" />
-                Select Weight Unit: 
-                <span className="text-primary font-semibold ml-2">{selectedWeight}</span>
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {uniqueWeights.map((weight) => {
-                  const isSelected = selectedWeight === weight;
-                  const isOutOfStock = activeVariant?.subVariants
-                    ?.filter(sv => sv.weight === weight)
-                    .every(sv => sv.stock === 0);
-
-                  return (
-                    <button
-                      key={weight}
-                      onClick={() => setSelectedWeight(weight)}
-                      className={`px-3.5 py-1.5 rounded-lg border text-xs font-semibold transition-all relative ${
-                        isSelected 
-                          ? "border-primary bg-primary/10 text-primary font-bold shadow-sm" 
-                          : "border-border hover:border-primary/50 text-muted-foreground bg-card"
-                      } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
-                      title={isOutOfStock ? "This weight option is currently out of stock" : ""}
-                    >
-                      {weight}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Quantity Selector & Action buttons */}
-          {activeVariant && (
-            <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t items-stretch">
-              <div className="flex items-center gap-2 border border-border rounded-lg p-1 bg-secondary/10 justify-between px-3 w-full sm:w-36">
-                <Button
-                  variant="ghost"
-                  type="button"
-                  onClick={() => setQty(prev => Math.max(moq, prev - 1))}
-                  className="p-1 h-8 w-8 text-foreground"
-                  disabled={qty <= moq}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                
-                {/* Quantity Input Box */}
-                <input
-                  ref={qtyInputRef}
-                  type="number"
-                  className="w-12 text-center text-sm font-extrabold bg-transparent text-foreground focus:outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  value={qty}
-                  min={moq}
-                  max={activeSubVariant?.stock || 0}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
-                    if (!isNaN(val)) setQty(val);
-                  }}
-                  onBlur={() => {
-                    if (qty < moq) setQty(moq);
-                    if (qty > (activeSubVariant?.stock || 0)) setQty(activeSubVariant?.stock || 0);
-                  }}
-                />
-
-                <Button
-                  variant="ghost"
-                  type="button"
-                  onClick={() => setQty(prev => Math.min(activeSubVariant?.stock || 0, prev + 1))}
-                  className="p-1 h-8 w-8 text-foreground"
-                  disabled={qty >= (activeSubVariant?.stock || 0)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <Button 
-                size="lg" 
-                className="flex-1 font-bold flex items-center justify-center gap-2 shadow" 
-                onClick={handleAddToCart}
-                disabled={(activeSubVariant?.stock || 0) <= 0}
+              <Button
+                size="lg"
+                className="w-full font-bold flex items-center justify-center gap-2 shadow mt-4"
+                onClick={handleAddBulkToCart}
               >
-                <ShoppingCart className="h-5 w-5" /> Add to Cart
+                <ShoppingCart className="h-5 w-5" /> Add Selected Variants to Cart
               </Button>
             </div>
           )}

@@ -5,9 +5,10 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { ArrowLeft, Trash2, ShoppingBag, ShieldCheck, MapPin } from "lucide-react";
+import { ArrowLeft, Trash2, ShoppingBag, ShieldCheck, MapPin, FileText } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
+import Image from "next/image";
 
 const INDIAN_STATES = [
   "Madhya Pradesh",
@@ -65,6 +66,195 @@ export function CartView() {
     }
   };
 
+  const handleExportQuote = () => {
+    if (items.length === 0) return;
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Please allow popups to export the B2B Quote.");
+      return;
+    }
+
+    const itemsHtml = items.map((item) => {
+      const formattedVariants = Object.entries(item.selectedVariants)
+        .map(([key, val]) => `${key}: ${val}`)
+        .join(" • ");
+      const totalItemAmount = item.pricePerUnit * item.quantity;
+      const rate = item.product.gstRate ?? 18;
+      return `
+        <tr class="border-b border-gray-150 text-xs">
+          <td class="py-3 font-semibold text-gray-800">
+            ${item.product.title}
+            <div class="text-[10px] text-gray-500 font-normal mt-0.5">${formattedVariants}</div>
+          </td>
+          <td class="py-3 text-center font-bold">${item.quantity} units</td>
+          <td class="py-3 text-right">₹${item.pricePerUnit.toFixed(2)}</td>
+          <td class="py-3 text-right">${rate}%</td>
+          <td class="py-3 text-right font-bold text-gray-800">₹${totalItemAmount.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join("");
+
+    const hsnRowsHtml = Object.values(hsnBreakdown).map((slab) => `
+      <div class="flex justify-between text-xs text-gray-600 border-b border-gray-100 pb-1.5 mb-1.5">
+        <span>HSN ${slab.hsnCode} (Rate: ${slab.gstRate}%)</span>
+        <span>Base: ₹${slab.baseAmount.toFixed(2)} | Tax: ₹${slab.totalTax.toFixed(2)}</span>
+      </div>
+    `).join("");
+
+    const cgstSgstHtml = isIntrastate 
+      ? `
+        <div class="flex justify-between text-xs text-gray-600">
+          <span>CGST (Central GST 9%):</span>
+          <span>₹${totalCgst.toFixed(2)}</span>
+        </div>
+        <div class="flex justify-between text-xs text-gray-600">
+          <span>SGST (State GST 9%):</span>
+          <span>₹${totalSgst.toFixed(2)}</span>
+        </div>
+      `
+      : `
+        <div class="flex justify-between text-xs text-gray-600">
+          <span>IGST (Integrated GST 18%):</span>
+          <span>₹${totalIgst.toFixed(2)}</span>
+        </div>
+      `;
+
+    const quoteId = `Q-${Math.floor(Math.random() * 900000 + 100000)}`;
+    const dateStr = new Date().toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+
+    const docContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>B2B Commercial Quote - ${quoteId}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            @media print {
+              body { background-color: white; color: black; padding: 0; }
+              .no-print { display: none; }
+              .print-container { border: none !important; box-shadow: none !important; padding: 0 !important; }
+            }
+          </style>
+        </head>
+        <body class="bg-gray-50 py-12 px-6 font-sans">
+          <div class="max-w-4xl mx-auto bg-white p-8 border border-gray-200 rounded-xl shadow-sm relative print-container">
+            
+            <!-- Controls bar -->
+            <div class="no-print flex justify-end gap-3 mb-6 pb-4 border-b border-gray-200">
+              <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2 px-4 rounded shadow cursor-pointer">
+                Print / Save PDF
+              </button>
+              <button onclick="window.close()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold py-2 px-4 rounded cursor-pointer">
+                Close Window
+              </button>
+            </div>
+
+            <!-- Header -->
+            <div class="flex justify-between items-start pb-6 border-b border-gray-200">
+              <div>
+                <h1 class="text-2xl font-black text-emerald-600 tracking-tight uppercase">FlexSell Wholesale</h1>
+                <p class="text-xs text-gray-500 mt-1">Wholesale Importers & B2B Distributors</p>
+                <p class="text-[10px] text-gray-400">GSTIN: 24AAACF1001M1Z5 | Central Warehouse, Surat, Gujarat</p>
+              </div>
+              <div class="text-right">
+                <h2 class="text-lg font-bold text-gray-800 uppercase tracking-wide">B2B Price Quote</h2>
+                <p class="text-xs font-mono font-bold mt-1 text-gray-600">Quote ID: ${quoteId}</p>
+                <p class="text-xs text-gray-500 mt-0.5">Date Generated: ${dateStr}</p>
+              </div>
+            </div>
+
+            <!-- Info block -->
+            <div class="grid grid-cols-2 gap-8 py-6 text-xs border-b border-gray-200">
+              <div>
+                <h3 class="font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To (Estimated Delivery):</h3>
+                <p class="font-bold text-gray-800 text-sm">Wholesale Buyer Portal</p>
+                <p class="text-gray-500 mt-1">Shipment State: <strong>${buyerState}</strong></p>
+                <p class="text-gray-500">Logistics dispatch destination: India domestic cargo routes</p>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-400 uppercase tracking-wider mb-2">Warehouse Logistics Dispatcher:</h3>
+                <p class="font-semibold text-gray-800">FlexSell Surat Central Warehouse</p>
+                <p class="text-gray-500 mt-1">Plot No. 12, GIDC Industrial Estate</p>
+                <p class="text-gray-500">Sachin, Surat, Gujarat - 394230</p>
+              </div>
+            </div>
+
+            <!-- Quote lines -->
+            <div class="py-6">
+              <h3 class="font-bold text-gray-400 uppercase tracking-wider text-xs mb-3">Itemized Price Schedule:</h3>
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="border-b border-gray-200 uppercase text-[10px] font-bold text-gray-400 tracking-wider">
+                    <th class="pb-2">Description</th>
+                    <th class="pb-2 text-center">Qty</th>
+                    <th class="pb-2 text-right">Price per Unit</th>
+                    <th class="pb-2 text-right">GST Rate</th>
+                    <th class="pb-2 text-right">Total Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHtml}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Summary block -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+              <div class="text-xs text-gray-500 space-y-2">
+                <p class="font-bold uppercase text-gray-400 tracking-wider">Quote Declarations & Terms:</p>
+                <p class="italic leading-relaxed">
+                  1. The prices listed above represent verified factory direct wholesale pricing.<br />
+                  2. This quote is valid for a period of 15 calendar days from the date of generation.<br />
+                  3. Prices listed are inclusive of integrated goods and services taxation as per Indian tax norms.<br />
+                  4. Direct logistics shipping rates are capped at ₹0 (Free Delivery) for volume wholesale orders.
+                </p>
+              </div>
+              <div class="bg-gray-50 p-4 border border-gray-200 rounded-lg space-y-2 text-xs">
+                <div class="flex justify-between text-gray-600">
+                  <span>Taxable Base Value:</span>
+                  <span class="font-semibold">₹${baseSubtotal.toFixed(2)}</span>
+                </div>
+                ${cgstSgstHtml}
+                <div class="border-t border-gray-200 pt-2 mt-2">
+                  <span class="font-bold text-[10px] text-gray-400 uppercase tracking-wider block mb-1">HSN Summary</span>
+                  ${hsnRowsHtml}
+                </div>
+                <div class="flex justify-between border-t border-emerald-600/20 pt-2 font-bold text-sm text-gray-800">
+                  <span>Grand Total (Incl. GST):</span>
+                  <span class="text-emerald-600 text-lg">₹${grandTotal.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Signature block -->
+            <div class="mt-12 pt-6 border-t border-gray-200 flex justify-between items-center text-xs">
+              <div class="text-gray-400">
+                Authorized Distributor Signature • FlexSell B2B Sourcing
+              </div>
+              <div class="border-b-2 border-dotted border-gray-300 w-48 h-8"></div>
+            </div>
+
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 300);
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(docContent);
+    printWindow.document.close();
+  };
+
   if (items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16 text-center max-w-md">
@@ -112,8 +302,14 @@ export function CartView() {
             return (
               <Card key={item.id} className="border-border">
                 <CardContent className="p-4 flex flex-col sm:flex-row gap-4">
-                  <div className="w-24 h-24 bg-secondary rounded-md overflow-hidden flex-shrink-0 border">
-                    <img src={imgUrl} alt={item.product.title} className="w-full h-full object-cover" />
+                  <div className="w-24 h-24 bg-secondary rounded-md overflow-hidden flex-shrink-0 border relative">
+                    <Image
+                      src={imgUrl || "https://placehold.co/400x400/10b981/ffffff?text=Product"}
+                      alt={item.product.title}
+                      fill
+                      sizes="96px"
+                      className="object-cover"
+                    />
                   </div>
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
@@ -282,11 +478,22 @@ export function CartView() {
                 <span className="text-primary">{formatPrice(grandTotal)}</span>
               </div>
 
-              <Link href="/checkout" className="block mt-6">
-                <Button size="lg" className="w-full text-base bg-primary text-primary-foreground hover:opacity-90">
-                  Proceed to Checkout
+              <div className="space-y-3 mt-6">
+                <Link href="/checkout" className="block">
+                  <Button size="lg" className="w-full text-base bg-primary text-primary-foreground hover:opacity-90 font-bold">
+                    Proceed to Checkout
+                  </Button>
+                </Link>
+
+                <Button
+                  onClick={handleExportQuote}
+                  variant="outline"
+                  size="lg"
+                  className="w-full text-sm font-semibold border-primary/20 text-primary hover:bg-primary/5 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <FileText className="h-4.5 w-4.5" /> Export B2B Quote (PDF)
                 </Button>
-              </Link>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Globe, Mail, MessageCircle, Phone } from "lucide-react";
 import { pagesContent } from "@/data/pagesContent";
 
+import Image from "next/image";
+
 export function Footer() {
   const footerData = pagesContent.footer;
   return (
@@ -10,7 +12,7 @@ export function Footer() {
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
         <div className="space-y-4">
           <Link href="/" className="flex items-center">
-            <img src="/Flexsell%20Logo.png" alt="Flexsell Logo" className="h-8 md:h-10 w-auto object-contain" />
+            <Image src="/Flexsell%20Logo.png" alt="Flexsell Logo" width={150} height={40} className="h-8 md:h-10 w-auto object-contain" />
           </Link>
           <p className="text-muted-foreground text-sm">
             {footerData.description}

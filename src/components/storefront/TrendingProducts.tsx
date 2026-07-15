@@ -10,6 +10,7 @@ import { ShoppingCart, Heart } from "lucide-react";
 import { useProductStore } from "@/stores/productStore";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
+import Image from "next/image";
 
 interface TrendingProductsProps {
   initialProducts: Product[];
@@ -66,10 +67,12 @@ export function TrendingProducts({ initialProducts }: TrendingProductsProps) {
 
             <div className="aspect-square relative bg-secondary overflow-hidden rounded-t-lg">
               <Link href={`/products/${product.slug}`}>
-                <img
-                  src={imgUrl || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
+                <Image
+                  src={imgUrl || "https://placehold.co/400x400/10b981/ffffff?text=Product"}
                   alt={product.title}
-                  className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                  className="object-cover hover:scale-105 transition-transform duration-300"
                 />
               </Link>
             </div>

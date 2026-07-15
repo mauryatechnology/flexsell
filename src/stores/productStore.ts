@@ -10,6 +10,7 @@ interface ProductStoreState {
   addProduct: (product: Omit<Product, "_id" | "createdAt">) => Promise<void>;
   updateProduct: (id: string, updatedFields: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+  getProductBySlug: (slug: string) => Promise<Product>;
 }
 
 export const useProductStore = create<ProductStoreState>()((set, get) => ({
@@ -29,6 +30,26 @@ export const useProductStore = create<ProductStoreState>()((set, get) => ({
         error: err instanceof Error ? err.message : "Failed to load products", 
         isLoading: false 
       });
+    }
+  },
+
+  getProductBySlug: async (slug) => {
+    const existing = get().products.find(p => p.slug === slug);
+    if (existing) return existing;
+    set({ isLoading: true, error: null });
+    try {
+      const product = await productService.getProductBySlug(slug);
+      set((state) => ({ 
+        products: [...state.products, product], 
+        isLoading: false 
+      }));
+      return product;
+    } catch (err) {
+      set({ 
+        error: err instanceof Error ? err.message : "Failed to load product", 
+        isLoading: false 
+      });
+      throw err;
     }
   },
 

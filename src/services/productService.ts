@@ -53,6 +53,17 @@ export const productService = {
     return apiClient.get<Product>(`/products/${id}`);
   },
 
+  async getProductBySlug(slug: string): Promise<Product> {
+    if (isMockMode) {
+      await delay();
+      const products = getMockProducts();
+      const product = products.find((p) => p.slug === slug);
+      if (!product) throw new Error("Product not found");
+      return product;
+    }
+    return apiClient.get<Product>(`/products/slug/${slug}`);
+  },
+
   async createProduct(
     productData: Omit<Product, "_id" | "createdAt">
   ): Promise<Product> {

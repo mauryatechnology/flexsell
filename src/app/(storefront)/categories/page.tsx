@@ -3,6 +3,8 @@ import Link from "next/link";
 import { categories } from "@/data/categories";
 import { Card } from "@/components/ui/Card";
 
+import Image from "next/image";
+
 export default function CategoriesPage() {
   return (
     <div className="container mx-auto px-4 py-8">
@@ -16,10 +18,12 @@ export default function CategoriesPage() {
           <Link key={category._id} href={`/categories/${category.slug}`}>
             <Card className="hover:border-primary transition-all hover:shadow-md cursor-pointer text-center overflow-hidden h-full flex flex-col group">
               <div className="aspect-video relative bg-secondary overflow-hidden">
-                <img
+                <Image
                   src={category.image || `https://placehold.co/600x400/10b981/ffffff?text=${encodeURIComponent(category.name)}`}
                   alt={category.name}
-                  className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <div className="p-4 flex flex-col flex-1 justify-center">

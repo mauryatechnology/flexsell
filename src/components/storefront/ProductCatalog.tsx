@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useProductStore } from "@/stores/productStore";
 import { useCategoryStore } from "@/stores/categoryStore";
+import Image from "next/image";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { Pagination } from "@/components/ui/Pagination";
@@ -379,10 +380,12 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
                     {/* Image Viewport */}
                     <div className="aspect-square relative bg-secondary overflow-hidden rounded-t-lg border-b">
                       <Link href={`/products/${product.slug}`}>
-                        <img
-                          src={imgUrl}
+                        <Image
+                          src={imgUrl || "https://placehold.co/400x400/10b981/ffffff?text=Product"}
                           alt={product.title}
-                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                          fill
+                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       </Link>
                       <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-mono px-1 rounded">
@@ -494,7 +497,7 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
                     {/* Image */}
                     <div className="w-24 h-24 rounded-lg bg-secondary border overflow-hidden flex-shrink-0 relative">
                       <Link href={`/products/${product.slug}`}>
-                        <img src={imgUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <Image src={imgUrl || "https://placehold.co/400x400/10b981/ffffff?text=Product"} alt={product.title} fill sizes="96px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
                       </Link>
                       {discount > 0 && (
                         <div className="absolute top-1 left-1 bg-destructive text-destructive-foreground text-[8px] font-extrabold px-1 rounded shadow">

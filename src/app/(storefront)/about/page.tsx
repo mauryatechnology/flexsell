@@ -1,4 +1,4 @@
-import * as React from "react";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { pagesContent } from "@/data/pagesContent";
 
@@ -17,8 +17,8 @@ export default function AboutPage() {
       </div>
 
       <div className="prose prose-slate dark:prose-invert max-w-none space-y-6">
-        <div className="aspect-video w-full bg-secondary rounded-xl overflow-hidden mb-8">
-           <img src={aboutData.warehouseImage} alt="FlexSell Wholesale B2B Sourcing" className="w-full h-full object-cover" />
+        <div className="aspect-video w-full bg-secondary rounded-xl overflow-hidden mb-8 relative">
+           <Image src={aboutData.warehouseImage} alt="FlexSell Wholesale B2B Sourcing" fill sizes="(max-width: 1024px) 100vw, 896px" className="object-cover" />
         </div>
 
         <h2>{aboutData.missionTitle}</h2>
