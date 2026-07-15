@@ -363,7 +363,7 @@ export function InventoryManager() {
                     const isOutStock = stock === 0;
 
                     return (
-                      <tr key={sku} className="hover:bg-secondary/15 transition-colors text-foreground">
+                      <tr key={item.product._id + "-" + item.subVariant.id} className="hover:bg-secondary/15 transition-colors text-foreground">
                         <td className="px-6 py-4 font-bold max-w-xs truncate" title={item.product.title}>
                           {item.product.title}
                         </td>

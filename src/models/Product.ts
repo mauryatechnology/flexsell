@@ -11,6 +11,7 @@ const SubVariantSchema = new Schema({
   stock: { type: Number, required: true },
   sku: { type: String, required: true },
   barcode: { type: String },
+  isActive: { type: Boolean, default: true },
 });
 
 const ColorVariantSchema = new Schema({

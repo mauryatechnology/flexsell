@@ -24,6 +24,7 @@ export interface SubVariant {
   stock: number;
   sku: string;
   barcode?: string;
+  isActive?: boolean;
 }
 
 export interface ColorVariant {

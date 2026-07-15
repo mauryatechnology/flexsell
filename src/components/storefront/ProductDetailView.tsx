@@ -9,14 +9,14 @@ import { useProductStore } from "@/stores/productStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { useCartStore } from "@/stores/cartStore";
 import { useToastStore } from "@/stores/toastStore";
-import { 
-  ShieldCheck, 
-  Truck, 
-  ArrowLeft, 
-  Heart, 
-  ShoppingCart, 
-  Minus, 
-  Plus, 
+import {
+  ShieldCheck,
+  Truck,
+  ArrowLeft,
+  Heart,
+  ShoppingCart,
+  Minus,
+  Plus,
   Scale,
   Maximize2
 } from "lucide-react";
@@ -55,7 +55,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
   const handleBulkQtyChange = (subVariantId: string, valStr: string, svStock: number) => {
     const val = parseInt(valStr, 10);
     const moqLimit = product?.moq ?? 1;
-    
+
     if (isNaN(val) || val <= 0) {
       setBulkQuantities(prev => {
         const copy = { ...prev };
@@ -84,7 +84,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
   const handleAddBulkToCart = () => {
     if (!product) return;
     let addedCount = 0;
-    
+
     product.colorVariants?.forEach(cv => {
       cv.subVariants?.forEach(sv => {
         const targetQty = bulkQuantities[sv.id] || 0;
@@ -123,21 +123,22 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
   // Derive active specific combination (subvariant)
   const activeSubVariant = React.useMemo(() => {
     if (!activeVariant || !activeVariant.subVariants) return null;
-    return activeVariant.subVariants.find(sv => 
-      (!selectedSize || sv.size === selectedSize) && 
+    return activeVariant.subVariants.find(sv =>
+      sv.isActive !== false &&
+      (!selectedSize || sv.size === selectedSize) &&
       (!selectedWeight || sv.weight === selectedWeight)
-    ) || activeVariant.subVariants[0];
+    ) || activeVariant.subVariants.find(sv => sv.isActive !== false) || activeVariant.subVariants[0];
   }, [activeVariant, selectedSize, selectedWeight]);
 
   // Derive unique sizes and weights for the current color variant
   const uniqueSizes = React.useMemo(() => {
     if (!activeVariant || !activeVariant.subVariants) return [];
-    return Array.from(new Set(activeVariant.subVariants.map(sv => sv.size))).filter(Boolean);
+    return Array.from(new Set(activeVariant.subVariants.filter(sv => sv.isActive !== false).map(sv => sv.size))).filter(Boolean);
   }, [activeVariant]);
 
   const uniqueWeights = React.useMemo(() => {
     if (!activeVariant || !activeVariant.subVariants) return [];
-    return Array.from(new Set(activeVariant.subVariants.map(sv => sv.weight))).filter(Boolean);
+    return Array.from(new Set(activeVariant.subVariants.filter(sv => sv.isActive !== false).map(sv => sv.weight))).filter(Boolean);
   }, [activeVariant]);
 
   // Reset secondary selections on color changes
@@ -151,25 +152,27 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
   // Synchronize size and weight selection to ensure it corresponds to a valid sub-variant
   React.useEffect(() => {
     if (!activeVariant || !activeVariant.subVariants) return;
-    
+
     // Check if the current size and weight combination is valid
-    const isValidCombination = activeVariant.subVariants.some(sv => 
-      sv.size === selectedSize && sv.weight === selectedWeight
+    const isValidCombination = activeVariant.subVariants.some(sv =>
+      sv.isActive !== false && sv.size === selectedSize && sv.weight === selectedWeight
     );
-    
+
     if (!isValidCombination) {
       // Find the first sub-variant that matches either the selected size or selected weight
-      const matchingSize = activeVariant.subVariants.find(sv => sv.size === selectedSize);
+      const matchingSize = activeVariant.subVariants.find(sv => sv.isActive !== false && sv.size === selectedSize);
       if (matchingSize) {
         setSelectedWeight(matchingSize.weight);
       } else {
-        const matchingWeight = activeVariant.subVariants.find(sv => sv.weight === selectedWeight);
+        const matchingWeight = activeVariant.subVariants.find(sv => sv.isActive !== false && sv.weight === selectedWeight);
         if (matchingWeight) {
           setSelectedSize(matchingWeight.size);
-        } else if (activeVariant.subVariants.length > 0) {
-          // Default fallback
-          setSelectedSize(activeVariant.subVariants[0].size);
-          setSelectedWeight(activeVariant.subVariants[0].weight);
+        } else {
+          const firstActive = activeVariant.subVariants.find(sv => sv.isActive !== false);
+          if (firstActive) {
+            setSelectedSize(firstActive.size);
+            setSelectedWeight(firstActive.weight);
+          }
         }
       }
     }
@@ -269,9 +272,9 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
         <Link href="/products" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center font-medium">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Products
         </Link>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => toggleWishlist(product)}
           className={favorited ? "text-destructive border-destructive bg-destructive/5 hover:bg-destructive/10" : ""}
         >
@@ -298,17 +301,16 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
               </span>
             )}
           </div>
-          
+
           {/* Slider thumbnails list */}
           {visibility.showImages && currentImages.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-2 pr-1">
               {currentImages.map((img, i) => (
-                <button 
-                  key={i} 
+                <button
+                  key={i}
                   onClick={() => setActiveImageIdx(i)}
-                  className={`w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0 bg-secondary transition-all relative ${
-                    activeImageIdx === i ? "border-primary scale-95 shadow-sm" : "border-border hover:border-primary/50"
-                  }`}
+                  className={`w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0 bg-secondary transition-all relative ${activeImageIdx === i ? "border-primary scale-95 shadow-sm" : "border-border hover:border-primary/50"
+                    }`}
                 >
                   <Image src={img} alt={`Thumbnail ${i}`} fill sizes="80px" className="object-cover" />
                 </button>
@@ -351,7 +353,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                     {isIncl ? "(GST Inclusive)" : "(GST Exclusive)"}
                   </span>
                 </div>
-                
+
               </div>
 
               <div className="flex flex-wrap items-center gap-4 text-xs pt-3 border-t border-border/40">
@@ -374,21 +376,19 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
           <div className="flex border-b border-border mb-4">
             <button
               onClick={() => setOrderMode("single")}
-              className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
-                orderMode === "single"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
+              className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${orderMode === "single"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
             >
               Standard Selector
             </button>
             <button
               onClick={() => setOrderMode("bulk")}
-              className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
-                orderMode === "bulk"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
+              className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${orderMode === "bulk"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
             >
               B2B Bulk Purchase Matrix
             </button>
@@ -400,7 +400,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
               {colorVariants.length > 0 && (
                 <div className="space-y-3">
                   <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">
-                    Select Option / Color: 
+                    Select Option / Color:
                     <span className="text-primary font-semibold ml-2">{activeVariant?.color}</span>
                   </h4>
                   <div className="flex flex-wrap gap-2">
@@ -411,11 +411,10 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                         <button
                           key={idx}
                           onClick={() => setSelectedColorIdx(idx)}
-                          className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
-                            isSelected 
-                              ? "border-primary bg-primary/10 text-primary font-bold shadow-sm" 
-                              : "border-border hover:border-primary/50 text-muted-foreground bg-card"
-                          } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
+                          className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${isSelected
+                            ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                            : "border-border hover:border-primary/50 text-muted-foreground bg-card"
+                            } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
                           title={isOutOfStock ? "This option is currently out of stock" : ""}
                         >
                           {v.color}
@@ -431,7 +430,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                 <div className="space-y-3 pt-2">
                   <h4 className="font-bold text-sm text-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <Maximize2 className="h-4.5 w-4.5 text-muted-foreground" />
-                    Select Pack Sizing: 
+                    Select Pack Sizing:
                     <span className="text-primary font-semibold ml-2">{selectedSize}</span>
                   </h4>
                   <div className="flex flex-wrap gap-2">
@@ -440,16 +439,15 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                       const isOutOfStock = activeVariant?.subVariants
                         ?.filter(sv => sv.size === size)
                         .every(sv => sv.stock === 0);
-                      
+
                       return (
                         <button
                           key={size}
                           onClick={() => setSelectedSize(size)}
-                          className={`px-3.5 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer relative ${
-                            isSelected 
-                              ? "border-primary bg-primary/10 text-primary font-bold shadow-sm" 
-                              : "border-border hover:border-primary/50 text-muted-foreground bg-card"
-                          } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
+                          className={`px-3.5 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer relative ${isSelected
+                            ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                            : "border-border hover:border-primary/50 text-muted-foreground bg-card"
+                            } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
                           title={isOutOfStock ? "This pack size option is currently out of stock" : ""}
                         >
                           {size}
@@ -465,7 +463,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                 <div className="space-y-3 pt-2">
                   <h4 className="font-bold text-sm text-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <Scale className="h-4.5 w-4.5 text-muted-foreground" />
-                    Select Weight Unit: 
+                    Select Weight Unit:
                     <span className="text-primary font-semibold ml-2">{selectedWeight}</span>
                   </h4>
                   <div className="flex flex-wrap gap-2">
@@ -479,11 +477,10 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                         <button
                           key={weight}
                           onClick={() => setSelectedWeight(weight)}
-                          className={`px-3.5 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer relative ${
-                            isSelected 
-                              ? "border-primary bg-primary/10 text-primary font-bold shadow-sm" 
-                              : "border-border hover:border-primary/50 text-muted-foreground bg-card"
-                          } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
+                          className={`px-3.5 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer relative ${isSelected
+                            ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                            : "border-border hover:border-primary/50 text-muted-foreground bg-card"
+                            } ${isOutOfStock ? "opacity-40 line-through cursor-not-allowed" : ""}`}
                           title={isOutOfStock ? "This weight option is currently out of stock" : ""}
                         >
                           {weight}
@@ -507,7 +504,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    
+
                     {/* Quantity Input Box */}
                     <input
                       ref={qtyInputRef}
@@ -537,9 +534,9 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                     </Button>
                   </div>
 
-                  <Button 
-                    size="lg" 
-                    className="flex-1 font-bold flex items-center justify-center gap-2 shadow" 
+                  <Button
+                    size="lg"
+                    className="flex-1 font-bold flex items-center justify-center gap-2 shadow"
                     onClick={handleAddToCart}
                     disabled={(activeSubVariant?.stock || 0) <= 0}
                   >
@@ -566,13 +563,13 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {product.colorVariants?.flatMap(cv => 
-                      cv.subVariants?.map(sv => {
+                    {product.colorVariants?.flatMap(cv =>
+                      (cv.subVariants || []).filter(sv => sv.isActive !== false).map(sv => {
                         const rate = product.gstRate ?? 18;
                         const isIncl = product.priceIncludesGst ?? true;
                         const totalPrice = isIncl ? sv.price : sv.price * (1 + rate / 100);
                         const qtyVal = bulkQuantities[sv.id] || "";
-                        
+
                         return (
                           <tr key={sv.id} className="hover:bg-secondary/10">
                             <td className="px-3 py-2.5 font-semibold">{cv.color}</td>
@@ -635,15 +632,15 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
       {/* A+ Content Section */}
       {product.aPlusContent && product.aPlusContent.length > 0 && (
         <div className="mt-20 border-t pt-16">
-          <div className="flex flex-col w-full max-w-[970px] mx-auto">
+          <div className="flex flex-col w-full max-w-[970px] mx-auto gap-4">
             {product.aPlusContent.map((block) => {
               // Only render blocks that actually contain an image, ignoring all text elements
               if (block.imageUrl) {
                 return (
-                  <img 
+                  <img
                     key={block.id}
-                    src={block.imageUrl} 
-                    alt="Manufacturer marketing graphic sheet" 
+                    src={block.imageUrl}
+                    alt="Manufacturer marketing graphic sheet"
                     className="w-full h-auto block"
                   />
                 );

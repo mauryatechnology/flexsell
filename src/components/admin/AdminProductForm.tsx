@@ -235,6 +235,16 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
     }));
   };
 
+  const removeSubVariant = (colorIdx: number, subId: string) => {
+    setVariantsList(prev => prev.map((item, idx) => {
+      if (idx !== colorIdx) return item;
+      return {
+        ...item,
+        subVariants: item.subVariants.filter(sv => sv.id !== subId)
+      };
+    }));
+  };
+
   const removeVariant = (index: number) => {
     if (variantsList.length <= 1) return;
     setVariantsList(prev => prev.filter((_, i) => i !== index));
@@ -359,7 +369,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
       return;
     }
 
-    const totalStock = finalVariants.reduce((sum, v) => sum + v.subVariants.reduce((s: number, sv: any) => s + sv.stock, 0), 0);
+    const totalStock = finalVariants.reduce((sum, v) => sum + v.subVariants.filter((sv: any) => sv.isActive !== false).reduce((s: number, sv: any) => s + sv.stock, 0), 0);
     const tags = tagsText.split(",").map(t => t.trim()).filter(Boolean);
 
     const productData: Omit<Product, "_id" | "createdAt"> = {
@@ -669,6 +679,8 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                               <th className="px-4 py-3">Price (₹)</th>
                               <th className="px-4 py-3">MRP (₹)</th>
                               <th className="px-4 py-3">Stock</th>
+                              <th className="px-4 py-3 text-center">Status</th>
+                              <th className="px-4 py-3 text-center">Action</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -681,13 +693,35 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                                   <Input className="h-8 text-xs" value={sv.sku} onChange={e => updateSubVariantField(idx, sv.id, "sku", e.target.value)} required />
                                 </td>
                                 <td className="px-4 py-2">
-                                  <Input type="number" className="h-8 text-xs w-24" value={sv.price || ""} onChange={e => updateSubVariantField(idx, sv.id, "price", Number(e.target.value))} required />
+                                  <Input type="number" className="h-8 text-xs w-24" value={sv.price ?? ""} onChange={e => updateSubVariantField(idx, sv.id, "price", e.target.value === "" ? 0 : Number(e.target.value))} required />
                                 </td>
                                 <td className="px-4 py-2">
-                                  <Input type="number" className="h-8 text-xs w-24" value={sv.mrp || ""} onChange={e => updateSubVariantField(idx, sv.id, "mrp", Number(e.target.value))} required />
+                                  <Input type="number" className="h-8 text-xs w-24" value={sv.mrp ?? ""} onChange={e => updateSubVariantField(idx, sv.id, "mrp", e.target.value === "" ? 0 : Number(e.target.value))} required />
                                 </td>
                                 <td className="px-4 py-2">
-                                  <Input type="number" className="h-8 text-xs w-24" value={sv.stock || ""} onChange={e => updateSubVariantField(idx, sv.id, "stock", Number(e.target.value))} required />
+                                  <Input type="number" className="h-8 text-xs w-24" value={sv.stock ?? ""} onChange={e => updateSubVariantField(idx, sv.id, "stock", e.target.value === "" ? 0 : Number(e.target.value))} required />
+                                </td>
+                                <td className="px-4 py-2 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={sv.isActive ?? true}
+                                    onChange={e => updateSubVariantField(idx, sv.id, "isActive", e.target.checked)}
+                                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+                                  />
+                                  <span className="text-xs ml-1.5 font-medium">{sv.isActive !== false ? "Active" : "Inactive"}</span>
+                                </td>
+                                <td className="px-4 py-2 text-center">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => removeSubVariant(idx, sv.id)}
+                                    disabled={item.subVariants.length <= 1}
+                                    title="Remove this combination"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
                                 </td>
                               </tr>
                             ))}
