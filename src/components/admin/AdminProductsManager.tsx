@@ -222,18 +222,17 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
     }
 
     const selectedProducts = activeProducts.filter(p => selectedProductIds.includes(p._id));
-    
     let cardsHtml = "";
     selectedProducts.forEach(product => {
       product.colorVariants.forEach(cv => {
         cv.subVariants?.forEach(sv => {
           const barValue = sv.barcode || sv.sku || "FX0000";
           cardsHtml += `
-            <div style="text-align:center; width:180px; margin:10px; display:inline-block; box-sizing:border-box;">
-              <div style="display:flex; justify-content:center; margin-bottom:6px;">
-                ${getBarcodeSvgString(barValue, 0.8, 35)}
+            <div style="text-align:center; width:140px; margin:10px; display:inline-block; box-sizing:border-box;">
+              <div style="display:flex; justify-content:center; margin-bottom:4px;">
+                ${getBarcodeSvgString(barValue, 0.8, 24)}
               </div>
-              <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${sv.sku} (${cv.color} - ${sv.size} / ${sv.weight})</div>
+              <div style="font-size:10px; font-weight:bold; font-family:monospace; text-transform:uppercase;">${sv.sku}</div>
             </div>
           `;
         });
@@ -295,11 +294,10 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
               Print Barcode
             </button>
             <div class="card">
-              <div style="display:flex; justify-content:center; margin-bottom:6px;">
-                ${getBarcodeSvgString(barValue, 0.8, 35)}
+              <div style="display:flex; justify-content:center; margin-bottom:4px;">
+                ${getBarcodeSvgString(barValue, 0.8, 24)}
               </div>
-              <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${sv.sku}</div>
-              <div style="font-size:9px; color:#555;">${cv.color} - ${sv.size} / ${sv.weight}</div>
+              <div style="font-size:10px; font-weight:bold; font-family:monospace; text-transform:uppercase;">${sv.sku}</div>
             </div>
           </div>
         </body>
@@ -326,12 +324,11 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
         const barValue = sv.barcode || sv.sku || "FX0000";
         
         return `
-          <div style="text-align:center; width:180px; margin:10px; display:inline-block;">
-            <div style="display:flex; justify-content:center; margin-bottom:6px;">
-              ${getBarcodeSvgString(barValue, 0.8, 35)}
+          <div style="text-align:center; width:140px; margin:10px; display:inline-block;">
+            <div style="display:flex; justify-content:center; margin-bottom:4px;">
+              ${getBarcodeSvgString(barValue, 0.8, 24)}
             </div>
-            <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${sv.sku}</div>
-            <div style="font-size:8px; color:#555;">${cv.color} - ${sv.size} / ${sv.weight}</div>
+            <div style="font-size:10px; font-weight:bold; font-family:monospace; text-transform:uppercase;">${sv.sku}</div>
           </div>
         `;
       }) || []
@@ -551,8 +548,9 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
                   </tr>
                 ) : (
                   paginatedProducts.map((product) => {
-                    const defaultVariant = product.colorVariants?.[0] || { price: 0, mrp: 0, stock: 0, sku: "NO SKU", images: [""] };
-                    const imgUrl = defaultVariant.images?.[0] || "";
+                    const defaultVariant = product.colorVariants?.[0] || { price: 0, mrp: 0, stock: 0, sku: "NO SKU", images: [] };
+                    const firstImg = defaultVariant.images?.[0];
+                    const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
                     const variantsCount = product.colorVariants?.length || 0;
                     const isSelected = selectedProductIds.includes(product._id);
 

@@ -17,7 +17,7 @@ const SubVariantSchema = new Schema({
 const ColorVariantSchema = new Schema({
   color: { type: String, required: true },
   dimensions: { type: String, required: true },
-  images: [{ type: String }],
+  images: [Schema.Types.Mixed],
   subVariants: [SubVariantSchema],
 });
 
@@ -27,6 +27,7 @@ const APlusBlockSchema = new Schema({
   title: { type: String },
   content: { type: String },
   imageUrl: { type: String },
+  alt: { type: String },
   features: [{ type: String }],
 });
 
@@ -41,6 +42,7 @@ const ProductSchema = new Schema<ProductType & Document>(
     rating: { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },
     tags: [{ type: String }],
+    cardTags: [{ type: String }],
     isActive: { type: Boolean, default: true },
     totalStock: { type: Number, default: 0 },
     colorVariants: [ColorVariantSchema],
@@ -62,5 +64,15 @@ const ProductSchema = new Schema<ProductType & Document>(
   },
   { timestamps: true }
 );
+
+// Schema-cache buster for Next.js hot-reloading in development
+if (mongoose.models.Product) {
+  const colorVariantsSchema = mongoose.models.Product.schema.path("colorVariants");
+  const imagesSchema = colorVariantsSchema?.schema?.path("images");
+  const embeddedType = imagesSchema?.embeddedSchemaType?.instance;
+  if (embeddedType && embeddedType !== "Mixed") {
+    delete mongoose.models.Product;
+  }
+}
 
 export default mongoose.models.Product || mongoose.model("Product", ProductSchema);

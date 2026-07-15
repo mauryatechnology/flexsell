@@ -367,10 +367,13 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
               {paginatedProducts.map((product) => {
                 const favorited = isInWishlist(product._id);
                 const currentQty = getItemQty(product._id);
-                const hasHighRating = product.rating >= 4.6;
+                const isBestseller = product.rating >= 4.6 || product.cardTags?.some(tag => tag.toLowerCase() === "bestseller");
+                const isNew = product.cardTags?.some(tag => tag.toLowerCase() === "new" || tag.toLowerCase() === "new arrival");
+                const isTrending = product.cardTags?.some(tag => tag.toLowerCase() === "trending" || tag.toLowerCase() === "hot");
                 const defaultVariant = product.colorVariants?.[0];
                 const defaultSub = defaultVariant?.subVariants?.[0];
-                const imgUrl = defaultVariant?.images?.[0] || "";
+                const firstImg = defaultVariant?.images?.[0];
+                const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
                 const price = defaultSub?.price ?? 0;
                 const mrp = defaultSub?.mrp ?? 0;
                 const discount = defaultSub?.discount ?? 0;
@@ -380,13 +383,23 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
                   <Card key={product._id} className="flex flex-col h-full bg-card hover:shadow-lg hover:border-primary/20 transition-all duration-300 relative group border border-border">
                     <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
                       {discount > 0 && (
-                        <span className="bg-destructive text-destructive-foreground text-[10px] font-extrabold px-2 py-0.5 rounded shadow">
+                        <span className="bg-destructive text-destructive-foreground text-[10px] font-extrabold px-2 py-0.5 rounded shadow uppercase">
                           {discount}% OFF
                         </span>
                       )}
-                      {hasHighRating && (
-                        <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded shadow">
+                      {isBestseller && (
+                        <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow uppercase">
                           BEST SELLER
+                        </span>
+                      )}
+                      {isNew && (
+                        <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow uppercase">
+                          NEW
+                        </span>
+                      )}
+                      {isTrending && (
+                        <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow uppercase">
+                          TRENDING
                         </span>
                       )}
                     </div>
@@ -421,6 +434,16 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
                           </h3>
                         </Link>
                         <p className="text-[10px] font-mono text-muted-foreground">SKU: {sku}</p>
+                        {/* Tiny Tag Pills */}
+                        {product.cardTags && product.cardTags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {product.cardTags.slice(0, 3).map((tag, tIdx) => (
+                              <span key={tIdx} className="bg-secondary text-muted-foreground text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       <div>
@@ -497,7 +520,8 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
                 const currentQty = getItemQty(product._id);
                 const defaultVariant = product.colorVariants?.[0];
                 const defaultSub = defaultVariant?.subVariants?.[0];
-                const imgUrl = defaultVariant?.images?.[0] || "";
+                const firstImg = defaultVariant?.images?.[0];
+                const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
                 const price = defaultSub?.price ?? 0;
                 const mrp = defaultSub?.mrp ?? 0;
                 const discount = defaultSub?.discount ?? 0;
@@ -529,6 +553,16 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
                           <h3 className="font-bold text-base line-clamp-1 text-foreground">{product.title}</h3>
                         </Link>
                         <p className="text-xs font-mono text-muted-foreground">SKU: {sku}</p>
+                        {/* Tiny Tag Pills */}
+                        {product.cardTags && product.cardTags.length > 0 && (
+                          <div className="flex flex-wrap justify-center sm:justify-start gap-1 pt-1">
+                            {product.cardTags.map((tag, tIdx) => (
+                              <span key={tIdx} className="bg-secondary text-muted-foreground text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-3 justify-center sm:justify-start">

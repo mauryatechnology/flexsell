@@ -19,6 +19,10 @@ export const useProductStore = create<ProductStoreState>()((set, get) => ({
   error: null,
 
   initializeProducts: async (initial) => {
+    if (initial && initial.length > 0) {
+      set({ products: initial, isLoading: false });
+      return;
+    }
     if (get().products.length > 0) return;
     set({ isLoading: true, error: null });
     try {

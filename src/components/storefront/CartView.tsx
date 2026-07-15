@@ -294,7 +294,8 @@ export function CartView() {
               (!item.selectedVariants["Size"] || sv.size === item.selectedVariants["Size"]) &&
               (!item.selectedVariants["Weight"] || sv.weight === item.selectedVariants["Weight"])
             ) || activeVariant?.subVariants?.[0];
-            const imgUrl = activeVariant?.images?.[0] || "";
+            const firstImg = activeVariant?.images?.[0];
+            const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
             const sku = activeSubVariant?.sku || "NO SKU";
             const moq = item.product.moq || 1;
             const maxStock = activeSubVariant?.stock || 0;

@@ -27,10 +27,15 @@ export interface SubVariant {
   isActive?: boolean;
 }
 
+export interface ProductImage {
+  url: string;
+  alt: string;
+}
+
 export interface ColorVariant {
   color: string;
   dimensions: string;
-  images: string[];
+  images: (string | ProductImage)[];
   subVariants: SubVariant[];
 }
 
@@ -47,6 +52,7 @@ export interface APlusBlock {
   title?: string;
   content?: string;
   imageUrl?: string;
+  alt?: string;
   features?: string[];
 }
 
@@ -59,6 +65,7 @@ export interface Product extends BaseDocument {
   rating: number;
   reviewCount: number;
   tags: string[];
+  cardTags?: string[];
   isActive: boolean;
   totalStock: number;
   colorVariants: ColorVariant[];

@@ -263,7 +263,15 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
   const sgstAmount = taxAmount / 2;
 
   const currentImages = activeVariant?.images || [];
-  const mainImage = currentImages[activeImageIdx] || "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80";
+  const mainImageObj = currentImages[activeImageIdx];
+  const mainImage = mainImageObj
+    ? typeof mainImageObj === "string"
+      ? mainImageObj
+      : mainImageObj.url || "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80"
+    : "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80";
+  const mainImageAlt = mainImageObj && typeof mainImageObj !== "string"
+    ? mainImageObj.alt
+    : product.title;
 
   return (
     <div className="container mx-auto px-4 py-8 text-foreground">
@@ -289,7 +297,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
           <div className="aspect-square bg-card rounded-xl overflow-hidden border border-border shadow-sm flex items-center justify-center relative">
             <Image
               src={mainImage}
-              alt={product.title}
+              alt={mainImageAlt}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               priority
@@ -305,16 +313,20 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
           {/* Slider thumbnails list */}
           {visibility.showImages && currentImages.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-2 pr-1">
-              {currentImages.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveImageIdx(i)}
-                  className={`w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0 bg-secondary transition-all relative ${activeImageIdx === i ? "border-primary scale-95 shadow-sm" : "border-border hover:border-primary/50"
-                    }`}
-                >
-                  <Image src={img} alt={`Thumbnail ${i}`} fill sizes="80px" className="object-cover" />
-                </button>
-              ))}
+              {currentImages.map((img, i) => {
+                const url = typeof img === "string" ? img : img.url || "";
+                const alt = typeof img === "string" ? `Thumbnail ${i}` : img.alt || `Thumbnail ${i}`;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImageIdx(i)}
+                    className={`w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0 bg-secondary transition-all relative ${activeImageIdx === i ? "border-primary scale-95 shadow-sm" : "border-border hover:border-primary/50"
+                      }`}
+                  >
+                    <Image src={url} alt={alt} fill sizes="80px" className="object-cover" />
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

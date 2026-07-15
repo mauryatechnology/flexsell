@@ -54,7 +54,8 @@ export function WishlistView() {
           {items.map((product) => {
             const defaultVariant = product.colorVariants?.[0];
             const defaultSub = defaultVariant?.subVariants?.[0];
-            const imgUrl = defaultVariant?.images?.[0] || "";
+            const firstImg = defaultVariant?.images?.[0];
+            const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
 
             return (
               <Card key={product._id} className="flex flex-col h-full hover:shadow-md transition-shadow relative">

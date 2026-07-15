@@ -61,6 +61,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
   const [description, setDescription] = React.useState("");
   const [categoryId, setCategoryId] = React.useState("");
   const [tagsText, setTagsText] = React.useState("");
+  const [cardTagsText, setCardTagsText] = React.useState("");
 
   // B2B GST, HSN & MOQ States
   const [hsnCode, setHsnCode] = React.useState("3924");
@@ -103,7 +104,8 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
   // Helper strings to bind comma-separated variant lists inside the editor
   const [variantSizes, setVariantSizes] = React.useState<Record<number, string>>({});
   const [variantWeights, setVariantWeights] = React.useState<Record<number, string>>({});
-  const [variantImages, setVariantImages] = React.useState<Record<number, string>>({});
+  const [variantImages, setVariantImages] = React.useState<Record<number, string>>({}); // keep to avoid breaking simple references if any, but unused
+  const [newImageUrl, setNewImageUrl] = React.useState<Record<number, string>>({});
 
   // Editor states
   const [editorMode, setEditorMode] = React.useState<"edit" | "preview">("edit");
@@ -118,6 +120,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
       setDescription(existingProduct.description);
       setCategoryId(existingProduct.categoryId);
       setTagsText(existingProduct.tags.join(", "));
+      setCardTagsText(existingProduct.cardTags?.join(", ") || "");
       setAPlusBlocks(existingProduct.aPlusContent || []);
 
       setHsnCode(existingProduct.hsnCode || "3924");
@@ -126,7 +129,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
       setSeoTitle(existingProduct.seoTitle || "");
       setSeoDescription(existingProduct.seoDescription || "");
       setSeoKeywords(existingProduct.seoKeywords || "");
-      
+
       setFieldVisibility(existingProduct.fieldVisibility || {
         showDescription: true,
         showSizes: true,
@@ -136,24 +139,37 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
       });
 
       if (existingProduct.colorVariants && existingProduct.colorVariants.length > 0) {
-        setVariantsList(existingProduct.colorVariants);
-        
+        // Normalize variant images to [{ url, alt }] objects
+        const normalizedVariants = existingProduct.colorVariants.map(v => ({
+          ...v,
+          images: (v.images || []).map((img, imgIdx) => {
+            if (typeof img === "string") {
+              return {
+                url: img,
+                alt: `${existingProduct.title} - ${v.color} - Image ${imgIdx + 1}`
+              };
+            }
+            return {
+              url: img.url || "",
+              alt: img.alt || `${existingProduct.title} - ${v.color} - Image ${imgIdx + 1}`
+            };
+          })
+        }));
+        setVariantsList(normalizedVariants);
+
         // Populate inputs
         const initialSizes: Record<number, string> = {};
         const initialWeights: Record<number, string> = {};
-        const initialImages: Record<number, string> = {};
-        
-        existingProduct.colorVariants.forEach((v, idx) => {
+
+        normalizedVariants.forEach((v, idx) => {
           const uniqueSizes = Array.from(new Set((v.subVariants || []).map(sv => sv.size))).filter(Boolean);
           const uniqueWeights = Array.from(new Set((v.subVariants || []).map(sv => sv.weight))).filter(Boolean);
           initialSizes[idx] = uniqueSizes.join(", ");
           initialWeights[idx] = uniqueWeights.join(", ");
-          initialImages[idx] = v.images.join(", ");
         });
-        
+
         setVariantSizes(initialSizes);
         setVariantWeights(initialWeights);
-        setVariantImages(initialImages);
       }
     } else {
       if (activeCategories.length > 0) {
@@ -248,7 +264,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
   const removeVariant = (index: number) => {
     if (variantsList.length <= 1) return;
     setVariantsList(prev => prev.filter((_, i) => i !== index));
-    
+
     // Adjust comma helper caches
     setVariantSizes(prev => {
       const copy = { ...prev };
@@ -265,6 +281,11 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
       delete copy[index];
       return copy;
     });
+    setNewImageUrl(prev => {
+      const copy = { ...prev };
+      delete copy[index];
+      return copy;
+    });
   };
 
   // Update variant field
@@ -275,56 +296,180 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
     }));
   };
 
-  // Local Base64 File Uploader for variant images
-  const handleVariantImageUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  // Aspect ratio validator for variant images (strictly 1:1)
+  const validateImageAspectRatio = (src: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        if (Math.abs(ratio - 1) <= 0.01) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      };
+      img.onerror = () => {
+        resolve(false);
+      };
+      img.src = src;
+    });
+  };
+
+  // Local Base64 File Uploader for variant images with 1:1 check and alt tag generation
+  const handleVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, variantIndex: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        const base64 = event.target.result as string;
-        const currentImagesString = variantImages[index] || "";
-        const updatedImagesString = currentImagesString 
-          ? `${currentImagesString}, ${base64}` 
-          : base64;
-          
-        setVariantImages(prev => ({ ...prev, [index]: updatedImagesString }));
-        updateVariantField(index, "images", updatedImagesString.split(",").map(url => url.trim()).filter(Boolean));
+    const currentImages = variantsList[variantIndex].images || [];
+    if (currentImages.length >= 9) {
+      addToast("You can only add a maximum of 9 images per color variant.", "error");
+      e.target.value = "";
+      return;
+    }
+
+    // Check aspect ratio first using a temporary object URL to avoid uploading invalid files
+    const objectUrl = URL.createObjectURL(file);
+    const isValid = await validateImageAspectRatio(objectUrl);
+    URL.revokeObjectURL(objectUrl);
+
+    if (!isValid) {
+      addToast("Variant images must have an exact 1:1 (square) aspect ratio.", "error");
+      e.target.value = "";
+      return;
+    }
+
+    addToast("Uploading variant image to Vercel Blob...", "info");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to upload to Vercel Blob");
       }
-    };
-    reader.readAsDataURL(file);
+
+      const { url } = await res.json();
+
+      const currentImages = variantsList[variantIndex].images || [];
+      const newImgIndex = currentImages.length + 1;
+      const colorName = variantsList[variantIndex].color || "Variant";
+      const defaultAlt = `${title || "Product"} - ${colorName} - Image ${newImgIndex}`;
+      
+      const updatedImages = [...currentImages, { url, alt: defaultAlt }];
+      updateVariantField(variantIndex, "images", updatedImages);
+      addToast("Variant image uploaded and validated successfully.", "success");
+    } catch (err: any) {
+      console.error(err);
+      addToast(err.message || "Failed to upload image to Vercel Blob.", "error");
+    } finally {
+      e.target.value = ""; // Reset file input
+    }
+  };
+
+  // Add Variant image via URL with 1:1 check and alt tag generation
+  const handleAddImageUrl = async (variantIndex: number) => {
+    const url = newImageUrl[variantIndex]?.trim();
+    if (!url) {
+      addToast("Please enter a valid image URL.", "error");
+      return;
+    }
+
+    const currentImages = variantsList[variantIndex].images || [];
+    if (currentImages.length >= 9) {
+      addToast("You can only add a maximum of 9 images per color variant.", "error");
+      return;
+    }
+
+    const isValid = await validateImageAspectRatio(url);
+    if (!isValid) {
+      addToast("Variant images must have an exact 1:1 (square) aspect ratio.", "error");
+      return;
+    }
+
+    const newImgIndex = currentImages.length + 1;
+    const colorName = variantsList[variantIndex].color || "Variant";
+    const defaultAlt = `${title || "Product"} - ${colorName} - Image ${newImgIndex}`;
+
+    const updatedImages = [...currentImages, { url, alt: defaultAlt }];
+    updateVariantField(variantIndex, "images", updatedImages);
+    setNewImageUrl(prev => ({ ...prev, [variantIndex]: "" }));
+    addToast("Image URL added and validated successfully.", "success");
   };
 
   // A+ blocks builder helpers
   const addAPlusBlock = () => {
+    if (aPlusBlocks.length >= 7) {
+      addToast("You can only add a maximum of 7 A+ content blocks.", "error");
+      return;
+    }
     const newBlock: APlusBlock = {
       id: `ap_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       type: "image",
       content: "970x600",
-      imageUrl: ""
+      imageUrl: "",
+      alt: ""
     };
     setAPlusBlocks([...aPlusBlocks, newBlock]);
+  };
+
+  const moveAPlusBlock = (index: number, direction: "up" | "down") => {
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === aPlusBlocks.length - 1) return;
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    const updated = [...aPlusBlocks];
+    const temp = updated[index];
+    updated[index] = updated[targetIndex];
+    updated[targetIndex] = temp;
+    setAPlusBlocks(updated);
   };
 
   const removeAPlusBlock = (id: string) => {
     setAPlusBlocks(aPlusBlocks.filter(b => b.id !== id));
   };
 
-  const handleBlockImageUpload = (e: React.ChangeEvent<HTMLInputElement>, blockId: string) => {
+  const handleBlockImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, blockId: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result;
-      if (result) {
-        setAPlusBlocks(prev => prev.map(b => 
-          b.id === blockId ? { ...b, imageUrl: result as string, type: "image" } : b
-        ));
+    addToast("Uploading banner image to Vercel Blob...", "info");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to upload to Vercel Blob");
       }
-    };
-    reader.readAsDataURL(file);
+
+      const { url } = await res.json();
+
+      setAPlusBlocks(prev => prev.map((b, idx) =>
+        b.id === blockId ? { 
+          ...b, 
+          imageUrl: url, 
+          type: "image",
+          alt: b.alt || `${title || "Product"} A+ Banner ${idx + 1}`
+        } : b
+      ));
+      addToast("Banner image uploaded successfully.", "success");
+    } catch (err: any) {
+      console.error(err);
+      addToast(err.message || "Failed to upload image to Vercel Blob.", "error");
+    } finally {
+      e.target.value = ""; // Reset file input
+    }
   };
 
   // Auto-Generate SEO Meta Tags
@@ -352,14 +497,11 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
     const matchedHsn = hsns.find(h => h.code === hsnCode);
     const gstRateVal = matchedHsn ? matchedHsn.gstRate : 18;
 
-    const finalVariants = variantsList.map((item, idx) => {
-      const images = variantImages[idx] 
-        ? variantImages[idx].split(",").map(img => img.trim()).filter(Boolean) 
-        : item.images;
-
+    const finalVariants = variantsList.map((item) => {
+      const validImages = (item.images || []).filter((img: any) => img.url && img.url.trim() !== "");
       return {
         ...item,
-        images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80"]
+        images: validImages.length > 0 ? validImages : [{ url: "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80", alt: `${title || 'Product'} Default Image` }]
       };
     });
 
@@ -371,6 +513,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
 
     const totalStock = finalVariants.reduce((sum, v) => sum + v.subVariants.filter((sv: any) => sv.isActive !== false).reduce((s: number, sv: any) => s + sv.stock, 0), 0);
     const tags = tagsText.split(",").map(t => t.trim()).filter(Boolean);
+    const cardTags = cardTagsText.split(",").map(t => t.trim()).filter(Boolean);
 
     const productData: Omit<Product, "_id" | "createdAt"> = {
       title,
@@ -380,11 +523,12 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
       rating: existingProduct ? existingProduct.rating : 4.5,
       reviewCount: existingProduct ? existingProduct.reviewCount : 12,
       tags,
+      cardTags,
       isActive: existingProduct ? existingProduct.isActive : true,
       totalStock,
       colorVariants: finalVariants,
       aPlusContent: aPlusBlocks.filter(b => b.imageUrl && b.imageUrl.trim() !== ""),
-      
+
       hsnCode,
       gstRate: gstRateVal,
       priceIncludesGst,
@@ -424,7 +568,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
         </div>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-8">
+      <form onSubmit={handleSave} className="space-y-4">
         {/* Card 1: Basic Info */}
         <Card>
           <CardContent className="p-6 space-y-6">
@@ -455,13 +599,30 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tags (comma separated)</label>
-              <Input
-                placeholder="e.g., kitchen, bestseller, kadai"
-                value={tagsText}
-                onChange={(e) => setTagsText(e.target.value)}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Search & SEO Tags (comma separated)</label>
+                <Input
+                  placeholder="e.g., clay pots, water cooler, kettle"
+                  value={tagsText}
+                  onChange={(e) => setTagsText(e.target.value)}
+                />
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Used exclusively for search query matching and SEO metadata keywords index.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Product Card Badges / Tags (comma separated)</label>
+                <Input
+                  placeholder="e.g., bestseller, new, trending, kitchen"
+                  value={cardTagsText}
+                  onChange={(e) => setCardTagsText(e.target.value)}
+                />
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Pills/badges shown on website cards (e.g. bestseller, new, trending).
+                </p>
+              </div>
             </div>
 
             {/* Rich Text Editor for Description */}
@@ -527,11 +688,10 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                 <button
                   type="button"
                   onClick={() => setPriceIncludesGst(!priceIncludesGst)}
-                  className={`w-full h-10 px-4 rounded-md border text-sm font-bold transition-all ${
-                    priceIncludesGst
-                      ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400"
-                      : "bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400"
-                  }`}
+                  className={`w-full h-10 px-4 rounded-md border text-sm font-bold transition-all ${priceIncludesGst
+                    ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400"
+                    : "bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400"
+                    }`}
                 >
                   {priceIncludesGst ? "Prices INCLUDE GST" : "Prices EXCLUDE GST"}
                 </button>
@@ -615,7 +775,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
 
                   <CardContent className="p-6 space-y-6">
                     <h4 className="font-bold text-sm text-primary uppercase tracking-wider">Color Line #{idx + 1}</h4>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase text-muted-foreground">Color Name</label>
@@ -660,10 +820,10 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                           />
                         </div>
                       </div>
-                      
+
                       <div className="col-span-1 sm:col-span-2">
                         <Button type="button" variant="secondary" size="sm" onClick={() => generateSubVariants(idx, currentSizes, currentWeights)}>
-                           Generate Combinations Matrix
+                          Generate Combinations Matrix
                         </Button>
                       </div>
                     </div>
@@ -730,24 +890,98 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                       </div>
                     </div>
 
-                    <div className="space-y-4 pt-4 border-t">
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-muted-foreground">Variant Image URLs (comma separated)</label>
-                        <Input
-                          placeholder="e.g. https://images.com/img1.jpg, https://images.com/img2.jpg"
-                          value={currentImages}
-                          onChange={(e) => {
-                            setVariantImages(prev => ({ ...prev, [idx]: e.target.value }));
-                            updateVariantField(idx, "images", e.target.value.split(",").map(img => img.trim()).filter(Boolean));
-                          }}
-                        />
-                      </div>
+                    <div className="space-y-3 pt-4 border-t">
+                      <label className="text-xs font-semibold uppercase text-muted-foreground block">Variant Images (1:1 Ratio Only)</label>
+                      
+                      {item.images && item.images.length > 0 && item.images[0] !== "" ? (
+                        <div className="border rounded-lg overflow-hidden bg-background">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className="bg-secondary/20 border-b">
+                                <th className="p-2 font-bold w-16 text-center">Preview</th>
+                                <th className="p-2 font-bold">Image URL / Data String</th>
+                                <th className="p-2 font-bold">Alt Tag (Editable)</th>
+                                <th className="p-2 font-bold w-12 text-center">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {item.images.map((img: any, imgIdx: number) => {
+                                const imgUrl = typeof img === "string" ? img : img.url || "";
+                                const imgAlt = typeof img === "string" ? `${title || 'Product'} - ${item.color || 'Variant'} - Image ${imgIdx + 1}` : img.alt || "";
+                                return (
+                                  <tr key={imgIdx} className="border-b last:border-0 hover:bg-secondary/5">
+                                    <td className="p-2 text-center">
+                                      <img
+                                        src={imgUrl}
+                                        alt={imgAlt}
+                                        className="h-10 w-10 object-cover rounded border bg-secondary mx-auto"
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80";
+                                        }}
+                                      />
+                                    </td>
+                                    <td className="p-2 font-mono truncate max-w-[220px]" title={imgUrl}>
+                                      {imgUrl}
+                                    </td>
+                                    <td className="p-2">
+                                      <Input
+                                        className="h-8 text-xs w-full"
+                                        value={imgAlt}
+                                        onChange={(e) => {
+                                          const updated = [...item.images];
+                                          if (typeof updated[imgIdx] === "string") {
+                                            updated[imgIdx] = { url: updated[imgIdx], alt: e.target.value };
+                                          } else {
+                                            updated[imgIdx] = { ...updated[imgIdx], alt: e.target.value };
+                                          }
+                                          updateVariantField(idx, "images", updated);
+                                        }}
+                                      />
+                                    </td>
+                                    <td className="p-2 text-center">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        onClick={() => {
+                                          const updated = item.images.filter((_: any, i: number) => i !== imgIdx);
+                                          updateVariantField(idx, "images", updated);
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">No images added yet. Add an image or upload one below.</p>
+                      )}
 
-                      {/* Image Upload Zone */}
-                      <div className="flex flex-wrap items-center gap-4">
-                        <label className="flex items-center gap-2 px-3 py-1.5 bg-background hover:bg-secondary/50 border rounded-md cursor-pointer text-xs font-medium transition-colors">
+                      {/* Add Image Control Panel */}
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <Input
+                          placeholder="Paste 1:1 image url..."
+                          className="text-xs flex-1 h-9"
+                          value={newImageUrl[idx] || ""}
+                          onChange={(e) => setNewImageUrl(prev => ({ ...prev, [idx]: e.target.value }))}
+                        />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="h-9 px-3 text-xs"
+                          onClick={() => handleAddImageUrl(idx)}
+                        >
+                          Add URL
+                        </Button>
+                        <label className="flex items-center justify-center gap-2 px-3 py-0 h-9 bg-background hover:bg-secondary/50 border border-input rounded-md cursor-pointer text-xs font-medium transition-colors">
                           <Upload className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>Upload Local Variant Image</span>
+                          <span>Upload 1:1 Image</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -755,23 +989,6 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                             onChange={(e) => handleVariantImageUpload(e, idx)}
                           />
                         </label>
-
-                        {/* Image Thumbnails */}
-                        {item.images && item.images.length > 0 && item.images[0] !== "" && (
-                          <div className="flex gap-2">
-                            {item.images.map((imgUrl, uIdx) => (
-                              <img
-                                key={uIdx}
-                                src={imgUrl}
-                                alt="Variant thumbnail"
-                                className="h-10 w-10 object-cover rounded border bg-secondary flex-shrink-0"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80";
-                                }}
-                              />
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </div>
 
@@ -784,8 +1001,8 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                           return (
                             <div key={sv.id} className="p-2 border rounded bg-secondary/15 flex flex-col items-center gap-1">
                               <span className="text-[10px] font-bold text-center">{sv.size} - {sv.weight}</span>
-                              <Barcode sku={barVal} height={25} />
-                              <span className="text-[9px] font-mono text-muted-foreground">SKU: {sv.sku || "NO SKU"}</span>
+                              <Barcode sku={barVal} height={18} />
+                              <span className="text-[9px] font-mono text-muted-foreground">{sv.sku || "NO SKU"}</span>
                               <Button
                                 type="button"
                                 variant="outline"
@@ -802,8 +1019,8 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                                       <head>
                                         <title>Barcode Print - ${sv.sku || "Variant"}</title>
                                         <style>
-                                          body { display: flex; justify-content: center; align-items: center; height: 90vh; font-family: sans-serif; }
-                                          .card { text-align: center; width: 220px; }
+                                          body { display: flex; justify-content: center; align-items: center; height: 90vh; font-family: sans-serif; background: #fff; }
+                                          .card { text-align: center; width: 180px; }
                                           @media print { button { display: none; } }
                                         </style>
                                       </head>
@@ -813,11 +1030,10 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                                             Print Barcode
                                           </button>
                                           <div class="card">
-                                            <div style="display:flex; justify-content:center; margin-bottom:6px;">
-                                              ${getBarcodeSvgString(barVal)}
+                                            <div style="display:flex; justify-content:center; margin-bottom:4px;">
+                                              ${getBarcodeSvgString(barVal, 0.8, 24)}
                                             </div>
-                                            <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${sv.sku}</div>
-                                            <div style="font-size:9px; color:#555;">Color: ${item.color} | Size: ${sv.size} | Weight: ${sv.weight}</div>
+                                            <div style="font-size:10px; font-weight:bold; font-family:monospace; text-transform:uppercase;">${sv.sku}</div>
                                           </div>
                                         </div>
                                       </body>
@@ -893,77 +1109,137 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
             {aPlusBlocks.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">No manufacturer A+ marketing banners configured.</p>
             ) : (
-              <div className="space-y-4">
-                {aPlusBlocks.map((block) => (
-                  <div key={block.id} className="p-4 border rounded-lg bg-secondary/20 relative space-y-3">
-                    <button
-                      type="button"
-                      onClick={() => removeAPlusBlock(block.id)}
-                      className="absolute top-3 right-3 text-destructive hover:bg-destructive/10 p-1 rounded"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold block">Aspect Sizing Format</label>
-                        <select
-                          className="w-full h-10 px-3 rounded-md border bg-background text-sm text-foreground"
-                          value={block.content}
-                          onChange={(e) => setAPlusBlocks(prev => prev.map(b => b.id === block.id ? { ...b, content: e.target.value } : b))}
-                        >
-                          <option value="970x300">970x300 Standard Landscape Banner</option>
-                          <option value="970x600">970x600 Double-Height Landscape Banner</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold block">Image Upload or Url</label>
-                        <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-2 px-3 py-1.5 bg-background hover:bg-secondary/50 border rounded-md cursor-pointer text-xs font-medium transition-colors">
-                            <Upload className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span>Upload File</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => handleBlockImageUpload(e, block.id)}
+              <div className="border rounded-lg overflow-hidden bg-background">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-secondary/20 border-b">
+                      <th className="p-2.5 font-bold w-20 text-center">Sequence</th>
+                      <th className="p-2.5 font-bold w-28 text-center">Preview</th>
+                      <th className="p-2.5 font-bold w-48">Aspect Sizing Format</th>
+                      <th className="p-2.5 font-bold">Image Upload or Url</th>
+                      <th className="p-2.5 font-bold">Alt Tag (Editable)</th>
+                      <th className="p-2.5 font-bold w-12 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {aPlusBlocks.map((block, idx) => (
+                      <tr key={block.id} className="border-b last:border-0 hover:bg-secondary/5">
+                        <td className="p-2.5 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              type="button"
+                              disabled={idx === 0}
+                              className="p-1 rounded bg-secondary/50 hover:bg-secondary disabled:opacity-30 disabled:hover:bg-secondary/50 transition-colors cursor-pointer"
+                              onClick={() => moveAPlusBlock(idx, "up")}
+                              title="Move Banner Up"
+                            >
+                              <ArrowLeft className="h-3 w-3 rotate-90" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={idx === aPlusBlocks.length - 1}
+                              className="p-1 rounded bg-secondary/50 hover:bg-secondary disabled:opacity-30 disabled:hover:bg-secondary/50 transition-colors cursor-pointer"
+                              onClick={() => moveAPlusBlock(idx, "down")}
+                              title="Move Banner Down"
+                            >
+                              <ArrowLeft className="h-3 w-3 -rotate-90" />
+                            </button>
+                          </div>
+                        </td>
+                        <td className="p-2.5 text-center">
+                          {block.imageUrl ? (
+                            <img
+                              src={block.imageUrl}
+                              alt={block.alt || "Banner preview"}
+                              className="h-10 w-24 object-cover rounded border bg-secondary mx-auto"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80";
+                              }}
                             />
-                          </label>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground italic">No image</span>
+                          )}
+                        </td>
+                        <td className="p-2.5">
+                          <select
+                            className="w-full h-8 px-2 rounded border bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                            value={block.content}
+                            onChange={(e) => setAPlusBlocks(prev => prev.map(b => b.id === block.id ? { ...b, content: e.target.value } : b))}
+                          >
+                            <option value="970x300">970x300 Standard</option>
+                            <option value="970x600">970x600 Double-Height</option>
+                          </select>
+                        </td>
+                        <td className="p-2.5">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="flex items-center justify-center gap-1.5 px-2 py-1 bg-background hover:bg-secondary/50 border rounded cursor-pointer text-[10px] font-medium transition-colors w-max">
+                              <Upload className="h-3 w-3 text-muted-foreground" />
+                              <span>Upload File</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => handleBlockImageUpload(e, block.id)}
+                              />
+                            </label>
+                            <Input
+                              placeholder="Or paste absolute image url..."
+                              className="text-[10px] h-7 px-2"
+                              value={block.imageUrl || ""}
+                              onChange={(e) => setAPlusBlocks(prev => prev.map((b, bIdx) => {
+                                if (b.id === block.id) {
+                                  return {
+                                    ...b,
+                                    imageUrl: e.target.value,
+                                    alt: b.alt || `${title || "Product"} A+ Banner ${bIdx + 1}`
+                                  };
+                                }
+                                return b;
+                              }))}
+                            />
+                          </div>
+                        </td>
+                        <td className="p-2.5">
                           <Input
-                            placeholder="Or paste absolute image url..."
-                            className="text-xs"
-                            value={block.imageUrl || ""}
-                            onChange={(e) => setAPlusBlocks(prev => prev.map(b => b.id === block.id ? { ...b, imageUrl: e.target.value } : b))}
+                            placeholder="Alt description for image..."
+                            className="text-[10px] h-8 px-2 w-full"
+                            value={block.alt || ""}
+                            onChange={(e) => setAPlusBlocks(prev => prev.map(b => b.id === block.id ? { ...b, alt: e.target.value } : b))}
                           />
-                        </div>
-                      </div>
-                    </div>
-
-                    {block.imageUrl && (
-                      <div className="border rounded bg-background p-1 w-max mx-auto">
-                        <img
-                          src={block.imageUrl}
-                          alt="Banner preview"
-                          className="h-16 object-contain"
-                          style={{ aspectRatio: block.content === "970x600" ? "970/600" : "970/300" }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
+                        </td>
+                        <td className="p-2.5 text-center">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => removeAPlusBlock(block.id)}
+                            title="Delete Block"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-3 pt-6">
+        {/* Fixed Save Bar at the bottom of the screen (no spaces) */}
+        <div className="fixed bottom-0 left-0 md:left-64 right-0 z-30  py-4 px-6 flex justify-end gap-3 ">
           <Link href="/admin/products">
-            <Button type="button" variant="outline" size="lg">Cancel</Button>
+            <Button type="button" variant="outline" size="lg" className="h-10 text-sm font-semibold cursor-pointer">Cancel</Button>
           </Link>
-          <Button type="submit" size="lg">
+          <Button type="submit" size="lg" className="h-10 text-sm font-bold cursor-pointer">
             {existingProduct ? "Save Product Details" : "Publish Product"}
           </Button>
         </div>
+
+        {/* Spacer to prevent the fixed bar from covering the last card content */}
+        <div className="h-24" />
       </form>
     </div>
   );

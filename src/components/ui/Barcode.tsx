@@ -59,7 +59,7 @@ interface BarcodeProps {
   height?: number;
 }
 
-export function Barcode({ value = "", sku, className = "", width = 0.8, height = 30 }: BarcodeProps) {
+export function Barcode({ value = "", sku, className = "", width = 0.8, height = 20 }: BarcodeProps) {
   const encodeValue = React.useMemo(() => {
     let raw = sku || value || "";
     // If it's a long SKU (longer than 8 characters), slice it down to compress space
@@ -101,7 +101,7 @@ export function Barcode({ value = "", sku, className = "", width = 0.8, height =
   const svgWidth = binaryBars.length * width;
 
   return (
-    <div className={`flex flex-col items-center p-1.5 bg-white rounded border border-gray-150 w-max select-none ${className}`}>
+    <div className={`flex flex-col items-center p-1 bg-white rounded border border-gray-100 w-max select-none ${className}`}>
       <svg
         width={svgWidth}
         height={height}
