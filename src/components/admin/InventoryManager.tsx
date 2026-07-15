@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useProductStore } from "@/stores/productStore";
 import { useInventoryHistoryStore } from "@/stores/inventoryHistoryStore";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToastStore } from "@/stores/toastStore";
@@ -15,13 +16,16 @@ import {
   Grid, 
   AlertTriangle, 
   Plus,
-  Minus
+  Minus,
+  X,
+  ArrowRight,
+  Loader2
 } from "lucide-react";
 import { Product, ColorVariant, SubVariant } from "@/types";
 
 export function InventoryManager() {
   const { products, updateProduct } = useProductStore();
-  const { logs, addLog, clearLogs } = useInventoryHistoryStore();
+  const { logs, addLog, clearLogs, initializeLogs, isLoading: ledgerLoading } = useInventoryHistoryStore();
   const { addToast } = useToastStore();
 
   const [activeTab, setActiveTab] = React.useState<"grid" | "ledger">("grid");
@@ -34,6 +38,40 @@ export function InventoryManager() {
 
   // Inline adjustment state
   const [adjustments, setAdjustments] = React.useState<Record<string, string>>({});
+
+  // Pagination states
+  const [gridPage, setGridPage] = React.useState(1);
+  const gridPageSize = 10;
+
+  const [ledgerPage, setLedgerPage] = React.useState(1);
+  const ledgerPageSize = 10;
+
+  // CSV Import Dialog state
+  const [importResults, setImportResults] = React.useState<{
+    isOpen: boolean;
+    successCount: number;
+    skippedCount: number;
+    errors: Array<{
+      line: number;
+      sku: string;
+      reason: "SKU Not Found" | "Invalid Stock Value" | "Parsing Error";
+      detail: string;
+    }>;
+  } | null>(null);
+
+  // Initialize logs on mount
+  React.useEffect(() => {
+    initializeLogs();
+  }, [initializeLogs]);
+
+  // Reset pagination on filter changes
+  React.useEffect(() => {
+    setGridPage(1);
+  }, [searchTerm, stockFilter]);
+
+  React.useEffect(() => {
+    setLedgerPage(1);
+  }, [ledgerSearch, ledgerActionFilter]);
 
   // Flattened list of all product variants for easy tabular display
   const flattenedVariants = React.useMemo(() => {
@@ -79,6 +117,13 @@ export function InventoryManager() {
     });
   }, [flattenedVariants, searchTerm, stockFilter]);
 
+  // Paginated grid variants
+  const totalGridPages = Math.ceil(filteredVariants.length / gridPageSize) || 1;
+  const paginatedVariants = React.useMemo(() => {
+    const startIndex = (gridPage - 1) * gridPageSize;
+    return filteredVariants.slice(startIndex, startIndex + gridPageSize);
+  }, [filteredVariants, gridPage]);
+
   // Filtered logs
   const filteredLogs = React.useMemo(() => {
     return logs.filter((log) => {
@@ -94,6 +139,13 @@ export function InventoryManager() {
       return matchesSearch && matchesAction;
     });
   }, [logs, ledgerSearch, ledgerActionFilter]);
+
+  // Paginated logs
+  const totalLedgerPages = Math.ceil(filteredLogs.length / ledgerPageSize) || 1;
+  const paginatedLogs = React.useMemo(() => {
+    const startIndex = (ledgerPage - 1) * ledgerPageSize;
+    return filteredLogs.slice(startIndex, startIndex + ledgerPageSize);
+  }, [filteredLogs, ledgerPage]);
 
   // Handlers for manual adjustments
   const handleQuickAdjust = async (sku: string, currentStock: number, item: typeof flattenedVariants[0], action: "add" | "sub" | "set") => {
@@ -149,7 +201,7 @@ export function InventoryManager() {
     });
 
     const totalStock = updatedVariants.reduce((sum, cv) => 
-      sum + (cv.subVariants?.reduce((sSum, sv) => sSum + sv.stock, 0) || 0)
+      sum + (cv.subVariants?.filter(sv => sv.isActive !== false).reduce((sSum, sv) => sSum + sv.stock, 0) || 0)
     , 0);
 
     const updatedProduct = {
@@ -163,7 +215,7 @@ export function InventoryManager() {
 
     // Write Stock Ledger audit log
     const variantDetails = `${colorVariant.color} • ${subVariant.size || "Standard"} • ${subVariant.weight || "250g"}`;
-    addLog({
+    await addLog({
       sku: subVariant.sku,
       productName: product.title,
       variantDetails,
@@ -213,17 +265,33 @@ export function InventoryManager() {
 
       const lines = text.split(/\r?\n/);
       let successCount = 0;
-      let errorCount = 0;
+      let skippedCount = 0;
+      const errorsList: Array<{
+        line: number;
+        sku: string;
+        reason: "SKU Not Found" | "Invalid Stock Value" | "Parsing Error";
+        detail: string;
+      }> = [];
 
-      // Skip headers
+      if (lines.length <= 1) {
+        addToast("The uploaded CSV file is empty.", "error");
+        return;
+      }
+
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
 
-        // Simple CSV parser supporting quotes
+        // Parse CSV columns
         const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(",");
+        
         if (matches.length < 6) {
-          errorCount++;
+          errorsList.push({
+            line: i + 1,
+            sku: matches[0]?.replace(/"/g, "").trim() || "Unknown",
+            reason: "Parsing Error",
+            detail: `Line contains only ${matches.length} columns (expected at least 6).`
+          });
           continue;
         }
 
@@ -232,7 +300,12 @@ export function InventoryManager() {
         const targetStock = parseInt(stockStr, 10);
 
         if (isNaN(targetStock) || targetStock < 0) {
-          errorCount++;
+          errorsList.push({
+            line: i + 1,
+            sku,
+            reason: "Invalid Stock Value",
+            detail: `Stock value '${stockStr}' must be a positive integer.`
+          });
           continue;
         }
 
@@ -243,41 +316,55 @@ export function InventoryManager() {
           if (change !== 0) {
             await saveStockUpdate(matchItem, targetStock, change, "CSV Bulk Import");
             successCount++;
+          } else {
+            skippedCount++;
           }
         } else {
-          errorCount++;
+          errorsList.push({
+            line: i + 1,
+            sku,
+            reason: "SKU Not Found",
+            detail: `SKU '${sku}' not found. Only existing stocks can be adjusted by this sheet.`
+          });
         }
       }
 
-      if (successCount > 0) {
-        addToast(`CSV Import Complete: Updated ${successCount} variant stocks. Errors: ${errorCount}.`, "success");
-      } else {
-        addToast(`CSV Import finished. No stock changes applied. Errors: ${errorCount}`, "warning");
-      }
+      setImportResults({
+        isOpen: true,
+        successCount,
+        skippedCount,
+        errors: errorsList
+      });
 
-      // Reset file input
+      // Clear input so same file can be uploaded again
       e.target.value = "";
     };
-
     reader.readAsText(file);
   };
 
   return (
     <div className="space-y-6">
-      {/* Navigation Headers */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Top Banner and Quick Operations */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-6 border rounded-xl shadow-sm text-foreground">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">B2B Warehouse Inventory Control</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Quickly adjust cargo lines, download spreadsheets, or trace the ledger logs.</p>
+          <h2 className="text-xl font-bold tracking-tight">Warehouse Inventory Audit & Adjustment</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            Perform physical stock takes, export stock sheets, or upload bulk logistics sheets.
+          </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" size="sm" onClick={handleExportCSV} className="flex items-center gap-1.5 font-semibold">
-            <Download className="h-4 w-4" /> Export CSV
+        
+        <div className="flex gap-2 w-full md:w-auto">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExportCSV} 
+            className="flex-1 md:flex-none font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+          >
+            <Download className="h-3.5 w-3.5" /> Export Stock Sheet
           </Button>
-          <label className="cursor-pointer">
-            <span className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-semibold text-foreground hover:bg-accent hover:text-accent-foreground transition-colors gap-1.5">
-              <Upload className="h-4 w-4" /> Import CSV
-            </span>
+
+          <label className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/95 border rounded-md cursor-pointer text-xs font-bold shadow-sm transition-colors">
+            <Upload className="h-3.5 w-3.5" /> Import Stock Update
             <input 
               type="file" 
               accept=".csv" 
@@ -289,10 +376,10 @@ export function InventoryManager() {
       </div>
 
       {/* Tabs Switcher */}
-      <div className="flex border-b border-border">
+      <div className="flex border-b border-border text-foreground">
         <button
           onClick={() => setActiveTab("grid")}
-          className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer ${
             activeTab === "grid" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
@@ -300,7 +387,7 @@ export function InventoryManager() {
         </button>
         <button
           onClick={() => setActiveTab("ledger")}
-          className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer ${
             activeTab === "ledger" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
@@ -310,7 +397,7 @@ export function InventoryManager() {
 
       {/* TAB CONTENT: STOCK GRID */}
       {activeTab === "grid" && (
-        <Card className="border border-border shadow-sm">
+        <Card className="border border-border shadow-sm text-foreground">
           <div className="p-6 border-b border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="relative w-full md:w-80">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -327,7 +414,7 @@ export function InventoryManager() {
                   key={filter}
                   variant={stockFilter === filter ? "default" : "outline"}
                   size="sm"
-                  className="capitalize font-bold"
+                  className="capitalize font-bold cursor-pointer"
                   onClick={() => setStockFilter(filter)}
                 >
                   {filter === "all" ? "All Stocks" : filter === "low" ? "Low Stock (<15)" : "Out of Stock"}
@@ -335,6 +422,7 @@ export function InventoryManager() {
               ))}
             </div>
           </div>
+          
           <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead className="bg-secondary/40 font-bold text-muted-foreground uppercase text-[10px] border-b">
@@ -348,14 +436,14 @@ export function InventoryManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {filteredVariants.length === 0 ? (
+                {paginatedVariants.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground italic">
                       No active cargo lines match filters.
                     </td>
                   </tr>
                 ) : (
-                  filteredVariants.map((item) => {
+                  paginatedVariants.map((item) => {
                     const sku = item.sku;
                     const stock = item.stock;
                     const inputVal = adjustments[sku] || "";
@@ -378,46 +466,47 @@ export function InventoryManager() {
                               OUT OF STOCK
                             </span>
                           ) : isLowStock ? (
-                            <span className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 font-extrabold px-2 py-0.5 rounded shadow-sm text-[10px] flex items-center justify-center gap-1 w-fit mx-auto">
-                              <AlertTriangle className="h-3 w-3" /> LOW STOCK ({stock})
+                            <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-2 py-0.5 rounded shadow-sm">
+                              {stock} units (Low)
                             </span>
                           ) : (
-                            <span className="bg-success/10 text-success font-black px-2.5 py-0.5 rounded text-[10px]">
-                              {stock} units
-                            </span>
+                            <span className="font-bold text-success font-mono">{stock} units</span>
                           )}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                          <div className="flex justify-end items-center gap-1">
                             <Input
                               type="number"
+                              min={1}
                               placeholder="Qty"
-                              className="h-8 w-16 text-center text-xs font-bold font-mono border-input"
+                              className="w-14 h-8 text-center text-xs p-1"
                               value={inputVal}
                               onChange={(e) => setAdjustments(prev => ({ ...prev, [sku]: e.target.value }))}
                             />
                             <Button 
-                              size="sm" 
                               variant="outline" 
-                              className="h-8 w-8 p-0" 
-                              title="Add Stock"
+                              size="sm" 
+                              className="h-8 w-8 p-0 text-success hover:bg-success/15 cursor-pointer"
+                              title="Add Stock (+)"
                               onClick={() => handleQuickAdjust(sku, stock, item, "add")}
                             >
-                              <Plus className="h-3.5 w-3.5" />
+                              <Plus className="h-3 w-3" />
                             </Button>
                             <Button 
-                              size="sm" 
                               variant="outline" 
-                              className="h-8 w-8 p-0" 
-                              title="Deduct Stock"
+                              size="sm" 
+                              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/15 cursor-pointer"
+                              title="Deduct Stock (-)"
+                              disabled={stock === 0}
                               onClick={() => handleQuickAdjust(sku, stock, item, "sub")}
                             >
-                              <Minus className="h-3.5 w-3.5" />
+                              <Minus className="h-3 w-3" />
                             </Button>
                             <Button 
+                              variant="secondary" 
                               size="sm" 
-                              className="h-8 px-2 text-[10px] font-bold" 
-                              title="Set Stock"
+                              className="h-8 px-2 text-[10px] font-bold cursor-pointer"
+                              title="Override Absolute Stock (=)"
                               onClick={() => handleQuickAdjust(sku, stock, item, "set")}
                             >
                               Set
@@ -431,12 +520,45 @@ export function InventoryManager() {
               </tbody>
             </table>
           </CardContent>
+          
+          {/* Pagination Controls */}
+          {totalGridPages > 1 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-t border-border/60 bg-secondary/5 gap-4">
+              <span className="text-xs text-muted-foreground font-medium">
+                Showing {(gridPage - 1) * gridPageSize + 1} to {Math.min(filteredVariants.length, gridPage * gridPageSize)} of {filteredVariants.length} lines
+              </span>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="font-bold text-xs h-8 px-3 cursor-pointer"
+                  disabled={gridPage === 1}
+                  onClick={() => setGridPage(p => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <span className="text-xs font-semibold px-2">
+                  Page {gridPage} of {totalGridPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="font-bold text-xs h-8 px-3 cursor-pointer"
+                  disabled={gridPage === totalGridPages}
+                  onClick={() => setGridPage(p => Math.min(totalGridPages, p + 1))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
       {/* TAB CONTENT: STOCK LEDGER LOGS */}
       {activeTab === "ledger" && (
-        <Card className="border border-border shadow-sm">
+        <Card className="border border-border shadow-sm text-foreground">
           <div className="p-6 border-b border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="relative w-full md:w-80">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -459,71 +581,243 @@ export function InventoryManager() {
                 <option value="Scan Adjustment">Scanner Adjustments</option>
                 <option value="Order Deduction">Order Sales Deductions</option>
               </select>
-              <Button variant="outline" size="sm" onClick={clearLogs} className="font-bold text-destructive border-destructive/20 hover:bg-destructive/10 h-9">
+              <Button variant="outline" size="sm" onClick={clearLogs} className="font-bold text-destructive border-destructive/20 hover:bg-destructive/10 h-9 cursor-pointer">
                 Clear Logs
               </Button>
             </div>
           </div>
+          
           <CardContent className="p-0 overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-secondary/40 font-bold text-muted-foreground uppercase text-[10px] border-b">
-                <tr>
-                  <th className="px-6 py-3">Timestamp</th>
-                  <th className="px-6 py-3">Product / Variant</th>
-                  <th className="px-6 py-3 font-mono">SKU</th>
-                  <th className="px-6 py-3">Action Type</th>
-                  <th className="px-6 py-3 text-center">Previous Stock</th>
-                  <th className="px-6 py-3 text-center">Adjustment</th>
-                  <th className="px-6 py-3 text-center">Resulting Stock</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {filteredLogs.length === 0 ? (
+            {ledgerLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-2 text-muted-foreground text-sm">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span>Loading ledger events...</span>
+              </div>
+            ) : (
+              <table className="w-full text-xs text-left">
+                <thead className="bg-secondary/40 font-bold text-muted-foreground uppercase text-[10px] border-b">
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground italic">
-                      No stock ledger events recorded yet.
-                    </td>
+                    <th className="px-6 py-3">Timestamp</th>
+                    <th className="px-6 py-3">Product / Variant</th>
+                    <th className="px-6 py-3 font-mono">SKU</th>
+                    <th className="px-6 py-3">Action Type</th>
+                    <th className="px-6 py-3 text-center">Previous Stock</th>
+                    <th className="px-6 py-3 text-center">Adjustment</th>
+                    <th className="px-6 py-3 text-center">Resulting Stock</th>
                   </tr>
-                ) : (
-                  filteredLogs.map((log) => {
-                    const isPositive = log.change > 0;
-                    const changeStr = isPositive ? `+${log.change}` : `${log.change}`;
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {paginatedLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground italic">
+                        No stock ledger events recorded yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedLogs.map((log) => {
+                      const isPositive = log.change > 0;
+                      const changeStr = isPositive ? `+${log.change}` : `${log.change}`;
 
-                    return (
-                      <tr key={log.id} className="hover:bg-secondary/15 transition-colors text-foreground">
-                        <td className="px-6 py-4 text-muted-foreground font-mono whitespace-nowrap">{log.timestamp}</td>
-                        <td className="px-6 py-4">
-                          <span className="font-bold">{log.productName}</span>
-                          <div className="text-[10px] text-muted-foreground mt-0.5 font-semibold">
-                            {log.variantDetails}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 font-mono font-bold text-muted-foreground">{log.sku}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                            log.actionType === "CSV Bulk Import" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" :
-                            log.actionType === "Scan Adjustment" ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" :
-                            log.actionType === "Order Deduction" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
-                            "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
-                          }`}>
-                            {log.actionType}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-center font-semibold text-muted-foreground">{log.prevStock}</td>
-                        <td className={`px-6 py-4 text-center font-black ${
-                          isPositive ? "text-success" : "text-destructive"
-                        }`}>
-                          {changeStr}
-                        </td>
-                        <td className="px-6 py-4 text-center font-bold text-foreground bg-secondary/10">{log.newStock}</td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                      return (
+                        <tr key={log._id} className="hover:bg-secondary/15 transition-colors text-foreground">
+                          <td className="px-6 py-4 text-muted-foreground font-mono whitespace-nowrap">{log.timestamp}</td>
+                          <td className="px-6 py-4">
+                            <span className="font-bold">{log.productName}</span>
+                            <div className="text-[10px] text-muted-foreground mt-0.5 font-semibold">
+                              {log.variantDetails}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 font-mono font-bold text-muted-foreground">{log.sku}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                              log.actionType === "CSV Bulk Import" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" :
+                              log.actionType === "Scan Adjustment" ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" :
+                              log.actionType === "Order Deduction" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
+                              "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
+                            }`}>
+                              {log.actionType}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-center font-mono font-medium">{log.prevStock}</td>
+                          <td className="px-6 py-4 text-center font-mono font-bold">
+                            <span className={isPositive ? "text-success" : "text-destructive"}>
+                              {changeStr}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-center font-mono font-bold">{log.newStock}</td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            )}
           </CardContent>
+
+          {/* Pagination Controls */}
+          {totalLedgerPages > 1 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-t border-border/60 bg-secondary/5 gap-4">
+              <span className="text-xs text-muted-foreground font-medium">
+                Showing {(ledgerPage - 1) * ledgerPageSize + 1} to {Math.min(filteredLogs.length, ledgerPage * ledgerPageSize)} of {filteredLogs.length} events
+              </span>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="font-bold text-xs h-8 px-3 cursor-pointer"
+                  disabled={ledgerPage === 1}
+                  onClick={() => setLedgerPage(p => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <span className="text-xs font-semibold px-2">
+                  Page {ledgerPage} of {totalLedgerPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="font-bold text-xs h-8 px-3 cursor-pointer"
+                  disabled={ledgerPage === totalLedgerPages}
+                  onClick={() => setLedgerPage(p => Math.min(totalLedgerPages, p + 1))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
+      )}
+
+      {/* CSV IMPORT RESULTS MODAL DIALOG */}
+      {importResults && importResults.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-card text-card-foreground border border-border w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            {/* Header */}
+            <div className="px-6 py-4 border-b flex justify-between items-center bg-secondary/15">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                <h3 className="font-bold text-lg">CSV Stock Import Summary</h3>
+              </div>
+              <button 
+                onClick={() => setImportResults(null)}
+                className="p-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 flex-1 overflow-y-auto space-y-5 text-sm leading-relaxed">
+              {/* Summary Alerts */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Successful Updates</span>
+                  <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1 block">
+                    {importResults.successCount}
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-1">Stock levels modified successfully.</p>
+                </div>
+                <div className="p-4 rounded-lg bg-zinc-500/10 border border-zinc-500/20">
+                  <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider block">Skipped (No Change)</span>
+                  <span className="text-3xl font-black text-zinc-600 dark:text-zinc-400 mt-1 block">
+                    {importResults.skippedCount}
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-1">Stock matches current levels.</p>
+                </div>
+                <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">Errors / Warnings</span>
+                  <span className="text-3xl font-black text-amber-600 dark:text-amber-400 mt-1 block">
+                    {importResults.errors.length}
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-1">Lines that could not be processed.</p>
+                </div>
+              </div>
+
+              {/* Informative Alert for New Products */}
+              {importResults.errors.some(e => e.reason === "SKU Not Found") && (
+                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/25 flex gap-3 text-xs">
+                  <AlertTriangle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <span className="font-bold text-blue-700 dark:text-blue-400 block">Sourcing New Inventory?</span>
+                    <p className="text-muted-foreground leading-normal">
+                      Stock adjustments can only be applied to **existing** catalog SKUs. If you are importing new inventory lines or new variations (different colors, sizes, or weights), you must add them first.
+                    </p>
+                    <div className="flex gap-4 pt-1.5 font-bold">
+                      <Link href="/admin/products/new" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                        Add New Product <ArrowRight className="h-3 w-3" />
+                      </Link>
+                      <Link href="/admin/products" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                        Manage Existing Products <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Details Log */}
+              {importResults.errors.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-bold text-xs uppercase text-muted-foreground tracking-wider">Detailed Error Logs</h4>
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    <div className="max-h-60 overflow-y-auto">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-secondary/40 font-bold text-muted-foreground border-b uppercase text-[9px]">
+                          <tr>
+                            <th className="px-4 py-2 text-center w-12">Line</th>
+                            <th className="px-4 py-2 w-28">SKU</th>
+                            <th className="px-4 py-2 w-32">Error Type</th>
+                            <th className="px-4 py-2">Details</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/60">
+                          {importResults.errors.map((err, idx) => (
+                            <tr key={idx} className="hover:bg-secondary/5">
+                              <td className="px-4 py-2.5 text-center font-mono font-medium text-muted-foreground">{err.line}</td>
+                              <td className="px-4 py-2.5 font-mono font-bold text-foreground">{err.sku}</td>
+                              <td className="px-4 py-2.5">
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide ${
+                                  err.reason === "SKU Not Found" ? "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400" :
+                                  err.reason === "Invalid Stock Value" ? "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400" :
+                                  "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-400"
+                                }`}>
+                                  {err.reason}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5 text-muted-foreground leading-normal">
+                                {err.detail}
+                                {err.reason === "SKU Not Found" && (
+                                  <Link 
+                                    href="/admin/products/new" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:underline font-bold inline-flex items-center gap-0.5 ml-1"
+                                  >
+                                    Add product/variant <ArrowRight className="h-2.5 w-2.5" />
+                                  </Link>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t flex justify-end bg-secondary/15">
+              <Button 
+                onClick={() => setImportResults(null)}
+                className="font-bold text-xs h-9 cursor-pointer"
+              >
+                Close Summary
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
