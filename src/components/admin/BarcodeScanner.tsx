@@ -9,7 +9,7 @@ import { useToastStore } from "@/stores/toastStore";
 import { Barcode } from "@/components/ui/Barcode";
 import { formatPrice } from "@/lib/utils";
 import { X, Search, QrCode, ArrowRight, Minus, Plus, Camera, CameraOff } from "lucide-react";
-import { Product, ColorVariant } from "@/types";
+import { Product, ColorVariant, SubVariant } from "@/types";
 
 interface BarcodeScannerProps {
   isOpen: boolean;
@@ -21,6 +21,7 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
   const [scanInput, setScanInput] = React.useState("");
   const [scannedProduct, setScannedProduct] = React.useState<Product | null>(null);
   const [scannedVariant, setScannedVariant] = React.useState<ColorVariant | null>(null);
+  const [scannedSubVariant, setScannedSubVariant] = React.useState<SubVariant | null>(null);
   const [errorMsg, setErrorMsg] = React.useState("");
 
   // Camera states
@@ -136,40 +137,56 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
 
     let foundProduct = null;
     let foundVariant = null;
+    let foundSubVariant = null;
 
     for (const p of products) {
-      const matchVar = p.colorVariants?.find(cv => 
-        cv.sku.toUpperCase() === cleaned || 
-        (cv.barcode && cv.barcode.toUpperCase() === cleaned)
-      );
-      if (matchVar) {
-        foundProduct = p;
-        foundVariant = matchVar;
-        break;
+      for (const cv of p.colorVariants || []) {
+        const matchSub = cv.subVariants?.find(sv => 
+          sv.sku.toUpperCase() === cleaned || 
+          (sv.barcode && sv.barcode.toUpperCase() === cleaned)
+        );
+        if (matchSub) {
+          foundProduct = p;
+          foundVariant = cv;
+          foundSubVariant = matchSub;
+          break;
+        }
       }
+      if (foundProduct) break;
     }
 
-    if (foundProduct && foundVariant) {
+    if (foundProduct && foundVariant && foundSubVariant) {
       setScannedProduct(foundProduct);
       setScannedVariant(foundVariant);
-      setScanInput(foundVariant.sku);
-      useToastStore.getState().addToast(`Matched variant: ${foundProduct.title} (${foundVariant.color})`, "success");
+      setScannedSubVariant(foundSubVariant);
+      setScanInput(foundSubVariant.sku);
+      useToastStore.getState().addToast(`Matched variant: ${foundProduct.title} (${foundVariant.color} - ${foundSubVariant.size} / ${foundSubVariant.weight})`, "success");
     } else {
       setScannedProduct(null);
       setScannedVariant(null);
+      setScannedSubVariant(null);
       setErrorMsg(`Barcode "${barcodeVal}" not matched in active B2B variants inventory.`);
       useToastStore.getState().addToast(`Barcode lookup failed.`, "error");
     }
   };
 
   const handleStockChange = (amount: number) => {
-    if (!scannedProduct || !scannedVariant) return;
-    const newStock = Math.max(0, scannedVariant.stock + amount);
+    if (!scannedProduct || !scannedVariant || !scannedSubVariant) return;
+    const newStock = Math.max(0, scannedSubVariant.stock + amount);
     
-    const updatedVariants = scannedProduct.colorVariants.map((cv: ColorVariant) => 
-      cv.sku === scannedVariant.sku ? { ...cv, stock: newStock } : cv
-    );
-    const totalStock = updatedVariants.reduce((sum: number, v: ColorVariant) => sum + v.stock, 0);
+    const updatedVariants = scannedProduct.colorVariants.map((cv: ColorVariant) => {
+      if (cv.color === scannedVariant.color) {
+        const updatedSubs = (cv.subVariants || []).map((sv) => 
+          sv.id === scannedSubVariant.id ? { ...sv, stock: newStock } : sv
+        );
+        return { ...cv, subVariants: updatedSubs };
+      }
+      return cv;
+    });
+
+    const totalStock = updatedVariants.reduce((sum: number, cv: ColorVariant) => 
+      sum + (cv.subVariants?.reduce((sSum, sv) => sSum + sv.stock, 0) || 0)
+    , 0);
 
     const updatedProduct = {
       ...scannedProduct,
@@ -181,7 +198,7 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
     
     // Update local state to reflect change instantly
     setScannedProduct(updatedProduct);
-    setScannedVariant({ ...scannedVariant, stock: newStock });
+    setScannedSubVariant({ ...scannedSubVariant, stock: newStock });
     useToastStore.getState().addToast(`Stock level adjusted to ${newStock} units.`, "success");
   };
 
@@ -272,7 +289,7 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Product to Scan</label>
               <div className="space-y-1 max-h-48 overflow-y-auto border rounded-md p-2 bg-secondary/15">
                 {products.slice(0, 10).map((prod) => {
-                  const bcValue = prod.colorVariants?.[0]?.sku || prod._id;
+                  const bcValue = prod.colorVariants?.[0]?.subVariants?.[0]?.sku || prod._id;
                   return (
                     <button
                       key={prod._id}
@@ -288,16 +305,16 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
 
             {/* Right Columns: Scanned Details */}
             <div className="md:col-span-2">
-              {scannedProduct && scannedVariant ? (
+              {scannedProduct && scannedVariant && scannedSubVariant ? (
                 <div className="space-y-6">
                   <div className="flex gap-4 items-start border-b pb-4">
                     <div className="flex-1">
                       <h3 className="font-bold text-base leading-tight">{scannedProduct.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">SKU: {scannedVariant.sku}</p>
-                      <p className="text-xs text-muted-foreground">Color: {scannedVariant.color} | Sizes: {scannedVariant.sizes.join(", ")} | Weights: {scannedVariant.weights.join(", ")}</p>
+                      <p className="text-xs text-muted-foreground mt-1">SKU: {scannedSubVariant.sku}</p>
+                      <p className="text-xs text-muted-foreground">Color: {scannedVariant.color} | Size: {scannedSubVariant.size} | Weight: {scannedSubVariant.weight}</p>
                     </div>
                     {/* Small Barcode display */}
-                    <Barcode sku={scannedVariant.sku} />
+                    <Barcode sku={scannedSubVariant.sku} />
                   </div>
 
                   {/* Stock Audit Controls */}
@@ -306,10 +323,10 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
                       <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Current Stock</p>
                       <div className="flex items-baseline gap-2 mt-2">
                         <span className={`text-3xl font-extrabold ${
-                          scannedVariant.stock > 25 ? "text-success" :
-                          scannedVariant.stock > 10 ? "text-yellow-600 dark:text-yellow-500" :
+                          scannedSubVariant.stock > 25 ? "text-success" :
+                          scannedSubVariant.stock > 10 ? "text-yellow-600 dark:text-yellow-500" :
                           "text-destructive"
-                        }`}>{scannedVariant.stock}</span>
+                        }`}>{scannedSubVariant.stock}</span>
                         <span className="text-xs text-muted-foreground">units</span>
                       </div>
                     </div>
@@ -341,7 +358,7 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
                   <div className="border-t pt-4 flex justify-between items-center text-sm">
                     <div>
                       <span className="text-muted-foreground">Price: </span>
-                      <span className="font-bold text-foreground">{formatPrice(scannedVariant.price)}</span>
+                      <span className="font-bold text-foreground">{formatPrice(scannedSubVariant.price)}</span>
                     </div>
                     <div className="text-xs text-success bg-success/15 px-2.5 py-1 rounded-full font-semibold">
                       Fulfillments Enabled

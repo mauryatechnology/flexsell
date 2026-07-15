@@ -99,12 +99,15 @@ export function CartView() {
               .join(", ");
             const matchingColor = item.selectedVariants["Color"] || item.selectedVariants["color"];
             const activeVariant = item.product.colorVariants?.find(cv => cv.color === matchingColor) 
-              || item.product.colorVariants?.[0] 
-              || { sku: "NO SKU", images: [""], stock: 0 };
-            const imgUrl = activeVariant.images?.[0] || "";
-            const sku = activeVariant.sku;
+              || item.product.colorVariants?.[0];
+            const activeSubVariant = activeVariant?.subVariants?.find(sv => 
+              (!item.selectedVariants["Size"] || sv.size === item.selectedVariants["Size"]) &&
+              (!item.selectedVariants["Weight"] || sv.weight === item.selectedVariants["Weight"])
+            ) || activeVariant?.subVariants?.[0];
+            const imgUrl = activeVariant?.images?.[0] || "";
+            const sku = activeSubVariant?.sku || "NO SKU";
             const moq = item.product.moq || 5;
-            const maxStock = activeVariant.stock;
+            const maxStock = activeSubVariant?.stock || 0;
 
             return (
               <Card key={item.id} className="border-border">

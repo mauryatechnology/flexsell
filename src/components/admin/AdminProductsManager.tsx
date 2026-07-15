@@ -11,7 +11,7 @@ import { useProductStore } from "@/stores/productStore";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { useHsnStore } from "@/stores/hsnStore";
 import { useToastStore } from "@/stores/toastStore";
-import { Product, Category, ColorVariant } from "@/types";
+import { Product, Category, ColorVariant, SubVariant } from "@/types";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { Barcode } from "@/components/ui/Barcode";
 import { Pagination } from "@/components/ui/Pagination";
@@ -70,7 +70,13 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
       const term = searchTerm.toLowerCase();
       list = list.filter(p => 
         p.title.toLowerCase().includes(term) || 
-        p.colorVariants?.some(cv => cv.sku.toLowerCase().includes(term))
+        p.colorVariants?.some(cv => 
+          cv.color.toLowerCase().includes(term) ||
+          cv.subVariants?.some(sv => 
+            sv.sku.toLowerCase().includes(term) ||
+            (sv.barcode && sv.barcode.toLowerCase().includes(term))
+          )
+        )
       );
     }
 
@@ -103,8 +109,8 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
 
     // Sorting
     list.sort((a, b) => {
-      const priceA = a.colorVariants?.[0]?.price ?? 0;
-      const priceB = b.colorVariants?.[0]?.price ?? 0;
+      const priceA = a.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
+      const priceB = b.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
 
       switch (sortBy) {
         case "title-asc":
@@ -197,15 +203,17 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
     let cardsHtml = "";
     selectedProducts.forEach(product => {
       product.colorVariants.forEach(cv => {
-        const barValue = cv.barcode || cv.sku || "FX0000";
-        cardsHtml += `
-          <div style="text-align:center; width:180px; margin:10px; display:inline-block; box-sizing:border-box;">
-            <div style="display:flex; justify-content:center; margin-bottom:6px;">
-              ${getBarcodeSvgString(barValue, 0.8, 35)}
+        cv.subVariants?.forEach(sv => {
+          const barValue = sv.barcode || sv.sku || "FX0000";
+          cardsHtml += `
+            <div style="text-align:center; width:180px; margin:10px; display:inline-block; box-sizing:border-box;">
+              <div style="display:flex; justify-content:center; margin-bottom:6px;">
+                ${getBarcodeSvgString(barValue, 0.8, 35)}
+              </div>
+              <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${sv.sku} (${cv.color} - ${sv.size} / ${sv.weight})</div>
             </div>
-            <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${cv.sku}</div>
-          </div>
-        `;
+          `;
+        });
       });
     });
 
@@ -239,19 +247,19 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
   };
 
   // Individual barcode printing inside the modal
-  const handlePrintIndividualBarcode = (product: Product, cv: ColorVariant) => {
+  const handlePrintIndividualBarcode = (product: Product, cv: ColorVariant, sv: SubVariant) => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       addToast("Popup blocker prevented printing.", "error");
       return;
     }
 
-    const barValue = cv.barcode || cv.sku || "FX0000";
+    const barValue = sv.barcode || sv.sku || "FX0000";
 
     printWindow.document.write(`
       <html>
         <head>
-          <title>Print Label - ${cv.sku}</title>
+          <title>Print Label - ${sv.sku}</title>
           <style>
             body { display: flex; justify-content: center; align-items: center; height: 90vh; font-family: sans-serif; background:#fff; }
             .card { text-align: center; width: 220px; }
@@ -267,7 +275,8 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
               <div style="display:flex; justify-content:center; margin-bottom:6px;">
                 ${getBarcodeSvgString(barValue, 0.8, 35)}
               </div>
-              <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${cv.sku}</div>
+              <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${sv.sku}</div>
+              <div style="font-size:9px; color:#555;">${cv.color} - ${sv.size} / ${sv.weight}</div>
             </div>
           </div>
         </body>
@@ -289,18 +298,21 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
     }
 
     const titleText = barcodePrintProduct.title;
-    const cardsHtml = barcodePrintProduct.colorVariants.map(cv => {
-      const barValue = cv.barcode || cv.sku || "FX0000";
-      
-      return `
-        <div style="text-align:center; width:180px; margin:10px; display:inline-block;">
-          <div style="display:flex; justify-content:center; margin-bottom:6px;">
-            ${getBarcodeSvgString(barValue, 0.8, 35)}
+    const cardsHtml = barcodePrintProduct.colorVariants.flatMap(cv => 
+      cv.subVariants?.map(sv => {
+        const barValue = sv.barcode || sv.sku || "FX0000";
+        
+        return `
+          <div style="text-align:center; width:180px; margin:10px; display:inline-block;">
+            <div style="display:flex; justify-content:center; margin-bottom:6px;">
+              ${getBarcodeSvgString(barValue, 0.8, 35)}
+            </div>
+            <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${sv.sku}</div>
+            <div style="font-size:8px; color:#555;">${cv.color} - ${sv.size} / ${sv.weight}</div>
           </div>
-          <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${cv.sku}</div>
-        </div>
-      `;
-    }).join("");
+        `;
+      }) || []
+    ).join("");
 
     printWindow.document.write(`
       <html>
@@ -530,8 +542,8 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="font-bold text-foreground">{formatPrice(defaultVariant.price)}</div>
-                          <div className="text-[10px] text-muted-foreground">MRP: {formatPrice(defaultVariant.mrp)}</div>
+                           <div className="font-bold text-foreground">{formatPrice(defaultVariant?.subVariants?.[0]?.price ?? 0)}</div>
+                          <div className="text-[10px] text-muted-foreground">MRP: {formatPrice(defaultVariant?.subVariants?.[0]?.mrp ?? 0)}</div>
                         </td>
                         <td className="px-6 py-4">
                           {product.totalStock > 20 ? (
@@ -614,23 +626,25 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
               </p>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {barcodePrintProduct.colorVariants?.map((cv, idx) => (
-                  <div key={idx} className="p-4 border rounded-lg bg-secondary/20 flex flex-col items-center gap-2">
-                    <span className="text-xs font-bold text-primary">{cv.color} Variant</span>
-                    <Barcode sku={cv.barcode || cv.sku} height={35} />
-                    <span className="text-[10px] text-muted-foreground font-mono">SKU: {cv.sku}</span>
-                    
-                    {/* Individual download option */}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handlePrintIndividualBarcode(barcodePrintProduct, cv)}
-                      className="text-xs mt-2 w-full flex items-center justify-center gap-1.5"
-                    >
-                      <Download className="h-3.5 w-3.5" /> Download Barcode
-                    </Button>
-                  </div>
-                ))}
+                {barcodePrintProduct.colorVariants?.flatMap((cv) => 
+                  cv.subVariants?.map((sv, idx) => (
+                    <div key={`${cv.color}-${sv.id}-${idx}`} className="p-4 border rounded-lg bg-secondary/20 flex flex-col items-center gap-2">
+                      <span className="text-xs font-bold text-primary">{cv.color} ({sv.size} / {sv.weight})</span>
+                      <Barcode sku={sv.barcode || sv.sku} height={35} />
+                      <span className="text-[10px] text-muted-foreground font-mono">SKU: {sv.sku}</span>
+                      
+                      {/* Individual download option */}
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handlePrintIndividualBarcode(barcodePrintProduct, cv, sv)}
+                        className="text-xs mt-2 w-full flex items-center justify-center gap-1.5"
+                      >
+                        <Download className="h-3.5 w-3.5" /> Download Barcode
+                      </Button>
+                    </div>
+                  ))
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t">

@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = products.find((p) => p.slug === slug);
   if (!product) return {};
   const defaultVariant = product.colorVariants?.[0];
-  const sku = defaultVariant?.sku || "NO SKU";
+  const sku = defaultVariant?.subVariants?.[0]?.sku || "NO SKU";
   const imgUrl = defaultVariant?.images?.[0] || "";
   return {
     title: `${product.title} - Factory Wholesale Price`,

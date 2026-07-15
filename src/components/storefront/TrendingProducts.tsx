@@ -33,14 +33,15 @@ export function TrendingProducts({ initialProducts }: TrendingProductsProps) {
 
   const handleAddToCart = (product: Product) => {
     const defaultVariant = product.colorVariants?.[0];
-    if (!defaultVariant) return;
+    const defaultSub = defaultVariant?.subVariants?.[0];
+    if (!defaultVariant || !defaultSub) return;
 
     addItem(
       product,
       {
         Color: defaultVariant.color,
-        Size: defaultVariant.sizes[0] || "Standard",
-        Weight: defaultVariant.weights[0] || "250g"
+        Size: defaultSub.size || "Standard",
+        Weight: defaultSub.weight || "250g"
       },
       1
     );
@@ -50,8 +51,9 @@ export function TrendingProducts({ initialProducts }: TrendingProductsProps) {
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
       {trending.map((product) => {
         const favorited = isInWishlist(product._id);
-        const defaultVariant = product.colorVariants?.[0] || { price: 0, mrp: 0, discount: 0, images: [""] };
-        const imgUrl = defaultVariant.images?.[0] || "";
+        const defaultVariant = product.colorVariants?.[0];
+        const defaultSub = defaultVariant?.subVariants?.[0];
+        const imgUrl = defaultVariant?.images?.[0] || "";
 
         return (
           <Card key={product._id} className="flex flex-col h-full hover:shadow-md transition-shadow relative group">
@@ -78,7 +80,7 @@ export function TrendingProducts({ initialProducts }: TrendingProductsProps) {
                 </h3>
               </Link>
               <div className="mt-auto pt-2 space-y-3">
-                <PriceDisplay price={defaultVariant.price} mrp={defaultVariant.mrp} discount={defaultVariant.discount} />
+                <PriceDisplay price={defaultSub?.price || 0} mrp={defaultSub?.mrp || 0} discount={defaultSub?.discount || 0} />
                 <Button 
                   className="w-full" 
                   size="sm"

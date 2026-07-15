@@ -14,18 +14,23 @@ export interface Category extends BaseDocument {
   order: number;
 }
 
-export interface ColorVariant {
-  color: string;
-  sizes: string[];
-  weights: string[];
-  dimensions: string;
-  images: string[];
+export interface SubVariant {
+  id: string;
+  size: string;
+  weight: string;
   price: number;
   mrp: number;
   discount: number;
   stock: number;
   sku: string;
-  barcode?: string; // Short unique code (e.g. FX100A)
+  barcode?: string;
+}
+
+export interface ColorVariant {
+  color: string;
+  dimensions: string;
+  images: string[];
+  subVariants: SubVariant[];
 }
 
 export interface HsnRecord extends BaseDocument {

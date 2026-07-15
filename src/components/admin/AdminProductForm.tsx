@@ -75,15 +75,18 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
   const [variantsList, setVariantsList] = React.useState<ColorVariant[]>([
     {
       color: "Default",
-      sizes: ["Standard"],
-      weights: ["250g"],
       dimensions: "15x12x8 cm",
       images: [""],
-      price: 0,
-      mrp: 0,
-      discount: 0,
-      stock: 100,
-      sku: ""
+      subVariants: [{
+        id: "sv-default",
+        size: "Standard",
+        weight: "250g",
+        price: 0,
+        mrp: 0,
+        discount: 0,
+        stock: 100,
+        sku: ""
+      }]
     }
   ]);
 
@@ -132,8 +135,10 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
         const initialImages: Record<number, string> = {};
         
         existingProduct.colorVariants.forEach((v, idx) => {
-          initialSizes[idx] = v.sizes.join(", ");
-          initialWeights[idx] = v.weights.join(", ");
+          const uniqueSizes = Array.from(new Set((v.subVariants || []).map(sv => sv.size))).filter(Boolean);
+          const uniqueWeights = Array.from(new Set((v.subVariants || []).map(sv => sv.weight))).filter(Boolean);
+          initialSizes[idx] = uniqueSizes.join(", ");
+          initialWeights[idx] = uniqueWeights.join(", ");
           initialImages[idx] = v.images.join(", ");
         });
         
@@ -175,17 +180,71 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
       ...prev,
       {
         color: `New Color ${prev.length + 1}`,
-        sizes: ["Standard"],
-        weights: ["250g"],
         dimensions: "15x12x8 cm",
         images: [""],
-        price: 0,
-        mrp: 0,
-        discount: 0,
-        stock: 50,
-        sku: ""
+        subVariants: [{
+          id: `sv-${Date.now()}`,
+          size: "Standard",
+          weight: "250g",
+          price: 0,
+          mrp: 0,
+          discount: 0,
+          stock: 50,
+          sku: ""
+        }]
       }
     ]);
+  };
+
+  const generateSubVariants = (idx: number, sizesStr: string, weightsStr: string) => {
+    const sizes = sizesStr.split(",").map(s => s.trim()).filter(Boolean);
+    const weights = weightsStr.split(",").map(w => w.trim()).filter(Boolean);
+    if (sizes.length === 0) sizes.push("Standard");
+    if (weights.length === 0) weights.push("250g");
+
+    setVariantsList(prev => prev.map((item, i) => {
+      if (i !== idx) return item;
+      const newSubVariants: any[] = [];
+      let counter = 1;
+      sizes.forEach(size => {
+        weights.forEach(weight => {
+          const existing = item.subVariants.find(sv => sv.size === size && sv.weight === weight);
+          if (existing) {
+            newSubVariants.push(existing);
+          } else {
+            newSubVariants.push({
+              id: `sv-${Date.now()}-${counter}`,
+              size,
+              weight,
+              price: item.subVariants[0]?.price || 0,
+              mrp: item.subVariants[0]?.mrp || 0,
+              discount: item.subVariants[0]?.discount || 0,
+              stock: 50,
+              sku: `${item.subVariants[0]?.sku || 'SKU'}-${counter}`
+            });
+          }
+          counter++;
+        });
+      });
+      return { ...item, subVariants: newSubVariants };
+    }));
+  };
+
+  const updateSubVariantField = (colorIdx: number, subId: string, field: string, value: any) => {
+    setVariantsList(prev => prev.map((item, idx) => {
+      if (idx !== colorIdx) return item;
+      const newSubs = item.subVariants.map(sv => {
+        if (sv.id !== subId) return sv;
+        const updated = { ...sv, [field]: value };
+        if (field === "price" || field === "mrp") {
+          const p = field === "price" ? Number(value) : sv.price;
+          const m = field === "mrp" ? Number(value) : sv.mrp;
+          updated.discount = m > 0 ? Math.round(((m - p) / m) * 100) : 0;
+        }
+        return updated;
+      });
+      return { ...item, subVariants: newSubs };
+    }));
   };
 
   const removeVariant = (index: number) => {
@@ -214,17 +273,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
   const updateVariantField = (index: number, field: keyof ColorVariant, value: any) => {
     setVariantsList(prev => prev.map((item, idx) => {
       if (idx !== index) return item;
-      
-      const updated = { ...item, [field]: value };
-      
-      // Calculate discount automatically on price/mrp edits
-      if (field === "price" || field === "mrp") {
-        const p = field === "price" ? Number(value) : item.price;
-        const m = field === "mrp" ? Number(value) : item.mrp;
-        updated.discount = m > 0 ? Math.round(((m - p) / m) * 100) : 0;
-      }
-      
-      return updated;
+      return { ...item, [field]: value };
     }));
   };
 
@@ -305,41 +354,24 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
     const matchedHsn = hsns.find(h => h.code === hsnCode);
     const gstRateVal = matchedHsn ? matchedHsn.gstRate : 18;
 
-    // Parse comma text fields into variant arrays
     const finalVariants = variantsList.map((item, idx) => {
-      const sizes = variantSizes[idx] 
-        ? variantSizes[idx].split(",").map(s => s.trim()).filter(Boolean) 
-        : item.sizes;
-      const weights = variantWeights[idx] 
-        ? variantWeights[idx].split(",").map(w => w.trim()).filter(Boolean) 
-        : item.weights;
       const images = variantImages[idx] 
         ? variantImages[idx].split(",").map(img => img.trim()).filter(Boolean) 
         : item.images;
 
-      // Assign a unique 6-character short barcode if not already set (e.g. FX100A)
-      const barcode = item.barcode || "FX" + Math.random().toString(36).substring(2, 6).toUpperCase();
-
       return {
         ...item,
-        sizes: sizes.length > 0 ? sizes : ["Standard"],
-        weights: weights.length > 0 ? weights : ["250g"],
-        images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80"],
-        price: Number(item.price),
-        mrp: Number(item.mrp),
-        stock: Number(item.stock),
-        barcode
+        images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80"]
       };
     });
 
-    // Check SKU constraints
-    const invalidSku = finalVariants.some(v => !v.sku);
+    const invalidSku = finalVariants.some(v => v.subVariants.some((sv: any) => !sv.sku));
     if (invalidSku) {
-      addToast("Each variant color must have a unique SKU code.", "error");
+      addToast("Each variant combination must have a unique SKU code.", "error");
       return;
     }
 
-    const totalStock = finalVariants.reduce((sum, v) => sum + v.stock, 0);
+    const totalStock = finalVariants.reduce((sum, v) => sum + v.subVariants.reduce((s: number, sv: any) => s + sv.stock, 0), 0);
     const tags = tagsText.split(",").map(t => t.trim()).filter(Boolean);
 
     const productData: Omit<Product, "_id" | "createdAt"> = {
@@ -353,7 +385,7 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
       isActive: existingProduct ? existingProduct.isActive : true,
       totalStock,
       colorVariants: finalVariants,
-      aPlusContent: aPlusBlocks,
+      aPlusContent: aPlusBlocks.filter(b => b.imageUrl && b.imageUrl.trim() !== ""),
       
       hsnCode,
       gstRate: gstRateVal,
@@ -624,8 +656,10 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
 
           <div className="space-y-6">
             {variantsList.map((item, idx) => {
-              const currentSizes = variantSizes[idx] !== undefined ? variantSizes[idx] : item.sizes.join(", ");
-              const currentWeights = variantWeights[idx] !== undefined ? variantWeights[idx] : item.weights.join(", ");
+              const derivedSizes = Array.from(new Set((item.subVariants || []).map(sv => sv.size))).filter(Boolean).join(", ");
+              const derivedWeights = Array.from(new Set((item.subVariants || []).map(sv => sv.weight))).filter(Boolean).join(", ");
+              const currentSizes = variantSizes[idx] !== undefined ? variantSizes[idx] : derivedSizes;
+              const currentWeights = variantWeights[idx] !== undefined ? variantWeights[idx] : derivedWeights;
               const currentImages = variantImages[idx] !== undefined ? variantImages[idx] : item.images.join(", ");
 
               return (
@@ -656,16 +690,6 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-muted-foreground">Variant SKU Code</label>
-                        <Input
-                          placeholder="e.g. FS-HK-CHOP12-001-SG"
-                          value={item.sku}
-                          onChange={(e) => updateVariantField(idx, "sku", e.target.value)}
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase text-muted-foreground">Cargo Dimensions</label>
                         <Input
                           placeholder="e.g. 15x12x8 cm"
@@ -676,61 +700,71 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-muted-foreground">Wholesale Unit Price (₹)</label>
-                        <Input
-                          type="number"
-                          value={item.price || ""}
-                          onChange={(e) => updateVariantField(idx, "price", Number(e.target.value))}
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-muted-foreground">Retail MRP (₹)</label>
-                        <Input
-                          type="number"
-                          value={item.mrp || ""}
-                          onChange={(e) => updateVariantField(idx, "mrp", Number(e.target.value))}
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-muted-foreground">Variant Stock</label>
-                        <Input
-                          type="number"
-                          value={item.stock || ""}
-                          onChange={(e) => updateVariantField(idx, "stock", Number(e.target.value))}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 border-b pb-4">
                       <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase text-muted-foreground">Sizes (comma separated)</label>
-                        <Input
-                          placeholder="e.g. Standard 1.2L, Pro 2.0L"
-                          value={currentSizes}
-                          onChange={(e) => {
-                            setVariantSizes(prev => ({ ...prev, [idx]: e.target.value }));
-                            updateVariantField(idx, "sizes", e.target.value.split(",").map(s => s.trim()).filter(Boolean));
-                          }}
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="e.g. Standard 1.2L, Pro 2.0L"
+                            value={currentSizes}
+                            onChange={(e) => setVariantSizes(prev => ({ ...prev, [idx]: e.target.value }))}
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase text-muted-foreground">Weights (comma separated)</label>
-                        <Input
-                          placeholder="e.g. 250g, 500g"
-                          value={currentWeights}
-                          onChange={(e) => {
-                            setVariantWeights(prev => ({ ...prev, [idx]: e.target.value }));
-                            updateVariantField(idx, "weights", e.target.value.split(",").map(w => w.trim()).filter(Boolean));
-                          }}
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="e.g. 250g, 500g"
+                            value={currentWeights}
+                            onChange={(e) => setVariantWeights(prev => ({ ...prev, [idx]: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="col-span-1 sm:col-span-2">
+                        <Button type="button" variant="secondary" size="sm" onClick={() => generateSubVariants(idx, currentSizes, currentWeights)}>
+                           Generate Combinations Matrix
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4">
+                      <h5 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Combinations Matrix (Stock & Pricing)</h5>
+                      <div className="border rounded-md overflow-hidden overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                          <thead className="bg-secondary/50 text-xs uppercase">
+                            <tr>
+                              <th className="px-4 py-3">Size / Weight</th>
+                              <th className="px-4 py-3">SKU</th>
+                              <th className="px-4 py-3">Price (₹)</th>
+                              <th className="px-4 py-3">MRP (₹)</th>
+                              <th className="px-4 py-3">Stock</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {item.subVariants.map(sv => (
+                              <tr key={sv.id} className="border-b bg-background">
+                                <td className="px-4 py-2 font-medium">
+                                  {sv.size} - {sv.weight}
+                                </td>
+                                <td className="px-4 py-2">
+                                  <Input className="h-8 text-xs" value={sv.sku} onChange={e => updateSubVariantField(idx, sv.id, "sku", e.target.value)} required />
+                                </td>
+                                <td className="px-4 py-2">
+                                  <Input type="number" className="h-8 text-xs w-24" value={sv.price || ""} onChange={e => updateSubVariantField(idx, sv.id, "price", Number(e.target.value))} required />
+                                </td>
+                                <td className="px-4 py-2">
+                                  <Input type="number" className="h-8 text-xs w-24" value={sv.mrp || ""} onChange={e => updateSubVariantField(idx, sv.id, "mrp", Number(e.target.value))} required />
+                                </td>
+                                <td className="px-4 py-2">
+                                  <Input type="number" className="h-8 text-xs w-24" value={sv.stock || ""} onChange={e => updateSubVariantField(idx, sv.id, "stock", Number(e.target.value))} required />
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
 
@@ -780,53 +814,62 @@ export function AdminProductForm({ productId, initialProducts, initialCategories
                     </div>
 
                     {/* Barcode Preview & Action Panel */}
-                    <div className="flex flex-col sm:flex-row items-center gap-4 pt-4 border-t mt-4 w-full justify-between">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">Variant Barcode Preview</span>
-                        <Barcode sku={item.barcode || item.sku || "FX0000"} height={30} />
+                    <div className="space-y-3 pt-4 border-t mt-4">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground font-semibold">Variant Barcodes</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {(item.subVariants || []).map((sv) => {
+                          const barVal = sv.barcode || sv.sku || "FX0000";
+                          return (
+                            <div key={sv.id} className="p-2 border rounded bg-secondary/15 flex flex-col items-center gap-1">
+                              <span className="text-[10px] font-bold text-center">{sv.size} - {sv.weight}</span>
+                              <Barcode sku={barVal} height={25} />
+                              <span className="text-[9px] font-mono text-muted-foreground">SKU: {sv.sku || "NO SKU"}</span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2 text-[10px] flex items-center gap-1"
+                                onClick={() => {
+                                  const printWindow = window.open("", "_blank");
+                                  if (!printWindow) {
+                                    addToast("Popup blocker prevented printing.", "error");
+                                    return;
+                                  }
+                                  printWindow.document.write(`
+                                    <html>
+                                      <head>
+                                        <title>Barcode Print - ${sv.sku || "Variant"}</title>
+                                        <style>
+                                          body { display: flex; justify-content: center; align-items: center; height: 90vh; font-family: sans-serif; }
+                                          .card { text-align: center; width: 220px; }
+                                          @media print { button { display: none; } }
+                                        </style>
+                                      </head>
+                                      <body>
+                                        <div style="text-align:center;">
+                                          <button onclick="window.print()" style="padding: 6px 12px; margin-bottom: 15px; cursor: pointer; background: #10b981; color: white; border: none; border-radius: 4px; font-weight: bold;">
+                                            Print Barcode
+                                          </button>
+                                          <div class="card">
+                                            <div style="display:flex; justify-content:center; margin-bottom:6px;">
+                                              ${getBarcodeSvgString(barVal)}
+                                            </div>
+                                            <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${sv.sku}</div>
+                                            <div style="font-size:9px; color:#555;">Color: ${item.color} | Size: ${sv.size} | Weight: ${sv.weight}</div>
+                                          </div>
+                                        </div>
+                                      </body>
+                                    </html>
+                                  `);
+                                  printWindow.document.close();
+                                }}
+                              >
+                                <Download className="h-3 w-3" /> Print Label
+                              </Button>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-1.5 text-xs"
-                        onClick={() => {
-                          const barVal = item.barcode || item.sku || "FX0000";
-                          const printWindow = window.open("", "_blank");
-                          if (!printWindow) {
-                            addToast("Popup blocker prevented printing.", "error");
-                            return;
-                          }
-                          printWindow.document.write(`
-                            <html>
-                              <head>
-                                <title>Barcode Print - ${item.sku || "Variant"}</title>
-                                <style>
-                                  body { display: flex; justify-content: center; align-items: center; height: 90vh; font-family: sans-serif; }
-                                  .card { text-align: center; width: 220px; }
-                                  @media print { button { display: none; } }
-                                </style>
-                              </head>
-                              <body>
-                                <div style="text-align:center;">
-                                  <button onclick="window.print()" style="padding: 6px 12px; margin-bottom: 15px; cursor: pointer; background: #10b981; color: white; border: none; border-radius: 4px; font-weight: bold;">
-                                    Print Barcode
-                                  </button>
-                                  <div class="card">
-                                    <div style="display:flex; justify-content:center; margin-bottom:6px;">
-                                      ${getBarcodeSvgString(barVal)}
-                                    </div>
-                                    <div style="font-size:10px; font-weight:bold; font-family:monospace;">SKU: ${item.sku}</div>
-                                  </div>
-                                </div>
-                              </body>
-                            </html>
-                          `);
-                          printWindow.document.close();
-                        }}
-                      >
-                        <Download className="h-3.5 w-3.5" /> Download Barcode
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>

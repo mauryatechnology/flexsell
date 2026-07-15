@@ -64,9 +64,20 @@ export const useCartStore = create<CartState>()(
         const liveProduct = storeProducts.find(p => p._id === product._id) || product;
 
         const selectedColor = selectedVariants["Color"] || selectedVariants["color"] || "Default";
-        const matchedVariant = liveProduct.colorVariants?.find(
+        const selectedSize = selectedVariants["Pack Sizing"] || selectedVariants["Size"] || selectedVariants["size"];
+        const selectedWeight = selectedVariants["Weight Unit"] || selectedVariants["Weight"] || selectedVariants["weight"];
+
+        const matchedColorVariant = liveProduct.colorVariants?.find(
           cv => cv.color.toLowerCase() === selectedColor.toLowerCase()
         ) || liveProduct.colorVariants?.[0];
+
+        let matchedVariant = null;
+        if (matchedColorVariant && matchedColorVariant.subVariants) {
+          matchedVariant = matchedColorVariant.subVariants.find(sv => 
+            (!selectedSize || sv.size.toLowerCase() === selectedSize.toLowerCase()) && 
+            (!selectedWeight || sv.weight.toLowerCase() === selectedWeight.toLowerCase())
+          ) || matchedColorVariant.subVariants[0];
+        }
 
         if (!matchedVariant) {
           useToastStore.getState().addToast("Failed to match product variant.", "error");
@@ -140,9 +151,20 @@ export const useCartStore = create<CartState>()(
         const storeProducts = useProductStore.getState().products;
         const liveProduct = storeProducts.find(p => p._id === item.product._id) || item.product;
         const selectedColor = item.selectedVariants["Color"] || item.selectedVariants["color"] || "Default";
-        const matchedVariant = liveProduct.colorVariants?.find(
+        const selectedSize = item.selectedVariants["Pack Sizing"] || item.selectedVariants["Size"] || item.selectedVariants["size"];
+        const selectedWeight = item.selectedVariants["Weight Unit"] || item.selectedVariants["Weight"] || item.selectedVariants["weight"];
+
+        const matchedColorVariant = liveProduct.colorVariants?.find(
           cv => cv.color.toLowerCase() === selectedColor.toLowerCase()
         ) || liveProduct.colorVariants?.[0];
+
+        let matchedVariant = null;
+        if (matchedColorVariant && matchedColorVariant.subVariants) {
+          matchedVariant = matchedColorVariant.subVariants.find(sv => 
+            (!selectedSize || sv.size.toLowerCase() === selectedSize.toLowerCase()) && 
+            (!selectedWeight || sv.weight.toLowerCase() === selectedWeight.toLowerCase())
+          ) || matchedColorVariant.subVariants[0];
+        }
 
         if (!matchedVariant) return;
 

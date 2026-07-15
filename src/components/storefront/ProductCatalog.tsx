@@ -106,13 +106,13 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
     }
     if (minPrice !== "") {
       list = list.filter(p => {
-        const price = p.colorVariants?.[0]?.price ?? 0;
+        const price = p.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
         return price >= Number(minPrice);
       });
     }
     if (maxPrice !== "") {
       list = list.filter(p => {
-        const price = p.colorVariants?.[0]?.price ?? 0;
+        const price = p.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
         return price <= Number(maxPrice);
       });
     }
@@ -121,7 +121,7 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
     }
     if (minDiscount > 0) {
       list = list.filter(p => {
-        const discount = p.colorVariants?.[0]?.discount ?? 0;
+        const discount = p.colorVariants?.[0]?.subVariants?.[0]?.discount ?? 0;
         return discount >= minDiscount;
       });
     }
@@ -134,15 +134,15 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
     const list = [...filteredProducts];
     if (sortBy === "price-asc") {
       return list.sort((a, b) => {
-        const priceA = a.colorVariants?.[0]?.price ?? 0;
-        const priceB = b.colorVariants?.[0]?.price ?? 0;
+        const priceA = a.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
+        const priceB = b.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
         return priceA - priceB;
       });
     }
     if (sortBy === "price-desc") {
       return list.sort((a, b) => {
-        const priceA = a.colorVariants?.[0]?.price ?? 0;
-        const priceB = b.colorVariants?.[0]?.price ?? 0;
+        const priceA = a.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
+        const priceB = b.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
         return priceB - priceA;
       });
     }
@@ -162,14 +162,15 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
   const handleAddToCart = (product: Product) => {
     const qty = getItemQty(product._id);
     const defaultVariant = product.colorVariants?.[0];
-    if (!defaultVariant) return;
+    const defaultSub = defaultVariant?.subVariants?.[0];
+    if (!defaultVariant || !defaultSub) return;
 
     addItem(
       product,
       {
         Color: defaultVariant.color,
-        Size: defaultVariant.sizes[0] || "Standard",
-        Weight: defaultVariant.weights[0] || "250g"
+        Size: defaultSub.size || "Standard",
+        Weight: defaultSub.weight || "250g"
       },
       qty
     );
@@ -344,16 +345,21 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
                 const favorited = isInWishlist(product._id);
                 const currentQty = getItemQty(product._id);
                 const hasHighRating = product.rating >= 4.6;
-                const defaultVariant = product.colorVariants?.[0] || { price: 0, mrp: 0, discount: 0, stock: 0, sku: "NO SKU", images: [""] };
-                const imgUrl = defaultVariant.images?.[0] || "";
+                const defaultVariant = product.colorVariants?.[0];
+                const defaultSub = defaultVariant?.subVariants?.[0];
+                const imgUrl = defaultVariant?.images?.[0] || "";
+                const price = defaultSub?.price ?? 0;
+                const mrp = defaultSub?.mrp ?? 0;
+                const discount = defaultSub?.discount ?? 0;
+                const sku = defaultSub?.sku || "NO SKU";
 
                 return (
                   <Card key={product._id} className="flex flex-col h-full bg-card hover:shadow-lg hover:border-primary/20 transition-all duration-300 relative group border border-border">
                     {/* Floating Badges */}
                     <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
-                      {defaultVariant.discount > 0 && (
+                      {discount > 0 && (
                         <span className="bg-destructive text-destructive-foreground text-[10px] font-extrabold px-2 py-0.5 rounded shadow">
-                          {defaultVariant.discount}% OFF
+                          {discount}% OFF
                         </span>
                       )}
                       {hasHighRating && (
@@ -391,7 +397,7 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
                             {product.title}
                           </h3>
                         </Link>
-                        <p className="text-[10px] font-mono text-muted-foreground">SKU: {defaultVariant.sku}</p>
+                        <p className="text-[10px] font-mono text-muted-foreground">SKU: {sku}</p>
                       </div>
 
                       {/* Stock Level meter */}
@@ -415,9 +421,9 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
                       <div className="pt-2 border-t mt-auto space-y-3">
                         <div>
                           <div className="flex items-baseline gap-1.5">
-                            <span className="text-lg font-black text-primary">{formatPrice(defaultVariant.price)}</span>
-                            {defaultVariant.mrp > defaultVariant.price && (
-                              <span className="text-xs text-muted-foreground line-through">{formatPrice(defaultVariant.mrp)}</span>
+                            <span className="text-lg font-black text-primary">{formatPrice(price)}</span>
+                            {mrp > price && (
+                              <span className="text-xs text-muted-foreground line-through">{formatPrice(mrp)}</span>
                             )}
                           </div>
                           <span className="text-[10px] text-muted-foreground font-semibold">+ 18% GST (B2B Claimable)</span>
@@ -468,8 +474,13 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
               {paginatedProducts.map((product) => {
                 const favorited = isInWishlist(product._id);
                 const currentQty = getItemQty(product._id);
-                const defaultVariant = product.colorVariants?.[0] || { price: 0, mrp: 0, discount: 0, stock: 0, sku: "NO SKU", images: [""] };
-                const imgUrl = defaultVariant.images?.[0] || "";
+                const defaultVariant = product.colorVariants?.[0];
+                const defaultSub = defaultVariant?.subVariants?.[0];
+                const imgUrl = defaultVariant?.images?.[0] || "";
+                const price = defaultSub?.price ?? 0;
+                const mrp = defaultSub?.mrp ?? 0;
+                const discount = defaultSub?.discount ?? 0;
+                const sku = defaultSub?.sku || "NO SKU";
 
                 return (
                   <div key={product._id} className="flex flex-col sm:flex-row items-center border border-border rounded-xl p-4 gap-6 bg-card hover:shadow-md hover:border-primary/20 transition-all duration-300 relative group text-foreground">
@@ -485,9 +496,9 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
                       <Link href={`/products/${product.slug}`}>
                         <img src={imgUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       </Link>
-                      {defaultVariant.discount > 0 && (
+                      {discount > 0 && (
                         <div className="absolute top-1 left-1 bg-destructive text-destructive-foreground text-[8px] font-extrabold px-1 rounded shadow">
-                          {defaultVariant.discount}% OFF
+                          {discount}% OFF
                         </div>
                       )}
                     </div>
@@ -498,7 +509,7 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
                         <Link href={`/products/${product.slug}`} className="hover:text-primary transition-colors">
                           <h3 className="font-bold text-base line-clamp-1 text-foreground">{product.title}</h3>
                         </Link>
-                        <p className="text-xs font-mono text-muted-foreground">SKU: {defaultVariant.sku}</p>
+                        <p className="text-xs font-mono text-muted-foreground">SKU: {sku}</p>
                       </div>
 
                       <div className="flex items-center gap-3 justify-center sm:justify-start">
@@ -522,9 +533,9 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
                     {/* Pricing */}
                     <div className="text-center sm:text-left flex-shrink-0">
                       <div className="flex items-baseline gap-1.5 justify-center sm:justify-start">
-                        <span className="text-xl font-extrabold text-primary">{formatPrice(defaultVariant.price)}</span>
-                        {defaultVariant.mrp > defaultVariant.price && (
-                          <span className="text-xs text-muted-foreground line-through">{formatPrice(defaultVariant.mrp)}</span>
+                        <span className="text-xl font-extrabold text-primary">{formatPrice(price)}</span>
+                        {mrp > price && (
+                          <span className="text-xs text-muted-foreground line-through">{formatPrice(mrp)}</span>
                         )}
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-0.5 font-semibold">+ 18% GST (B2B Claimable)</p>
