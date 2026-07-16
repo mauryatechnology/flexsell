@@ -15,7 +15,7 @@ export default async function CategoriesPage() {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 text-foreground w-full">
+    <div className="mx-auto max-w-8xl px-4 md:px-6 py-12 text-foreground w-full">
       <div className="mb-10 text-center sm:text-left">
         <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">All Categories</h1>
         <p className="text-muted-foreground mt-2">Browse wholesale catalog lines direct from verified factories.</p>

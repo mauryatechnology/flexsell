@@ -40,8 +40,8 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
       {/* Slides Wrapper */}
       <div className="relative w-full h-full">
         {slides.map((slide, idx) => (
-          <div 
-            key={idx} 
+          <div
+            key={idx}
             className={`absolute inset-0 w-full h-full flex items-center transition-all duration-700 ease-in-out ${idx === current ? "opacity-100 translate-x-0 z-10" : "opacity-0 translate-x-4 z-0 pointer-events-none"}`}
           >
             {/* Slide Background Image */}
@@ -57,9 +57,9 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
                 <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
               </div>
             )}
-            
+
             {/* Content Container */}
-            <div className="mx-auto max-w-7xl px-4 md:px-6 z-10 w-full">
+            <div className="mx-auto max-w-8xl px-4 md:px-6 z-10 w-full">
               <div className="max-w-2xl space-y-4">
                 <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
                   {slide.title} <span className="text-primary">{slide.highlight}</span>
@@ -83,13 +83,13 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
       {/* Nav Controls */}
       {slides.length > 1 && (
         <>
-          <button 
+          <button
             onClick={prevSlide}
             className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/85 hover:bg-background text-foreground p-2 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <button 
+          <button
             onClick={nextSlide}
             className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/85 hover:bg-background text-foreground p-2 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
           >

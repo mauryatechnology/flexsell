@@ -7,15 +7,15 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PriceDisplay } from "@/components/ui/PriceDisplay";
-import { 
-  ShoppingCart, 
-  SearchX, 
+import {
+  ShoppingCart,
+  SearchX,
   Heart,
-  Grid, 
-  List, 
-  SlidersHorizontal, 
-  RotateCcw, 
-  Minus, 
+  Grid,
+  List,
+  SlidersHorizontal,
+  RotateCcw,
+  Minus,
   Plus,
   Info
 } from "lucide-react";
@@ -83,15 +83,15 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
   // Search Results base match list
   const results = React.useMemo(() => {
     if (!lowercaseQuery) return activeProducts;
-    return activeProducts.filter(p => 
-      p.title.toLowerCase().includes(lowercaseQuery) || 
+    return activeProducts.filter(p =>
+      p.title.toLowerCase().includes(lowercaseQuery) ||
       p.description.toLowerCase().includes(lowercaseQuery) ||
       p.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
     );
   }, [activeProducts, lowercaseQuery]);
 
   const handleCategoryToggle = (catId: string) => {
-    setSelectedCategories(prev => 
+    setSelectedCategories(prev =>
       prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
     );
     setCurrentPage(1);
@@ -174,7 +174,7 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
   }, [categories]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 text-foreground w-full">
+    <div className="mx-auto max-w-8xl px-4 md:px-6 py-8 text-foreground w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b pb-6 border-border/60">
         <div>
@@ -184,8 +184,8 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
         <div className="flex items-center gap-3 w-full sm:w-auto">
           {/* Mobile Filter toggle */}
           {results.length > 0 && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="lg:hidden flex-1 sm:flex-none flex items-center justify-center gap-2"
               onClick={() => setShowMobileFilters(!showMobileFilters)}
             >
@@ -211,8 +211,8 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
             </button>
           </div>
 
-          <select 
-            value={sortBy} 
+          <select
+            value={sortBy}
             onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
             className="border-input border rounded-md px-3 py-2 text-sm bg-background text-foreground flex-1 sm:flex-none h-10"
           >
@@ -226,14 +226,13 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* Left Column: Sidebar Filters */}
-        <div className={`w-full lg:w-64 flex-shrink-0 bg-card rounded-xl border border-border p-5 space-y-6 text-foreground h-fit lg:sticky lg:top-24 transition-all duration-300 ${
-          showMobileFilters ? "block" : "hidden lg:block"
-        }`}>
+        <div className={`w-full lg:w-64 flex-shrink-0 bg-card rounded-xl border border-border p-5 space-y-6 text-foreground h-fit lg:sticky lg:top-24 transition-all duration-300 ${showMobileFilters ? "block" : "hidden lg:block"
+          }`}>
           <div className="flex justify-between items-center border-b pb-2">
             <h3 className="font-bold text-sm uppercase tracking-wider flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4 text-primary" /> Filter
             </h3>
-            <button 
+            <button
               onClick={handleClearFilters}
               className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 font-medium"
             >
@@ -250,9 +249,9 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
                   const checked = selectedCategories.includes(cat._id);
                   return (
                     <label key={cat._id} className="flex items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
-                      <input 
-                        type="checkbox" 
-                        checked={checked} 
+                      <input
+                        type="checkbox"
+                        checked={checked}
                         onChange={() => handleCategoryToggle(cat._id)}
                         className="rounded border-input text-primary focus:ring-primary w-4 h-4 bg-background"
                       />
@@ -268,7 +267,7 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
           <div className="space-y-3 pt-4 border-t">
             <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Price Range (₹)</h4>
             <div className="flex gap-2 items-center">
-              <Input 
+              <Input
                 type="number"
                 placeholder="Min"
                 className="h-8 text-xs text-center"
@@ -276,7 +275,7 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
                 onChange={(e) => { setMinPrice(e.target.value === "" ? "" : Number(e.target.value)); setCurrentPage(1); }}
               />
               <span className="text-muted-foreground text-xs">—</span>
-              <Input 
+              <Input
                 type="number"
                 placeholder="Max"
                 className="h-8 text-xs text-center"
@@ -290,9 +289,9 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
           <div className="space-y-3 pt-4 border-t">
             <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Availability</h4>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={inStockOnly} 
+              <input
+                type="checkbox"
+                checked={inStockOnly}
                 onChange={(e) => { setInStockOnly(e.target.checked); setCurrentPage(1); }}
                 className="rounded border-input text-primary focus:ring-primary w-4 h-4 bg-background"
               />
@@ -306,8 +305,8 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
             <div className="space-y-2">
               {[0, 20, 40, 60].map((disc) => (
                 <label key={disc} className="flex items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
-                  <input 
-                    type="radio" 
+                  <input
+                    type="radio"
                     name="minDiscount"
                     checked={minDiscount === disc}
                     onChange={() => { setMinDiscount(disc); setCurrentPage(1); }}

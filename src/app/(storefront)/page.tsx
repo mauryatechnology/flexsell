@@ -14,7 +14,7 @@ import { HeroCarousel } from "@/components/storefront/HeroCarousel";
 
 export default async function HomePage() {
   await dbConnect();
-  
+
   // Fetch CMS sections
   const cmsHeroSlides = await CmsContent.findOne({ key: "hero_slides" });
   const cmsWhyChooseUs = await CmsContent.findOne({ key: "why_choose_us" });
@@ -61,7 +61,7 @@ export default async function HomePage() {
       <HeroCarousel slides={heroSlides} />
 
       {/* Categories Grid Section with Navbar Match Padding */}
-      <section className="mx-auto max-w-7xl px-4 md:px-6 w-full">
+      <section className="mx-auto max-w-8xl px-4 md:px-6 w-full">
         <div className="flex justify-between items-end mb-8 border-b pb-4 border-border/60">
           <div>
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
@@ -73,7 +73,7 @@ export default async function HomePage() {
             View All Categories &rarr;
           </Link>
         </div>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           {categories.filter(c => !c.parentId).slice(0, 6).map((category) => (
             <Link key={category._id} href={`/categories/${category.slug}`}>
@@ -97,7 +97,7 @@ export default async function HomePage() {
       </section>
 
       <section className="bg-secondary/15 py-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-6 w-full">
+        <div className="mx-auto max-w-8xl px-4 md:px-6 w-full">
           <div className="text-center max-w-xl mx-auto mb-12">
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
               {pagesContent.about.whyChooseUsTitle}
@@ -119,7 +119,7 @@ export default async function HomePage() {
       </section>
 
       {/* Trending Products Grid Section */}
-      <section className="mx-auto max-w-7xl px-4 md:px-6 w-full">
+      <section className="mx-auto max-w-8xl px-4 md:px-6 w-full">
         <div className="flex justify-between items-end mb-8 border-b pb-4 border-border/60">
           <div>
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
@@ -131,7 +131,7 @@ export default async function HomePage() {
             {homeData.viewAllText} &rarr;
           </Link>
         </div>
-        
+
         <TrendingProducts initialProducts={products} />
       </section>
     </div>

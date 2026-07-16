@@ -147,7 +147,7 @@ export function CheckoutView() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 text-foreground w-full">
+    <div className="mx-auto max-w-8xl px-4 md:px-6 py-8 text-foreground w-full">
       <h1 className="text-3xl font-bold text-foreground mb-8 text-center">Secure Checkout</h1>
 
       <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -157,8 +157,8 @@ export function CheckoutView() {
               <CardTitle>Contact Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Input 
-                placeholder="Email or mobile phone number" 
+              <Input
+                placeholder="Email or mobile phone number"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -176,38 +176,38 @@ export function CheckoutView() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <Input 
-                  placeholder="First Name" 
+                <Input
+                  placeholder="First Name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
                 />
-                <Input 
-                  placeholder="Last Name" 
+                <Input
+                  placeholder="Last Name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
                 />
               </div>
-              <Input 
-                placeholder="Company Name (optional)" 
+              <Input
+                placeholder="Company Name (optional)"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
               />
-              <Input 
-                placeholder="Street Address, Shop No." 
+              <Input
+                placeholder="Street Address, Shop No."
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 required
               />
-              <Input 
-                placeholder="Apartment, suite, unit, etc. (optional)" 
+              <Input
+                placeholder="Apartment, suite, unit, etc. (optional)"
                 value={apartment}
                 onChange={(e) => setApartment(e.target.value)}
               />
               <div className="grid grid-cols-3 gap-4">
-                <Input 
-                  placeholder="City" 
+                <Input
+                  placeholder="City"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   required
@@ -221,15 +221,15 @@ export function CheckoutView() {
                     <option key={st} value={st}>{st}</option>
                   ))}
                 </select>
-                <Input 
-                  placeholder="PIN Code" 
+                <Input
+                  placeholder="PIN Code"
                   value={pinCode}
                   onChange={(e) => setPinCode(e.target.value)}
                   required
                 />
               </div>
-              <Input 
-                placeholder="Contact Phone Number" 
+              <Input
+                placeholder="Contact Phone Number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required
@@ -262,7 +262,7 @@ export function CheckoutView() {
           <Card className="sticky top-20 bg-secondary/20 border-border">
             <CardContent className="p-6 space-y-6">
               <h3 className="font-bold text-lg border-b pb-4 text-foreground">Order Summary</h3>
-              
+
               <div className="space-y-2 border-b pb-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
@@ -332,7 +332,7 @@ export function CheckoutView() {
               <Button type="submit" size="lg" className="w-full text-base bg-foreground text-background hover:bg-foreground/90" disabled={isSubmitting}>
                 {isSubmitting ? "Placing Order..." : "Confirm Order"}
               </Button>
-              
+
               <p className="text-xs text-center text-muted-foreground">
                 By placing your order, you agree to our B2B Sourcing Terms of Service and Cargo Liability Rules.
               </p>

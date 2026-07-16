@@ -25,8 +25,8 @@ export default async function ClientDashboardLayout({ children }: { children: Re
   return (
     <div className="min-h-screen flex flex-col bg-secondary/20">
       <Header categories={allCategories} />
-      
-      <div className="flex-1 mx-auto max-w-7xl px-4 md:px-6 py-8 flex flex-col md:flex-row gap-8 w-full">
+
+      <div className="flex-1 mx-auto max-w-8xl px-4 md:px-6 py-8 flex flex-col md:flex-row gap-8 w-full">
         {/* Sidebar */}
         <aside className="w-full md:w-64 flex-shrink-0">
           <div className="bg-card border rounded-lg overflow-hidden sticky top-24">
@@ -65,7 +65,7 @@ export default async function ClientDashboardLayout({ children }: { children: Re
           {children}
         </main>
       </div>
-      
+
       <Footer />
     </div>
   );

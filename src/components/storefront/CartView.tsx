@@ -102,7 +102,7 @@ export function CartView() {
       </div>
     `).join("");
 
-    const cgstSgstHtml = isIntrastate 
+    const cgstSgstHtml = isIntrastate
       ? `
         <div class="flex justify-between text-xs text-gray-600">
           <span>CGST (Central GST 9%):</span>
@@ -271,7 +271,7 @@ export function CartView() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 text-foreground w-full">
+    <div className="mx-auto max-w-8xl px-4 md:px-6 py-8 text-foreground w-full">
       <div className="mb-6">
         <Link href="/products" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center">
           <ArrowLeft className="mr-2 h-4 w-4" /> Continue Shopping
@@ -288,9 +288,9 @@ export function CartView() {
               .map(([key, val]) => `${key}: ${val}`)
               .join(", ");
             const matchingColor = item.selectedVariants["Color"] || item.selectedVariants["color"];
-            const activeVariant = item.product.colorVariants?.find(cv => cv.color === matchingColor) 
+            const activeVariant = item.product.colorVariants?.find(cv => cv.color === matchingColor)
               || item.product.colorVariants?.[0];
-            const activeSubVariant = activeVariant?.subVariants?.find(sv => 
+            const activeSubVariant = activeVariant?.subVariants?.find(sv =>
               (!item.selectedVariants["Size"] || sv.size === item.selectedVariants["Size"]) &&
               (!item.selectedVariants["Weight"] || sv.weight === item.selectedVariants["Weight"])
             ) || activeVariant?.subVariants?.[0];
@@ -316,9 +316,9 @@ export function CartView() {
                     <div>
                       <div className="flex justify-between items-start gap-2">
                         <h3 className="font-semibold text-foreground line-clamp-2">{item.product.title}</h3>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="text-destructive hover:bg-destructive/10 -mt-1 -mr-1"
                           onClick={() => removeItem(item.id)}
                         >
@@ -339,16 +339,16 @@ export function CartView() {
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground font-medium">Qty:</span>
                         <div className="flex items-center">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="h-8 w-8 px-0 rounded-r-none text-foreground border-r-0"
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             disabled={item.quantity <= moq}
                           >
                             -
                           </Button>
-                          <input 
+                          <input
                             type="number"
                             className="h-8 w-16 text-center text-sm font-semibold text-foreground bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                             value={item.quantity}
@@ -357,9 +357,9 @@ export function CartView() {
                             min={moq}
                             max={maxStock}
                           />
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="h-8 w-8 px-0 rounded-l-none text-foreground border-l-0"
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             disabled={item.quantity >= maxStock}
@@ -421,7 +421,7 @@ export function CartView() {
           <Card className="border-border">
             <CardContent className="p-6 space-y-6">
               <h3 className="font-bold text-lg border-b pb-4">Order Summary</h3>
-              
+
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Base Amount (Excl. GST)</span>
@@ -447,7 +447,7 @@ export function CartView() {
                     <span>{formatPrice(totalIgst)}</span>
                   </div>
                 )}
-                
+
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
                   <span className="text-success font-semibold">Free Delivery</span>

@@ -7,16 +7,16 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PriceDisplay } from "@/components/ui/PriceDisplay";
-import { 
-  ShoppingCart, 
-  Heart, 
-  ArrowLeft, 
+import {
+  ShoppingCart,
+  Heart,
+  ArrowLeft,
   Info,
-  Grid, 
-  List, 
-  SlidersHorizontal, 
-  RotateCcw, 
-  Minus, 
+  Grid,
+  List,
+  SlidersHorizontal,
+  RotateCcw,
+  Minus,
   Plus
 } from "lucide-react";
 import { useProductStore } from "@/stores/productStore";
@@ -93,7 +93,7 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
   }, [sortBy, selectedSubcategories, minPrice, maxPrice, inStockOnly, minDiscount]);
 
   const handleSubcategoryToggle = (catId: string) => {
-    setSelectedSubcategories(prev => 
+    setSelectedSubcategories(prev =>
       prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
     );
   };
@@ -176,7 +176,7 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
 
 
   return (
-    <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 text-foreground w-full">
+    <div className="mx-auto max-w-8xl px-4 md:px-6 py-8 text-foreground w-full">
       {/* Back Link */}
       <div className="mb-4">
         <Link href="/categories" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center">
@@ -193,8 +193,8 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
         <div className="flex items-center gap-3 w-full sm:w-auto">
           {/* Mobile Filter toggle */}
           {subcategories.length > 0 && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="lg:hidden flex-1 sm:flex-none flex items-center justify-center gap-2"
               onClick={() => setShowMobileFilters(!showMobileFilters)}
             >
@@ -220,8 +220,8 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
             </button>
           </div>
 
-          <select 
-            value={sortBy} 
+          <select
+            value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className="border-input border rounded-md px-3 py-2 text-sm bg-background text-foreground flex-1 sm:flex-none h-10"
           >
@@ -235,14 +235,13 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* Left Column: Sidebar Filters */}
-        <div className={`w-full lg:w-64 flex-shrink-0 bg-card rounded-xl border border-border p-5 space-y-6 text-foreground h-fit lg:sticky lg:top-24 transition-all duration-300 ${
-          showMobileFilters ? "block" : "hidden lg:block"
-        }`}>
+        <div className={`w-full lg:w-64 flex-shrink-0 bg-card rounded-xl border border-border p-5 space-y-6 text-foreground h-fit lg:sticky lg:top-24 transition-all duration-300 ${showMobileFilters ? "block" : "hidden lg:block"
+          }`}>
           <div className="flex justify-between items-center border-b pb-2">
             <h3 className="font-bold text-sm uppercase tracking-wider flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4 text-primary" /> Filter
             </h3>
-            <button 
+            <button
               onClick={handleClearFilters}
               className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 font-medium"
             >
@@ -259,9 +258,9 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
                   const checked = selectedSubcategories.includes(cat._id);
                   return (
                     <label key={cat._id} className="flex items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
-                      <input 
-                        type="checkbox" 
-                        checked={checked} 
+                      <input
+                        type="checkbox"
+                        checked={checked}
                         onChange={() => handleSubcategoryToggle(cat._id)}
                         className="rounded border-input text-primary focus:ring-primary w-4 h-4 bg-background"
                       />
@@ -277,7 +276,7 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
           <div className="space-y-3 pt-4 border-t">
             <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Price Range (₹)</h4>
             <div className="flex gap-2 items-center">
-              <Input 
+              <Input
                 type="number"
                 placeholder="Min"
                 className="h-8 text-xs text-center"
@@ -285,7 +284,7 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
                 onChange={(e) => setMinPrice(e.target.value === "" ? "" : Number(e.target.value))}
               />
               <span className="text-muted-foreground text-xs">—</span>
-              <Input 
+              <Input
                 type="number"
                 placeholder="Max"
                 className="h-8 text-xs text-center"
@@ -299,9 +298,9 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
           <div className="space-y-3 pt-4 border-t">
             <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Availability</h4>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={inStockOnly} 
+              <input
+                type="checkbox"
+                checked={inStockOnly}
                 onChange={(e) => setInStockOnly(e.target.checked)}
                 className="rounded border-input text-primary focus:ring-primary w-4 h-4 bg-background"
               />
@@ -315,8 +314,8 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
             <div className="space-y-2">
               {[0, 20, 40, 60].map((disc) => (
                 <label key={disc} className="flex items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
-                  <input 
-                    type="radio" 
+                  <input
+                    type="radio"
                     name="minDiscount"
                     checked={minDiscount === disc}
                     onChange={() => setMinDiscount(disc)}

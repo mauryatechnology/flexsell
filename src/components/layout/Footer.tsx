@@ -24,7 +24,7 @@ export function Footer({ data }: FooterProps) {
 
   return (
     <footer className="bg-card border-t pt-16 pb-8 text-foreground">
-      <div className="mx-auto max-w-7xl px-4 md:px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12 w-full">
+      <div className="mx-auto max-w-8xl px-4 md:px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12 w-full">
         <div className="space-y-4">
           <Link href="/" className="flex items-center">
             <Image src="/Flexsell%20Logo.png" alt="Flexsell Logo" width={150} height={40} className="h-8 md:h-10 w-auto object-contain" />
@@ -39,7 +39,7 @@ export function Footer({ data }: FooterProps) {
             <Link href="#" className="text-muted-foreground hover:text-primary"><Phone className="h-5 w-5" /></Link>
           </div>
         </div>
-        
+
         <div>
           <h4 className="font-semibold mb-4 text-foreground">Quick Links</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
@@ -48,7 +48,7 @@ export function Footer({ data }: FooterProps) {
             ))}
           </ul>
         </div>
-        
+
         <div>
           <h4 className="font-semibold mb-4 text-foreground">Customer Service</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
@@ -57,7 +57,7 @@ export function Footer({ data }: FooterProps) {
             ))}
           </ul>
         </div>
-        
+
         <div>
           <h4 className="font-semibold mb-4 text-foreground">Contact Info</h4>
           <ul className="space-y-2 text-sm text-muted-foreground leading-relaxed">
@@ -68,8 +68,8 @@ export function Footer({ data }: FooterProps) {
           </ul>
         </div>
       </div>
-      
-      <div className="mx-auto max-w-7xl px-4 md:px-6 border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground w-full">
+
+      <div className="mx-auto max-w-8xl px-4 md:px-6 border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground w-full">
         <p>&copy; {new Date().getFullYear()} FlexSell Wholesale. All rights reserved.</p>
         <div className="flex gap-4">
           <Link href="/policies/privacy" className="hover:text-primary">Privacy Policy</Link>

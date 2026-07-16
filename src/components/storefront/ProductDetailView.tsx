@@ -310,7 +310,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
     : product.title;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 text-foreground w-full">
+    <div className="mx-auto max-w-8xl px-4 md:px-6 py-8 text-foreground w-full">
       {/* Breadcrumb Header */}
       <div className="mb-6 flex justify-between items-center">
         <Link href="/products" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center font-medium">
@@ -340,9 +340,8 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
                   <button
                     key={i}
                     onClick={() => setActiveImageIdx(i)}
-                    className={`w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0 bg-secondary transition-all relative ${
-                      activeImageIdx === i ? "border-primary scale-95 shadow-sm" : "border-border hover:border-primary/50"
-                    }`}
+                    className={`w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0 bg-secondary transition-all relative ${activeImageIdx === i ? "border-primary scale-95 shadow-sm" : "border-border hover:border-primary/50"
+                      }`}
                   >
                     <Image src={url} alt={alt} fill sizes="80px" className="object-cover" />
                   </button>
@@ -674,19 +673,18 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
             <div className="space-y-3">
               <h3 className="text-lg font-bold">Product Description</h3>
               <div className="relative">
-                <div 
-                  className={`text-muted-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert transition-all duration-300 overflow-hidden ${
-                    isDescExpanded ? "max-h-full" : "max-h-[160px] line-clamp-6"
-                  }`}
-                  dangerouslySetInnerHTML={{ __html: product.description }} 
+                <div
+                  className={`text-muted-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert transition-all duration-300 overflow-hidden ${isDescExpanded ? "max-h-full" : "max-h-[160px] line-clamp-6"
+                    }`}
+                  dangerouslySetInnerHTML={{ __html: product.description }}
                 />
                 {!isDescExpanded && (
                   <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background to-transparent pointer-events-none" />
                 )}
               </div>
-              <Button 
-                variant="link" 
-                onClick={() => setIsDescExpanded(!isDescExpanded)} 
+              <Button
+                variant="link"
+                onClick={() => setIsDescExpanded(!isDescExpanded)}
                 className="text-primary font-bold p-0 h-auto text-xs flex items-center"
               >
                 {isDescExpanded ? "Show Less" : "Read Full Description"}
@@ -699,10 +697,10 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
       {/* Related Products Carousel */}
       {relatedProducts.length > 0 && (
         <div className="mt-16 border-t pt-10">
-          <ProductCarousel 
-            title="Related Products" 
-            subtitle="Top wholesale items from the same category" 
-            products={relatedProducts} 
+          <ProductCarousel
+            title="Related Products"
+            subtitle="Top wholesale items from the same category"
+            products={relatedProducts}
           />
         </div>
       )}
@@ -710,10 +708,10 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
       {/* Recently Viewed Products Carousel */}
       {recentProducts.length > 0 && (
         <div className="mt-16 border-t pt-10">
-          <ProductCarousel 
-            title="Recently Viewed Products" 
-            subtitle="Cargo lines you checked in this session" 
-            products={recentProducts} 
+          <ProductCarousel
+            title="Recently Viewed Products"
+            subtitle="Cargo lines you checked in this session"
+            products={recentProducts}
           />
         </div>
       )}
@@ -743,10 +741,10 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
       {/* Other Products Carousel */}
       {otherProducts.length > 0 && (
         <div className="mt-16 border-t pt-10">
-          <ProductCarousel 
-            title="Other Wholesale Deals" 
-            subtitle="Explore hot items from our wholesale catalog" 
-            products={otherProducts} 
+          <ProductCarousel
+            title="Other Wholesale Deals"
+            subtitle="Explore hot items from our wholesale catalog"
+            products={otherProducts}
           />
         </div>
       )}
