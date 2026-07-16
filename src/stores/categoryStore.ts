@@ -18,6 +18,10 @@ export const useCategoryStore = create<CategoryStoreState>()((set, get) => ({
   error: null,
 
   initializeCategories: async (initial) => {
+    if (initial && initial.length > 0) {
+      set({ categories: initial, isLoading: false });
+      return;
+    }
     if (get().categories.length > 0) return;
     set({ isLoading: true, error: null });
     try {

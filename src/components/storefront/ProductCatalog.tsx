@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Product } from "@/types";
+import { Product, Category } from "@/types";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PriceDisplay } from "@/components/ui/PriceDisplay";
@@ -30,11 +30,12 @@ import { ProductCard } from "./ProductCard";
 
 interface ProductCatalogProps {
   initialProducts: Product[];
+  initialCategories: Category[];
 }
 
-export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
+export function ProductCatalog({ initialProducts, initialCategories }: ProductCatalogProps) {
   const { products, initializeProducts } = useProductStore();
-  const { categories } = useCategoryStore();
+  const { categories, initializeCategories } = useCategoryStore();
 
   // Layout States
   const [sortBy, setSortBy] = React.useState("recommended");
@@ -67,10 +68,11 @@ export function ProductCatalog({ initialProducts }: ProductCatalogProps) {
     }));
   };
 
-  // Sync server products into client store
+  // Sync server products and categories into client stores
   React.useEffect(() => {
     initializeProducts(initialProducts);
-  }, [initialProducts, initializeProducts]);
+    initializeCategories(initialCategories);
+  }, [initialProducts, initialCategories, initializeProducts, initializeCategories]);
 
   const activeProducts = products.length > 0 ? products : initialProducts;
 

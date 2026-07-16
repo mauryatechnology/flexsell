@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Product } from "@/types";
+import { Product, Category } from "@/types";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -29,11 +29,12 @@ import { ProductCard } from "./ProductCard";
 interface SearchResultsProps {
   query: string;
   initialProducts: Product[];
+  initialCategories: Category[];
 }
 
-export function SearchResults({ query, initialProducts }: SearchResultsProps) {
+export function SearchResults({ query, initialProducts, initialCategories }: SearchResultsProps) {
   const { products, initializeProducts } = useProductStore();
-  const { categories } = useCategoryStore();
+  const { categories, initializeCategories } = useCategoryStore();
 
   // Layout States
   const [sortBy, setSortBy] = React.useState("recommended");
@@ -75,7 +76,8 @@ export function SearchResults({ query, initialProducts }: SearchResultsProps) {
 
   React.useEffect(() => {
     initializeProducts(initialProducts);
-  }, [initialProducts, initializeProducts]);
+    initializeCategories(initialCategories);
+  }, [initialProducts, initialCategories, initializeProducts, initializeCategories]);
 
   const activeProducts = products.length > 0 ? products : initialProducts;
   const lowercaseQuery = query.toLowerCase();
