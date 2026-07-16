@@ -102,9 +102,12 @@ export default function ClientProfilePage() {
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">Business Type</label>
-                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                <select 
+                  defaultValue="wholesaler"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
                   <option value="distributor">Distributor / Dealer</option>
-                  <option value="wholesaler" selected>Wholesaler</option>
+                  <option value="wholesaler">Wholesaler</option>
                   <option value="retailer">Retailer</option>
                 </select>
               </div>

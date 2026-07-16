@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import Image from "next/image";
+import { ProductCarousel } from "./ProductCarousel";
 
 interface ProductDetailViewProps {
   slug: string;
@@ -33,6 +34,8 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
   const { toggleWishlist, isInWishlist } = useWishlistStore();
   const { addItem } = useCartStore();
   const { addToast } = useToastStore();
+  const [isDescExpanded, setIsDescExpanded] = React.useState(false);
+  const [recentProducts, setRecentProducts] = React.useState<Product[]>([]);
 
   React.useEffect(() => {
     initializeProducts(initialProducts);
@@ -40,6 +43,39 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
 
   const activeProducts = products.length > 0 ? products : initialProducts;
   const product = activeProducts.find((p) => p.slug === slug);
+
+  // Load and update recently viewed products on client mount
+  React.useEffect(() => {
+    if (!product) return;
+    try {
+      const list = JSON.parse(localStorage.getItem("recently_viewed") || "[]");
+      const filtered = list.filter((id: string) => id !== product._id);
+      filtered.unshift(product._id);
+      localStorage.setItem("recently_viewed", JSON.stringify(filtered.slice(0, 10)));
+
+      // Set state (excluding current item)
+      const recentItems = filtered
+        .filter((id: string) => id !== product._id)
+        .map((id: string) => activeProducts.find((p) => p._id === id))
+        .filter(Boolean) as Product[];
+      setRecentProducts(recentItems);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [product, activeProducts]);
+
+  // Related products (same category, excluding current)
+  const relatedProducts = React.useMemo(() => {
+    if (!product) return [];
+    return activeProducts.filter(p => p.categoryId === product.categoryId && p._id !== product._id);
+  }, [product, activeProducts]);
+
+  // Other products (catalog popular items, excluding current and related)
+  const otherProducts = React.useMemo(() => {
+    if (!product) return [];
+    const relatedIds = relatedProducts.map(p => p._id);
+    return activeProducts.filter(p => p._id !== product._id && !relatedIds.includes(p._id));
+  }, [product, activeProducts, relatedProducts]);
 
   // Selector States
   const [selectedColorIdx, setSelectedColorIdx] = React.useState(0);
@@ -274,7 +310,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
     : product.title;
 
   return (
-    <div className="container mx-auto px-4 py-8 text-foreground">
+    <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 text-foreground w-full">
       {/* Breadcrumb Header */}
       <div className="mb-6 flex justify-between items-center">
         <Link href="/products" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center font-medium">
@@ -292,9 +328,31 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-        {/* Left: Interactive Image Slider */}
-        <div className="space-y-4">
-          <div className="aspect-square bg-card rounded-xl overflow-hidden border border-border shadow-sm flex items-center justify-center relative">
+        {/* Left: Interactive Image Slider with left-positioned thumbnails on desktop */}
+        <div className="flex flex-col-reverse md:flex-row gap-4 items-start w-full">
+          {/* Slider thumbnails list (Left on desktop, bottom on mobile) */}
+          {visibility.showImages && currentImages.length > 1 && (
+            <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto pb-2 pr-1 md:pb-0 md:pr-0 w-full md:w-24 md:h-[400px] flex-shrink-0">
+              {currentImages.map((img, i) => {
+                const url = typeof img === "string" ? img : img.url || "";
+                const alt = typeof img === "string" ? `Thumbnail ${i}` : img.alt || `Thumbnail ${i}`;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImageIdx(i)}
+                    className={`w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0 bg-secondary transition-all relative ${
+                      activeImageIdx === i ? "border-primary scale-95 shadow-sm" : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <Image src={url} alt={alt} fill sizes="80px" className="object-cover" />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Large Main Image */}
+          <div className="flex-1 w-full aspect-square bg-card rounded-xl overflow-hidden border border-border shadow-sm flex items-center justify-center relative">
             <Image
               src={mainImage}
               alt={mainImageAlt}
@@ -309,26 +367,6 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
               </span>
             )}
           </div>
-
-          {/* Slider thumbnails list */}
-          {visibility.showImages && currentImages.length > 1 && (
-            <div className="flex gap-3 overflow-x-auto pb-2 pr-1">
-              {currentImages.map((img, i) => {
-                const url = typeof img === "string" ? img : img.url || "";
-                const alt = typeof img === "string" ? `Thumbnail ${i}` : img.alt || `Thumbnail ${i}`;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImageIdx(i)}
-                    className={`w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0 bg-secondary transition-all relative ${activeImageIdx === i ? "border-primary scale-95 shadow-sm" : "border-border hover:border-primary/50"
-                      }`}
-                  >
-                    <Image src={url} alt={alt} fill sizes="80px" className="object-cover" />
-                  </button>
-                );
-              })}
-            </div>
-          )}
         </div>
 
         {/* Right: Product specifications & options */}
@@ -631,35 +669,85 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
 
           {/* End of action section */}
 
-          {/* Product Description */}
+          {/* Product Description with Read More */}
           {visibility.showDescription && product.description && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <h3 className="text-lg font-bold">Product Description</h3>
-              <div className="text-muted-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: product.description }} />
+              <div className="relative">
+                <div 
+                  className={`text-muted-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert transition-all duration-300 overflow-hidden ${
+                    isDescExpanded ? "max-h-full" : "max-h-[160px] line-clamp-6"
+                  }`}
+                  dangerouslySetInnerHTML={{ __html: product.description }} 
+                />
+                {!isDescExpanded && (
+                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                )}
+              </div>
+              <Button 
+                variant="link" 
+                onClick={() => setIsDescExpanded(!isDescExpanded)} 
+                className="text-primary font-bold p-0 h-auto text-xs flex items-center"
+              >
+                {isDescExpanded ? "Show Less" : "Read Full Description"}
+              </Button>
             </div>
           )}
         </div>
       </div>
 
+      {/* Related Products Carousel */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-16 border-t pt-10">
+          <ProductCarousel 
+            title="Related Products" 
+            subtitle="Top wholesale items from the same category" 
+            products={relatedProducts} 
+          />
+        </div>
+      )}
+
+      {/* Recently Viewed Products Carousel */}
+      {recentProducts.length > 0 && (
+        <div className="mt-16 border-t pt-10">
+          <ProductCarousel 
+            title="Recently Viewed Products" 
+            subtitle="Cargo lines you checked in this session" 
+            products={recentProducts} 
+          />
+        </div>
+      )}
+
       {/* A+ Content Section */}
       {product.aPlusContent && product.aPlusContent.length > 0 && (
-        <div className="mt-20 border-t pt-16">
+        <div className="mt-16 border-t pt-10">
+          <h3 className="text-xl md:text-2xl font-extrabold tracking-tight text-foreground mb-6 text-center">Manufacturer A+ Marketing Material</h3>
           <div className="flex flex-col w-full max-w-[970px] mx-auto gap-4">
             {product.aPlusContent.map((block) => {
-              // Only render blocks that actually contain an image, ignoring all text elements
               if (block.imageUrl) {
                 return (
                   <img
                     key={block.id}
                     src={block.imageUrl}
-                    alt="Manufacturer marketing graphic sheet"
-                    className="w-full h-auto block"
+                    alt={block.alt || "Manufacturer marketing graphic sheet"}
+                    className="w-full h-auto block rounded-lg shadow-sm border"
                   />
                 );
               }
               return null;
             })}
           </div>
+        </div>
+      )}
+
+      {/* Other Products Carousel */}
+      {otherProducts.length > 0 && (
+        <div className="mt-16 border-t pt-10">
+          <ProductCarousel 
+            title="Other Wholesale Deals" 
+            subtitle="Explore hot items from our wholesale catalog" 
+            products={otherProducts} 
+          />
         </div>
       )}
     </div>

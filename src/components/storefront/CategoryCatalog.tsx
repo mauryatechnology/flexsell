@@ -21,12 +21,11 @@ import {
 } from "lucide-react";
 import { useProductStore } from "@/stores/productStore";
 import { useCategoryStore } from "@/stores/categoryStore";
-import { useCartStore } from "@/stores/cartStore";
-import { useWishlistStore } from "@/stores/wishlistStore";
 import Image from "next/image";
 import { Pagination } from "@/components/ui/Pagination";
 import { notFound } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
+import { ProductCard } from "./ProductCard";
 
 interface CategoryCatalogProps {
   slug: string;
@@ -37,8 +36,6 @@ interface CategoryCatalogProps {
 export function CategoryCatalog({ slug, initialProducts, initialCategories }: CategoryCatalogProps) {
   const { products, initializeProducts } = useProductStore();
   const { categories, initializeCategories } = useCategoryStore();
-  const { addItem } = useCartStore();
-  const { toggleWishlist, isInWishlist } = useWishlistStore();
 
   // Layout States
   const [sortBy, setSortBy] = React.useState("recommended");
@@ -177,25 +174,9 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
     return sortedProducts.slice(start, start + ITEMS_PER_PAGE);
   }, [sortedProducts, currentPage]);
 
-  const handleAddToCart = (product: Product) => {
-    const qty = getItemQty(product._id);
-    const defaultVariant = product.colorVariants?.[0];
-    const defaultSub = defaultVariant?.subVariants?.[0];
-    if (!defaultVariant || !defaultSub) return;
-
-    addItem(
-      product,
-      {
-        Color: defaultVariant.color,
-        Size: defaultSub.size || "Standard",
-        Weight: defaultSub.weight || "250g"
-      },
-      qty
-    );
-  };
 
   return (
-    <div className="container mx-auto px-4 py-8 text-foreground">
+    <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 text-foreground w-full">
       {/* Back Link */}
       <div className="mb-4">
         <Link href="/categories" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center">
@@ -364,274 +345,16 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
           ) : viewMode === "grid" ? (
             /* Enhanced B2B Grid View */
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-              {paginatedProducts.map((product) => {
-                const favorited = isInWishlist(product._id);
-                const currentQty = getItemQty(product._id);
-                const isBestseller = product.rating >= 4.6 || product.cardTags?.some(tag => tag.toLowerCase() === "bestseller");
-                const isNew = product.cardTags?.some(tag => tag.toLowerCase() === "new" || tag.toLowerCase() === "new arrival");
-                const isTrending = product.cardTags?.some(tag => tag.toLowerCase() === "trending" || tag.toLowerCase() === "hot");
-                const defaultVariant = product.colorVariants?.[0];
-                const defaultSub = defaultVariant?.subVariants?.[0];
-                const firstImg = defaultVariant?.images?.[0];
-                const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
-                const price = defaultSub?.price ?? 0;
-                const mrp = defaultSub?.mrp ?? 0;
-                const discount = defaultSub?.discount ?? 0;
-                const sku = defaultSub?.sku || "NO SKU";
-
-                return (
-                  <Card key={product._id} className="flex flex-col h-full bg-card hover:shadow-lg hover:border-primary/20 transition-all duration-300 relative group border border-border">
-                    <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
-                      {discount > 0 && (
-                        <span className="bg-destructive text-destructive-foreground text-[10px] font-extrabold px-2 py-0.5 rounded shadow uppercase">
-                          {discount}% OFF
-                        </span>
-                      )}
-                      {isBestseller && (
-                        <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow uppercase">
-                          BEST SELLER
-                        </span>
-                      )}
-                      {isNew && (
-                        <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow uppercase">
-                          NEW
-                        </span>
-                      )}
-                      {isTrending && (
-                        <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow uppercase">
-                          TRENDING
-                        </span>
-                      )}
-                    </div>
-
-                    <button 
-                      onClick={() => toggleWishlist(product)}
-                      className="absolute top-2 right-2 z-10 bg-background/80 hover:bg-background text-muted-foreground hover:text-destructive p-1.5 rounded-full shadow transition-colors"
-                    >
-                      <Heart className={`h-4 w-4 ${favorited ? "fill-destructive text-destructive" : ""}`} />
-                    </button>
-
-                    <div className="aspect-square relative bg-secondary overflow-hidden rounded-t-lg border-b">
-                      <Link href={`/products/${product.slug}`}>
-                        <Image
-                          src={imgUrl || "https://placehold.co/400x400/10b981/ffffff?text=Product"}
-                          alt={product.title}
-                          fill
-                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </Link>
-                      <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-mono px-1 rounded">
-                        MOQ: {product.moq || 1} pcs
-                      </div>
-                    </div>
-
-                    <CardContent className="p-4 flex flex-col flex-1 gap-3">
-                      <div className="space-y-1">
-                        <Link href={`/products/${product.slug}`} className="hover:text-primary transition-colors">
-                          <h3 className="font-bold text-sm line-clamp-2 text-foreground" title={product.title}>
-                            {product.title}
-                          </h3>
-                        </Link>
-                        <p className="text-[10px] font-mono text-muted-foreground">SKU: {sku}</p>
-                        {/* Tiny Tag Pills */}
-                        {product.cardTags && product.cardTags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 pt-1">
-                            {product.cardTags.slice(0, 3).map((tag, tIdx) => (
-                              <span key={tIdx} className="bg-secondary text-muted-foreground text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        {product.totalStock > 30 ? (
-                          <span className="text-[11px] font-semibold text-success bg-success/10 px-2 py-0.5 rounded">
-                            In Stock ({product.totalStock})
-                          </span>
-                        ) : product.totalStock > 0 ? (
-                          <span className="text-[11px] font-semibold text-yellow-600 dark:text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded">
-                            Low Stock ({product.totalStock})
-                          </span>
-                        ) : (
-                          <span className="text-[11px] font-semibold text-destructive bg-destructive/10 px-2 py-0.5 rounded">
-                            Out of Stock
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="pt-2 border-t mt-auto space-y-3">
-                        <div>
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="text-lg font-black text-primary">{formatPrice(price)}</span>
-                            {mrp > price && (
-                              <span className="text-xs text-muted-foreground line-through">{formatPrice(mrp)}</span>
-                            )}
-                          </div>
-                          <span className="text-[10px] text-muted-foreground font-semibold">+ 18% GST (B2B Claimable)</span>
-                        </div>
-
-                        {/* Bulk quantity counters */}
-                        <div className="flex items-center gap-1.5 border rounded-lg p-0.5 bg-secondary/10 w-full justify-between">
-                          <button
-                            type="button"
-                            onClick={() => adjustItemQty(product._id, -1)}
-                            className="p-1 rounded-md hover:bg-secondary transition-colors"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </button>
-                          <input
-                            type="number"
-                            value={currentQty}
-                            onChange={(e) => setItemQty(product._id, Number(e.target.value))}
-                            className="w-12 text-center text-xs font-bold bg-transparent border-none outline-none focus:ring-0 text-foreground"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => adjustItemQty(product._id, 1)}
-                            className="p-1 rounded-md hover:bg-secondary transition-colors"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
-                        </div>
-
-                        <Button 
-                          className="w-full flex items-center justify-center gap-2 font-bold shadow-sm" 
-                          size="sm"
-                          onClick={() => handleAddToCart(product)}
-                          disabled={product.totalStock <= 0}
-                        >
-                          <ShoppingCart className="h-4 w-4" />
-                          Add to Cart
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {paginatedProducts.map((product) => (
+                <ProductCard key={product._id} product={product} layout="grid" />
+              ))}
             </div>
           ) : (
             /* Enhanced B2B List View */
             <div className="space-y-4">
-              {paginatedProducts.map((product) => {
-                const favorited = isInWishlist(product._id);
-                const currentQty = getItemQty(product._id);
-                const defaultVariant = product.colorVariants?.[0];
-                const defaultSub = defaultVariant?.subVariants?.[0];
-                const firstImg = defaultVariant?.images?.[0];
-                const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
-                const price = defaultSub?.price ?? 0;
-                const mrp = defaultSub?.mrp ?? 0;
-                const discount = defaultSub?.discount ?? 0;
-                const sku = defaultSub?.sku || "NO SKU";
-
-                return (
-                  <div key={product._id} className="flex flex-col sm:flex-row items-center border border-border rounded-xl p-4 gap-6 bg-card hover:shadow-md hover:border-primary/20 transition-all duration-300 relative group text-foreground animate-in fade-in">
-                    <button 
-                      onClick={() => toggleWishlist(product)}
-                      className="absolute top-4 right-4 bg-background/80 hover:bg-background text-muted-foreground hover:text-destructive p-1.5 rounded-full shadow transition-colors"
-                    >
-                      <Heart className={`h-4 w-4 ${favorited ? "fill-destructive text-destructive" : ""}`} />
-                    </button>
-
-                    <div className="w-24 h-24 rounded-lg bg-secondary border overflow-hidden flex-shrink-0 relative">
-                      <Link href={`/products/${product.slug}`}>
-                        <Image src={imgUrl || "https://placehold.co/400x400/10b981/ffffff?text=Product"} alt={product.title} fill sizes="96px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                      </Link>
-                      {discount > 0 && (
-                        <div className="absolute top-1 left-1 bg-destructive text-destructive-foreground text-[8px] font-extrabold px-1 rounded shadow">
-                          {discount}% OFF
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0 space-y-2 text-center sm:text-left">
-                      <div className="space-y-0.5">
-                        <Link href={`/products/${product.slug}`} className="hover:text-primary transition-colors">
-                          <h3 className="font-bold text-base line-clamp-1 text-foreground">{product.title}</h3>
-                        </Link>
-                        <p className="text-xs font-mono text-muted-foreground">SKU: {sku}</p>
-                        {/* Tiny Tag Pills */}
-                        {product.cardTags && product.cardTags.length > 0 && (
-                          <div className="flex flex-wrap justify-center sm:justify-start gap-1 pt-1">
-                            {product.cardTags.map((tag, tIdx) => (
-                              <span key={tIdx} className="bg-secondary text-muted-foreground text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-3 justify-center sm:justify-start">
-                        {product.totalStock > 30 ? (
-                          <span className="text-[10px] font-semibold text-success bg-success/10 px-2 py-0.5 rounded">
-                            In Stock ({product.totalStock} units)
-                          </span>
-                        ) : product.totalStock > 0 ? (
-                          <span className="text-[10px] font-semibold text-yellow-600 dark:text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded">
-                            Low Stock ({product.totalStock} left)
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-semibold text-destructive bg-destructive/10 px-2 py-0.5 rounded">
-                            Out of Stock
-                          </span>
-                        )}
-                        <span className="text-xs text-muted-foreground">MOQ: {product.moq || 1} units</span>
-                      </div>
-                    </div>
-
-                    {/* Pricing */}
-                    <div className="text-center sm:text-left flex-shrink-0">
-                      <div className="flex items-baseline gap-1.5 justify-center sm:justify-start">
-                        <span className="text-xl font-extrabold text-primary">{formatPrice(price)}</span>
-                        {mrp > price && (
-                          <span className="text-xs text-muted-foreground line-through">{formatPrice(mrp)}</span>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 font-semibold">+ 18% GST (B2B Claimable)</p>
-                    </div>
-
-                    {/* Action Block */}
-                    <div className="flex flex-col gap-2 w-full sm:w-48 flex-shrink-0">
-                      <div className="flex items-center gap-1.5 border rounded-lg p-0.5 bg-secondary/10 w-full justify-between">
-                        <button
-                          type="button"
-                          onClick={() => adjustItemQty(product._id, -1)}
-                          className="p-1 rounded hover:bg-secondary transition-colors"
-                        >
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <input
-                          type="number"
-                          value={currentQty}
-                          onChange={(e) => setItemQty(product._id, Number(e.target.value))}
-                          className="w-12 text-center text-xs font-bold bg-transparent border-none outline-none focus:ring-0 text-foreground"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => adjustItemQty(product._id, 1)}
-                          className="p-1 rounded hover:bg-secondary transition-colors"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
-                      </div>
-
-                      <Button 
-                        className="w-full flex items-center justify-center gap-2 font-bold" 
-                        size="sm"
-                        onClick={() => handleAddToCart(product)}
-                        disabled={product.totalStock <= 0}
-                      >
-                        <ShoppingCart className="h-4 w-4" />
-                        Add to Cart
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+              {paginatedProducts.map((product) => (
+                <ProductCard key={product._id} product={product} layout="list" />
+              ))}
             </div>
           )}
 

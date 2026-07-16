@@ -147,7 +147,7 @@ export function CheckoutView() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 text-foreground">
+    <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 text-foreground w-full">
       <h1 className="text-3xl font-bold text-foreground mb-8 text-center">Secure Checkout</h1>
 
       <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">

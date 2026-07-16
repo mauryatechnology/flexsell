@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { 
   LayoutDashboard, ShoppingBag, FolderTree, Users, 
-  Settings, Palette, Tags, CreditCard, Menu, Percent 
+  Settings, Palette, Tags, CreditCard, Menu, Percent, FileText
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 
@@ -16,6 +16,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     { name: "Customers", href: "/admin/customers", icon: Users },
     { name: "HSN Management", href: "/admin/hsn", icon: Percent },
     { name: "Coupons", href: "/admin/coupons", icon: Tags },
+    { name: "Website CMS", href: "/admin/cms", icon: FileText },
     { name: "Theme Editor", href: "/admin/theme", icon: Palette },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ];

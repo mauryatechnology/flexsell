@@ -271,7 +271,7 @@ export function CartView() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 text-foreground">
+    <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 text-foreground w-full">
       <div className="mb-6">
         <Link href="/products" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center">
           <ArrowLeft className="mr-2 h-4 w-4" /> Continue Shopping

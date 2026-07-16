@@ -15,7 +15,7 @@ export function MegaMenu({ categories }: MegaMenuProps) {
 
   return (
     <nav className="hidden md:flex border-t bg-secondary/30 relative z-40 group">
-      <div className="container mx-auto px-4 h-12 flex items-center gap-6 text-sm font-medium">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 h-12 flex items-center gap-6 text-sm font-medium w-full">
         
         {/* Categories Dropdown Trigger */}
         <div className="h-full flex items-center hover:text-primary cursor-pointer peer">
@@ -24,7 +24,7 @@ export function MegaMenu({ categories }: MegaMenuProps) {
 
         {/* Mega Menu Dropdown */}
         <div className="absolute top-12 left-0 w-full bg-background border-b shadow-lg hidden peer-hover:block hover:block transition-all">
-          <div className="container mx-auto px-4 py-8">
+          <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 w-full">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8">
               {topLevel.map((cat) => {
                 const subCats = categories.filter(c => c.parentId === cat._id).sort((a, b) => a.order - b.order);
