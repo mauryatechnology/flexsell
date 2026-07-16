@@ -1,8 +1,19 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
+    const token = await getTokenFromCookie();
+    if (!token) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload) {
+      return NextResponse.json({ message: "Invalid session" }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 

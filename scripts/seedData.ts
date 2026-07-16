@@ -147,9 +147,11 @@ export const categories = [
 
 export const customers = [
   {
-    "_id": "60c72b2f9b1d8e001c8e2001",
+    "_id": "FSW-0001",
     "name": "John Doe",
     "email": "john@doeent.com",
+    "password": "password123",
+    "role": "customer",
     "company": "Doe Ent.",
     "address": "45 Textile Market, Ring Road",
     "city": "Surat",
@@ -160,9 +162,11 @@ export const customers = [
     "gstin": "24AAACD4521D1Z1"
   },
   {
-    "_id": "60c72b2f9b1d8e001c8e2002",
+    "_id": "FSW-0002",
     "name": "Jane Smith",
     "email": "jane@smithretail.in",
+    "password": "password123",
+    "role": "customer",
     "company": "Smith Retail Group",
     "address": "GIDC Electronic Zone, Sector 26",
     "city": "Gandhinagar",
@@ -173,9 +177,11 @@ export const customers = [
     "gstin": "24AAACS9823S2Z5"
   },
   {
-    "_id": "60c72b2f9b1d8e001c8e2003",
+    "_id": "FSW-0003",
     "name": "Amit Patel",
     "email": "amit@pateldistributors.com",
+    "password": "password123",
+    "role": "customer",
     "company": "Patel Distributors",
     "address": "Industrial Area Phase 2",
     "city": "Ahmedabad",

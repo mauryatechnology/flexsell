@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Product from "@/models/Product";
+import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 
 export async function GET() {
   try {
@@ -16,6 +17,16 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await dbConnect();
+    const token = await getTokenFromCookie();
+    if (!token) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload || payload.role !== "admin") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
     const body = await request.json();
     
     // Generate a random 24-character hex ID if not provided

@@ -151,6 +151,10 @@ export interface Customer {
   _id: string;
   name: string;
   email: string;
+  password?: string;
+  role?: "customer" | "admin";
+  resetPasswordToken?: string;
+  resetPasswordExpires?: string;
   company?: string;
   address: string;
   city: string;

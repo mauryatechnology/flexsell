@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
+import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 
 const statusClasses = {
   Processing: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500",
@@ -15,6 +16,16 @@ export async function PUT(
 ) {
   try {
     await dbConnect();
+    const token = await getTokenFromCookie();
+    if (!token) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload || payload.role !== "admin") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
     const { id } = await params;
     const { status } = await request.json();
     

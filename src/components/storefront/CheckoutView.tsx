@@ -63,32 +63,74 @@ export function CheckoutView() {
   const [address, setAddress] = React.useState("");
   const [apartment, setApartment] = React.useState("");
   const [city, setCity] = React.useState("");
-  const [state, setState] = React.useState("");
+  const [state, setState] = React.useState(INDIAN_STATES[0]);
   const [pinCode, setPinCode] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  // Admin delegation states
+  const [currentUser, setCurrentUser] = React.useState<any>(null);
+  const [customersList, setCustomersList] = React.useState<any[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = React.useState("");
 
   // Load customer on mount
   React.useEffect(() => {
     const loadCustomer = async () => {
       try {
         const customer = await customerService.getActiveCustomer();
-        setEmail(customer.email);
-        setFirstName(customer.name.split(" ")[0] || "");
-        setLastName(customer.name.split(" ").slice(1).join(" ") || "");
-        setCompany(customer.company || "");
-        setAddress(customer.address);
-        setCity(customer.city);
-        setState(customer.state);
-        setPinCode(customer.pinCode);
-        setPhone(customer.phone);
-        setBuyerState(customer.state);
+        setCurrentUser(customer);
+        
+        if (customer.role === "admin") {
+          const list = await customerService.getCustomers();
+          setCustomersList(list);
+          setState(INDIAN_STATES[0]);
+          setBuyerState(INDIAN_STATES[0]);
+        } else {
+          setEmail(customer.email);
+          setFirstName(customer.name.split(" ")[0] || "");
+          setLastName(customer.name.split(" ").slice(1).join(" ") || "");
+          setCompany(customer.company || "");
+          setAddress(customer.address);
+          setCity(customer.city);
+          setState(customer.state || INDIAN_STATES[0]);
+          setPinCode(customer.pinCode);
+          setPhone(customer.phone);
+          setBuyerState(customer.state || INDIAN_STATES[0]);
+        }
       } catch (err) {
         console.error("Failed to load active customer:", err);
       }
     };
     loadCustomer();
   }, [setBuyerState]);
+
+  const handleSelectDelegatedCustomer = (customerId: string) => {
+    setSelectedCustomerId(customerId);
+    const selected = customersList.find((c) => c._id === customerId);
+    if (selected) {
+      setEmail(selected.email || "");
+      setFirstName(selected.name?.split(" ")[0] || "");
+      setLastName(selected.name?.split(" ").slice(1).join(" ") || "");
+      setCompany(selected.company || "");
+      setAddress(selected.address || "");
+      setCity(selected.city || "");
+      setState(selected.state || INDIAN_STATES[0]);
+      setPinCode(selected.pinCode || "");
+      setPhone(selected.phone || "");
+      setBuyerState(selected.state || INDIAN_STATES[0]);
+    } else {
+      setEmail("");
+      setFirstName("");
+      setLastName("");
+      setCompany("");
+      setAddress("");
+      setCity("");
+      setState(INDIAN_STATES[0]);
+      setPinCode("");
+      setPhone("");
+      setBuyerState(INDIAN_STATES[0]);
+    }
+  };
 
   // Sync state dropdown with store POS
   const handleStateChange = (val: string) => {
@@ -98,6 +140,17 @@ export function CheckoutView() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (currentUser?.role === "admin") {
+      if (!selectedCustomerId) {
+        alert("Administrators cannot place orders for themselves. Please select a B2B customer from the dropdown list at the top.");
+        return;
+      }
+      if (email.toLowerCase() === currentUser.email.toLowerCase()) {
+        alert("Administrators cannot place orders for themselves. Please select a different B2B customer.");
+        return;
+      }
+    }
 
     if (!email || !firstName || !lastName || !address || !city || !state || !pinCode || !phone) {
       alert("Please fill in all required shipping address fields.");
@@ -125,8 +178,12 @@ export function CheckoutView() {
       // Clear shopping cart
       clearCart();
 
-      // Redirect to client orders
-      router.push(`/client/orders?success=${orderId}`);
+      // Redirect to client or admin orders depending on who is placing the order
+      if (currentUser?.role === "admin") {
+        router.push(`/admin/orders?success=${orderId}`);
+      } else {
+        router.push(`/client/orders?success=${orderId}`);
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to place order. Please try again.");
     } finally {
@@ -152,6 +209,37 @@ export function CheckoutView() {
 
       <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
         <div className="space-y-6">
+          {currentUser?.role === "admin" && (
+            <Card className="border-primary/50 border bg-primary/5">
+              <CardHeader>
+                <CardTitle className="text-primary text-base">
+                  Placing Order on Behalf of Customer
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <label className="text-sm font-semibold text-foreground block">
+                  Select B2B Customer <span className="text-destructive">*</span>
+                </label>
+                <select
+                  className="h-10 px-3 rounded-md border border-border bg-background text-sm font-semibold text-foreground focus:ring-2 focus:ring-primary w-full cursor-pointer"
+                  value={selectedCustomerId}
+                  onChange={(e) => handleSelectDelegatedCustomer(e.target.value)}
+                  required
+                >
+                  <option value="">-- Choose Customer --</option>
+                  {customersList.map((cust) => (
+                    <option key={cust._id} value={cust._id}>
+                      {cust.name} ({cust._id}) - {cust.email}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Selecting a customer will automatically load their registered company address and calculate the corresponding state/IGST tax rates.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Contact Information</CardTitle>

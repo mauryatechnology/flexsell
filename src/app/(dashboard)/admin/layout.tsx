@@ -6,14 +6,16 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, ShoppingBag, FolderTree, Users, 
-  Settings, Palette, Tags, CreditCard, Menu, Percent, FileText
+  Settings, Palette, Tags, CreditCard, Menu, Percent, FileText, LogOut
 } from "lucide-react";
+import { useAuthStore } from "@/stores/authStore";
 import { Avatar } from "@/components/ui/Avatar";
 import { Drawer } from "@/components/ui/Drawer";
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const pathname = usePathname();
+  const logout = useAuthStore((state) => state.logout);
 
   const sidebarLinks = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -42,7 +44,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         </Link>
       </div>
       
-      <div className="flex-1 overflow-y-auto py-6 px-3">
+      <div className="flex-1 overflow-y-auto py-6 px-3 flex flex-col justify-between">
         <nav className="space-y-1">
           {sidebarLinks.map((link) => {
             const Icon = link.icon;
@@ -63,6 +65,16 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             );
           })}
         </nav>
+
+        <div className="mt-auto pt-4 border-t">
+          <button 
+            onClick={logout}
+            className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md hover:bg-destructive/10 text-destructive transition-colors w-full text-left cursor-pointer"
+          >
+            <LogOut className="h-5 w-5" />
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   );

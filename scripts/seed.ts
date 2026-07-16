@@ -1,5 +1,6 @@
 import fs from "fs";
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 // Load environment variables manually if not set
 if (!process.env.MONGODB_URI) {
@@ -268,7 +269,13 @@ async function seed() {
     // Seed Customers
     console.log("Seeding Customers...");
     await Customer.deleteMany({});
-    await Customer.insertMany(customers);
+    const hashedCustomers = await Promise.all(
+      customers.map(async (c) => {
+        const hashedPassword = await bcrypt.hash(c.password, 10);
+        return { ...c, password: hashedPassword };
+      })
+    );
+    await Customer.insertMany(hashedCustomers);
     console.log("Seeded", customers.length, "customers.");
 
     // Seed HSN

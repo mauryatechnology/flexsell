@@ -3,11 +3,17 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ClientSidebar } from "@/components/layout/ClientSidebar";
 
-import { customerService } from "@/services/customerService";
+export const dynamic = "force-dynamic";
+
+import { getActiveCustomerServer } from "@/lib/auth";
 import { categoryService } from "@/services/categoryService";
+import { redirect } from "next/navigation";
 
 export default async function ClientDashboardLayout({ children }: { children: React.ReactNode }) {
-  const activeCustomer = await customerService.getActiveCustomer();
+  const activeCustomer = await getActiveCustomerServer();
+  if (!activeCustomer) {
+    redirect("/login");
+  }
   const allCategories = await categoryService.getCategories();
 
   return (

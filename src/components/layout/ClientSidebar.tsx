@@ -7,6 +7,7 @@ import { Package, Heart, MapPin, User, Star, Ticket, Bell, LogOut, Menu } from "
 import { Avatar } from "@/components/ui/Avatar";
 import { Drawer } from "@/components/ui/Drawer";
 import { Customer } from "@/types";
+import { useAuthStore } from "@/stores/authStore";
 
 const sidebarLinks = [
   { name: "Dashboard", href: "/client", icon: User },
@@ -26,6 +27,7 @@ interface ClientSidebarProps {
 export function ClientSidebar({ activeCustomer }: ClientSidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const pathname = usePathname();
+  const logout = useAuthStore((state) => state.logout);
 
   // Auto-close mobile drawer when pathname changes
   React.useEffect(() => {
@@ -61,7 +63,10 @@ export function ClientSidebar({ activeCustomer }: ClientSidebarProps) {
           );
         })}
         <div className="my-2 border-t"></div>
-        <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md hover:bg-destructive/10 text-destructive transition-colors w-full text-left cursor-pointer">
+        <button 
+          onClick={logout}
+          className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md hover:bg-destructive/10 text-destructive transition-colors w-full text-left cursor-pointer"
+        >
           <LogOut className="h-5 w-5" />
           Logout
         </button>

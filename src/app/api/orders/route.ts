@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
+import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 
 const statusClasses = {
   Processing: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500",
@@ -13,8 +14,23 @@ const statusClasses = {
 export async function GET() {
   try {
     await dbConnect();
-    // Retrieve orders sorted by createdAt descending
-    const orders = await Order.find({}).sort({ createdAt: -1 });
+    const token = await getTokenFromCookie();
+    if (!token) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload) {
+      return NextResponse.json({ message: "Invalid session" }, { status: 401 });
+    }
+
+    let query = {};
+    if (payload.role !== "admin") {
+      // B2B buyer can only fetch their own orders matching their email
+      query = { "shippingAddress.email": payload.email.toLowerCase() };
+    }
+
+    const orders = await Order.find(query).sort({ createdAt: -1 });
     return NextResponse.json(orders);
   } catch (error: any) {
     return NextResponse.json({ message: error.message || "Failed to fetch orders" }, { status: 500 });
@@ -24,6 +40,15 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await dbConnect();
+    const token = await getTokenFromCookie();
+    if (!token) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+    const payload = verifyToken(token);
+    if (!payload) {
+      return NextResponse.json({ message: "Invalid session" }, { status: 401 });
+    }
+
     const { items, amount, shippingAddress } = await request.json();
     
     // Determine the next sequential Order ID

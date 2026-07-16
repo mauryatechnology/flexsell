@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import StockLog from "@/models/StockLog";
+import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 
 export async function GET() {
   try {
     await dbConnect();
+    const token = await getTokenFromCookie();
+    if (!token) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload || payload.role !== "admin") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
     const logs = await StockLog.find({}).sort({ createdAt: -1 });
     return NextResponse.json(logs);
   } catch (error: any) {
@@ -18,6 +29,16 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await dbConnect();
+    const token = await getTokenFromCookie();
+    if (!token) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload || payload.role !== "admin") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
     const body = await request.json();
 
     if (!body._id) {
@@ -39,6 +60,16 @@ export async function POST(request: Request) {
 export async function DELETE() {
   try {
     await dbConnect();
+    const token = await getTokenFromCookie();
+    if (!token) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload || payload.role !== "admin") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
     await StockLog.deleteMany({});
     return NextResponse.json({ message: "Ledger history cleared successfully" });
   } catch (error: any) {
