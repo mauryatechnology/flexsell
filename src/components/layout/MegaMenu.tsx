@@ -52,13 +52,15 @@ export function MegaMenu({ categories }: MegaMenuProps) {
         </div>
 
         {/* Regular Nav Links */}
-        <div className="flex items-center gap-6 ml-6 overflow-x-auto scrollbar-none">
-          {topLevel.map(cat => (
-            <Link key={cat._id} href={`/categories/${cat.slug}`} className="hover:text-primary whitespace-nowrap">
-              {cat.name}
-            </Link>
-          ))}
-          <Link href="/products" className="hover:text-primary whitespace-nowrap text-primary ml-auto font-bold">
+        <div className="flex-1 min-w-0 flex items-center justify-between gap-6 ml-6">
+          <div className="flex-1 min-w-0 flex items-center gap-6 overflow-x-auto scrollbar-none py-1">
+            {topLevel.map(cat => (
+              <Link key={cat._id} href={`/categories/${cat.slug}`} className="hover:text-primary whitespace-nowrap">
+                {cat.name}
+              </Link>
+            ))}
+          </div>
+          <Link href="/products" className="hover:text-primary whitespace-nowrap text-primary font-bold shrink-0">
             Explore All Products &rarr;
           </Link>
         </div>
