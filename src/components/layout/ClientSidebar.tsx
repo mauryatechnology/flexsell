@@ -3,23 +3,27 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Menu } from "lucide-react";
+import { Package, Heart, MapPin, User, Star, Ticket, Bell, LogOut, Menu } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Drawer } from "@/components/ui/Drawer";
 import { Customer } from "@/types";
 
-interface SidebarLink {
-  name: string;
-  href: string;
-  icon: React.ComponentType<any>;
-}
+const sidebarLinks = [
+  { name: "Dashboard", href: "/client", icon: User },
+  { name: "My Orders", href: "/client/orders", icon: Package },
+  { name: "Wishlist", href: "/client/wishlist", icon: Heart },
+  { name: "Addresses", href: "/client/addresses", icon: MapPin },
+  { name: "Profile", href: "/client/profile", icon: User },
+  { name: "My Reviews", href: "/client/reviews", icon: Star },
+  { name: "Coupons", href: "/client/coupons", icon: Ticket },
+  { name: "Notifications", href: "/client/notifications", icon: Bell },
+];
 
 interface ClientSidebarProps {
   activeCustomer: Customer;
-  links: SidebarLink[];
 }
 
-export function ClientSidebar({ activeCustomer, links }: ClientSidebarProps) {
+export function ClientSidebar({ activeCustomer }: ClientSidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const pathname = usePathname();
 
@@ -38,7 +42,7 @@ export function ClientSidebar({ activeCustomer, links }: ClientSidebarProps) {
         </div>
       </div>
       <nav className="flex flex-col p-2">
-        {links.map((link) => {
+        {sidebarLinks.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
           return (
