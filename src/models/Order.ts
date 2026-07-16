@@ -42,6 +42,7 @@ const OrderSchema = new Schema<OrderType & Document>(
       state: { type: String, required: true },
       pinCode: { type: String, required: true },
       phone: { type: String, required: true },
+      gstin: { type: String },
     },
     items: [{ type: Schema.Types.Mixed, required: true }],
     shipmentDetails: { type: ShipmentDetailsSchema },

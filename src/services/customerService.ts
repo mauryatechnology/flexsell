@@ -32,5 +32,14 @@ export const customerService = {
       return staticActiveCustomer;
     }
     return apiClient.get<Customer>("/customers/active");
+  },
+
+  async updateActiveCustomer(data: Partial<Customer>): Promise<Customer> {
+    if (isMockMode) {
+      await delay();
+      Object.assign(staticActiveCustomer, data);
+      return staticActiveCustomer;
+    }
+    return apiClient.put<Customer>("/customers/active", data);
   }
 };

@@ -17,9 +17,14 @@ export default function ClientOrderDetailPage({ params }: PageProps) {
   const orderId = resolvedParams.id;
 
   const { orders, initializeOrders, isLoading } = useOrderStore();
+  const [cmsData, setCmsData] = React.useState<any>(null);
 
   React.useEffect(() => {
     initializeOrders();
+    fetch("/api/cms")
+      .then(res => res.json())
+      .then(data => setCmsData(data))
+      .catch(err => console.error("Failed to load CMS data:", err));
   }, [initializeOrders]);
 
   const order = React.useMemo(() => orders.find(o => o._id === orderId), [orders, orderId]);
@@ -138,7 +143,10 @@ export default function ClientOrderDetailPage({ params }: PageProps) {
                   <h4 className="font-bold text-[10px] text-muted-foreground uppercase mb-1">Billing Details:</h4>
                   <p className="text-muted-foreground">Order Ref ID: <span className="font-mono font-bold text-foreground">{order._id}</span></p>
                   <p className="text-muted-foreground mt-0.5">Order Date: {order.date}</p>
-                  <p className="text-muted-foreground">GST Status: 18% GST claimable invoice</p>
+                  <p className="text-muted-foreground">GST Status: {cmsData?.commerceSettings?.defaultTaxRate || 18}% GST claimable invoice</p>
+                  {order.shippingAddress.gstin && (
+                    <p className="font-mono font-bold text-primary mt-1">Customer GSTIN: {order.shippingAddress.gstin}</p>
+                  )}
                 </div>
               </div>
 
@@ -179,16 +187,22 @@ export default function ClientOrderDetailPage({ params }: PageProps) {
               <div className="flex flex-col md:flex-row md:justify-between items-start gap-6 pt-4 border-t">
                 <div className="text-[10px] text-muted-foreground max-w-sm">
                   <p className="font-semibold uppercase text-foreground mb-0.5">Note:</p>
-                  <p>Invoices are inclusive of standard 18% GST (9% CGST + 9% SGST). GSTIN claims are processed during invoice download validation.</p>
+                  <p>Invoices are inclusive of standard {cmsData?.commerceSettings?.defaultTaxRate || 18}% GST. GSTIN claims are processed during invoice download validation.</p>
+                  {cmsData?.brandSettings?.gstin && (
+                    <p className="mt-1 font-semibold text-foreground">Seller GSTIN: {cmsData.brandSettings.gstin}</p>
+                  )}
+                  {cmsData?.brandSettings?.companyAddress && (
+                    <p className="text-muted-foreground">Office: {cmsData.brandSettings.companyAddress}</p>
+                  )}
                 </div>
                 <div className="w-full md:w-56 space-y-1.5 text-xs">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Taxable Base Value:</span>
-                    <span>{formatPrice(order.amount / 1.18)}</span>
+                    <span>{formatPrice(order.amount / (1 + (cmsData?.commerceSettings?.defaultTaxRate || 18) / 100))}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>CGST/SGST (18%):</span>
-                    <span>{formatPrice(order.amount - (order.amount / 1.18))}</span>
+                    <span>CGST/SGST ({cmsData?.commerceSettings?.defaultTaxRate || 18}%):</span>
+                    <span>{formatPrice(order.amount - (order.amount / (1 + (cmsData?.commerceSettings?.defaultTaxRate || 18) / 100)))}</span>
                   </div>
                   <div className="flex justify-between font-bold text-base text-foreground border-t pt-2 mt-2">
                     <span>Total (incl. GST):</span>
@@ -203,11 +217,11 @@ export default function ClientOrderDetailPage({ params }: PageProps) {
                   <div>
                     <h4 className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Bank Transfer Details for B2B Payments:</h4>
                     <div className="bg-secondary/20 p-3 rounded-lg border font-mono text-[11px] text-foreground space-y-1">
-                      <p><span className="text-muted-foreground font-sans">Beneficiary:</span> FlexSell B2B Private Limited</p>
-                      <p><span className="text-muted-foreground font-sans">Bank Name:</span> HDFC Bank</p>
-                      <p><span className="text-muted-foreground font-sans">Account No:</span> 50200084729104</p>
-                      <p><span className="text-muted-foreground font-sans">IFSC Code:</span> HDFC0000024</p>
-                      <p><span className="text-muted-foreground font-sans">Branch:</span> Sachin GIDC, Surat</p>
+                      <p><span className="text-muted-foreground font-sans">Beneficiary:</span> {cmsData?.brandSettings?.bankDetails?.beneficiaryName || "FlexSell B2B Private Limited"}</p>
+                      <p><span className="text-muted-foreground font-sans">Bank Name:</span> {cmsData?.brandSettings?.bankDetails?.bankName || "HDFC Bank"}</p>
+                      <p><span className="text-muted-foreground font-sans">Account No:</span> {cmsData?.brandSettings?.bankDetails?.accountNo || "50200084729104"}</p>
+                      <p><span className="text-muted-foreground font-sans">IFSC Code:</span> {cmsData?.brandSettings?.bankDetails?.ifscCode || "HDFC0000024"}</p>
+                      <p><span className="text-muted-foreground font-sans">Branch:</span> {cmsData?.brandSettings?.bankDetails?.branch || "Sachin GIDC, Surat"}</p>
                     </div>
                   </div>
                   <div>
@@ -219,13 +233,13 @@ export default function ClientOrderDetailPage({ params }: PageProps) {
                 <div className="flex flex-col justify-between items-end h-full pt-4 md:pt-0">
                   <div className="text-center w-56 border border-border/85 p-3 rounded-lg bg-secondary/10 relative">
                     <div className="border border-primary/25 border-dashed rounded text-[9px] font-bold text-primary px-2 py-1 rotate-[-4deg] absolute left-2 top-2 opacity-80 uppercase tracking-widest no-print">
-                      FlexSell B2B Verified
+                      {cmsData?.brandSettings?.storeName || "FlexSell"} B2B Verified
                     </div>
                     <div className="h-16 flex items-center justify-center">
                       <span className="text-[10px] text-muted-foreground italic font-serif">Authorized Signatory</span>
                     </div>
                     <div className="border-t border-border pt-1.5 font-bold text-[10px] text-foreground uppercase tracking-wider">
-                      For FlexSell Wholesale
+                      For {cmsData?.brandSettings?.storeName || "FlexSell Wholesale"}
                     </div>
                   </div>
                 </div>

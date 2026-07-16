@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useCartStore } from "@/stores/cartStore";
 import { useOrderStore } from "@/stores/orderStore";
+import { useToastStore } from "@/stores/toastStore";
 import { formatPrice } from "@/lib/utils";
 import { customerService } from "@/services/customerService";
 
@@ -46,6 +47,7 @@ const INDIAN_STATES = [
 
 export function CheckoutView() {
   const router = useRouter();
+  const { addToast } = useToastStore();
   const { items, buyerState, setBuyerState, clearCart } = useCartStore();
   const { createOrder } = useOrderStore();
 
@@ -60,6 +62,7 @@ export function CheckoutView() {
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
   const [company, setCompany] = React.useState("");
+  const [gstin, setGstin] = React.useState("");
   const [address, setAddress] = React.useState("");
   const [apartment, setApartment] = React.useState("");
   const [city, setCity] = React.useState("");
@@ -68,10 +71,17 @@ export function CheckoutView() {
   const [phone, setPhone] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  // Coupon states
+  const [couponCode, setCouponCode] = React.useState("");
+  const [appliedCoupon, setAppliedCoupon] = React.useState<any>(null);
+  const [couponDiscount, setCouponDiscount] = React.useState(0);
+  const [isValidatingCoupon, setIsValidatingCoupon] = React.useState(false);
+
   // Admin delegation states
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [customersList, setCustomersList] = React.useState<any[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = React.useState("");
+  const [savedAddresses, setSavedAddresses] = React.useState<any[]>([]);
 
   // Load customer on mount
   React.useEffect(() => {
@@ -87,9 +97,38 @@ export function CheckoutView() {
           setBuyerState(INDIAN_STATES[0]);
         } else {
           setEmail(customer.email);
+          
+          // Fetch saved addresses
+          try {
+            const addrRes = await fetch("/api/customers/addresses");
+            if (addrRes.ok) {
+              const addrs = await addrRes.json();
+              setSavedAddresses(addrs);
+              const defaultAddr = addrs.find((a: any) => a.isDefault);
+              if (defaultAddr) {
+                setFirstName(defaultAddr.firstName);
+                setLastName(defaultAddr.lastName);
+                setCompany(defaultAddr.company || "");
+                setGstin(defaultAddr.gstin || "");
+                setAddress(defaultAddr.address);
+                setApartment(defaultAddr.apartment || "");
+                setCity(defaultAddr.city);
+                setState(defaultAddr.state || INDIAN_STATES[0]);
+                setPinCode(defaultAddr.pinCode);
+                setPhone(defaultAddr.phone);
+                setBuyerState(defaultAddr.state || INDIAN_STATES[0]);
+                return;
+              }
+            }
+          } catch (addrErr) {
+            console.error("Failed to load saved addresses", addrErr);
+          }
+
+          // Fallback to customer model fields
           setFirstName(customer.name.split(" ")[0] || "");
           setLastName(customer.name.split(" ").slice(1).join(" ") || "");
           setCompany(customer.company || "");
+          setGstin(customer.gstin || "");
           setAddress(customer.address);
           setCity(customer.city);
           setState(customer.state || INDIAN_STATES[0]);
@@ -104,6 +143,55 @@ export function CheckoutView() {
     loadCustomer();
   }, [setBuyerState]);
 
+  const handleSelectSavedAddress = (id: string) => {
+    const selected = savedAddresses.find(a => a._id === id);
+    if (selected) {
+      setFirstName(selected.firstName || "");
+      setLastName(selected.lastName || "");
+      setCompany(selected.company || "");
+      setGstin(selected.gstin || "");
+      setAddress(selected.address || "");
+      setApartment(selected.apartment || "");
+      setCity(selected.city || "");
+      setState(selected.state || INDIAN_STATES[0]);
+      setPinCode(selected.pinCode || "");
+      setPhone(selected.phone || "");
+      setBuyerState(selected.state || INDIAN_STATES[0]);
+    }
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidatingCoupon(true);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode, orderValue: grandTotal })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Invalid coupon");
+      }
+      setAppliedCoupon(data);
+      setCouponDiscount(data.discountAmount);
+      addToast(`Coupon "${data.couponCode}" applied successfully!`, "success");
+    } catch (err: any) {
+      addToast(err.message || "Failed to validate coupon", "error");
+      setCouponDiscount(0);
+      setAppliedCoupon(null);
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    setCouponCode("");
+    addToast("Coupon removed", "info");
+  };
+
   const handleSelectDelegatedCustomer = (customerId: string) => {
     setSelectedCustomerId(customerId);
     const selected = customersList.find((c) => c._id === customerId);
@@ -112,6 +200,7 @@ export function CheckoutView() {
       setFirstName(selected.name?.split(" ")[0] || "");
       setLastName(selected.name?.split(" ").slice(1).join(" ") || "");
       setCompany(selected.company || "");
+      setGstin(selected.gstin || "");
       setAddress(selected.address || "");
       setCity(selected.city || "");
       setState(selected.state || INDIAN_STATES[0]);
@@ -123,6 +212,7 @@ export function CheckoutView() {
       setFirstName("");
       setLastName("");
       setCompany("");
+      setGstin("");
       setAddress("");
       setCity("");
       setState(INDIAN_STATES[0]);
@@ -167,13 +257,14 @@ export function CheckoutView() {
       city,
       state,
       pinCode,
-      phone
+      phone,
+      gstin: gstin || undefined
     };
 
     setIsSubmitting(true);
     try {
-      // Create B2B order using the dynamic grandTotal
-      const orderId = await createOrder(items, grandTotal, shippingAddress);
+      // Create B2B order using the dynamic grandTotal less coupon discount
+      const orderId = await createOrder(items, Math.max(0, grandTotal - couponDiscount), shippingAddress);
 
       // Clear shopping cart
       clearCart();
@@ -263,6 +354,22 @@ export function CheckoutView() {
               <CardTitle>Shipping Address</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {savedAddresses.length > 0 && (
+                <div className="space-y-1.5 pb-2 border-b">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Quick Select Saved Address</label>
+                  <select
+                    onChange={(e) => handleSelectSavedAddress(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">-- Choose a Saved Address --</option>
+                    {savedAddresses.map(addr => (
+                      <option key={addr._id} value={addr._id}>
+                        {addr.name} ({addr.firstName} {addr.lastName} - {addr.city}, {addr.state})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   placeholder="First Name"
@@ -277,11 +384,18 @@ export function CheckoutView() {
                   required
                 />
               </div>
-              <Input
-                placeholder="Company Name (optional)"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  placeholder="Company Name (optional)"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                />
+                <Input
+                  placeholder="GSTIN (optional)"
+                  value={gstin}
+                  onChange={(e) => setGstin(e.target.value)}
+                />
+              </div>
               <Input
                 placeholder="Street Address, Shop No."
                 value={address}
@@ -362,6 +476,36 @@ export function CheckoutView() {
                 ))}
               </div>
 
+              {/* Coupon Entry Panel */}
+              <div className="space-y-2 border-b pb-4">
+                <label className="text-xs font-bold uppercase text-muted-foreground block">Have a Coupon / Promo Code?</label>
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between bg-primary/10 border border-primary/20 p-2.5 rounded-lg">
+                    <div>
+                      <span className="font-mono font-bold text-primary text-xs">{appliedCoupon.couponCode}</span>
+                      <span className="text-[10px] text-muted-foreground block">
+                        Saved {formatPrice(couponDiscount)}
+                      </span>
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-destructive font-semibold" onClick={handleRemoveCoupon}>
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g. B2B15"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      className="font-mono uppercase h-9 text-xs"
+                    />
+                    <Button type="button" size="sm" className="h-9 font-bold px-4" onClick={handleApplyCoupon} disabled={isValidatingCoupon}>
+                      {isValidatingCoupon ? "..." : "Apply"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-3 text-sm text-foreground">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Base Subtotal</span>
@@ -383,6 +527,13 @@ export function CheckoutView() {
                   <div className="flex justify-between text-blue-600 dark:text-blue-400">
                     <span>IGST (Integrated GST)</span>
                     <span>{formatPrice(totalIgst)}</span>
+                  </div>
+                )}
+
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-primary font-bold">
+                    <span>Coupon Discount ({appliedCoupon?.couponCode})</span>
+                    <span>-{formatPrice(couponDiscount)}</span>
                   </div>
                 )}
 
@@ -414,7 +565,7 @@ export function CheckoutView() {
 
               <div className="flex justify-between font-bold text-lg border-t pt-4 text-foreground">
                 <span>Total to Pay</span>
-                <span>{formatPrice(grandTotal)}</span>
+                <span>{formatPrice(Math.max(0, grandTotal - couponDiscount))}</span>
               </div>
 
               <Button type="submit" size="lg" className="w-full text-base bg-foreground text-background hover:bg-foreground/90" disabled={isSubmitting}>

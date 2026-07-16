@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
+import Customer from "@/models/Customer";
 import { verifyToken, getTokenFromCookie } from "@/lib/auth";
+import { dispatchWebhook } from "@/lib/webhookDispatcher";
 
 const statusClasses = {
   Processing: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500",
@@ -128,6 +130,17 @@ export async function POST(request: Request) {
         }
       ]
     });
+
+    // Fire webhook and in-app notifications asynchronously
+    const targetCustomerId = payload.role === "admin"
+      ? (await Customer.findOne({ email: shippingAddress.email.toLowerCase() }).select("_id"))?._id || payload.userId
+      : payload.userId;
+
+    dispatchWebhook("order.created", newOrder, targetCustomerId, {
+      title: "Order Placed Successfully",
+      message: `Your wholesale order ${orderId} has been placed. Current status is Processing.`,
+      type: "success"
+    }).catch(console.error);
 
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error: any) {

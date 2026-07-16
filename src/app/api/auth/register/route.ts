@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Customer from "@/models/Customer";
 import bcrypt from "bcryptjs";
 import { signToken, setTokenCookie } from "@/lib/auth";
+import { dispatchWebhook } from "@/lib/webhookDispatcher";
 
 export async function POST(req: Request) {
   try {
@@ -60,6 +61,19 @@ export async function POST(req: Request) {
     });
 
     await newCustomer.save();
+
+    // Dispatch Webhook and in-app Notification asynchronously
+    dispatchWebhook("customer.created", {
+      _id: customerId,
+      name,
+      email: newCustomer.email,
+      company: newCustomer.company,
+      phone: newCustomer.phone
+    }, customerId, {
+      title: "Welcome to Flexsell Wholesale!",
+      message: `Thank you for registering. Your B2B wholesale portal account is now active. ID: ${customerId}`,
+      type: "success"
+    }).catch(console.error);
 
     // Create session
     const token = signToken({

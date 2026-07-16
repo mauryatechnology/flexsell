@@ -26,3 +26,52 @@ export async function GET() {
     return NextResponse.json({ message: error.message || "Failed to fetch active customer" }, { status: 500 });
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    await dbConnect();
+    const token = await getTokenFromCookie();
+    if (!token) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload) {
+      return NextResponse.json({ message: "Invalid session" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { name, phone, company, gstin, address, city, state, pinCode, email } = body;
+
+    const customer = await Customer.findById(payload.userId);
+    if (!customer) {
+      return NextResponse.json({ message: "Customer not found" }, { status: 404 });
+    }
+
+    if (name !== undefined) customer.name = name;
+    if (phone !== undefined) customer.phone = phone;
+    if (company !== undefined) customer.company = company;
+    if (gstin !== undefined) customer.gstin = gstin;
+    if (address !== undefined) customer.address = address;
+    if (city !== undefined) customer.city = city;
+    if (state !== undefined) customer.state = state;
+    if (pinCode !== undefined) customer.pinCode = pinCode;
+    if (email !== undefined) customer.email = email.toLowerCase();
+
+    // Recalculate initials if name changed
+    if (name) {
+      const parts = name.trim().split(/\s+/);
+      const initials = (parts[0]?.[0] || "") + (parts[parts.length - 1]?.[0] || "");
+      customer.initials = initials.toUpperCase().substring(0, 2) || "U";
+    }
+
+    await customer.save();
+
+    const customerObj = customer.toObject();
+    delete customerObj.password;
+
+    return NextResponse.json(customerObj);
+  } catch (error: any) {
+    return NextResponse.json({ message: error.message || "Failed to update profile" }, { status: 500 });
+  }
+}

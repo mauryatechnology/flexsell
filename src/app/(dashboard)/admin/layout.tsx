@@ -6,7 +6,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, ShoppingBag, FolderTree, Users, 
-  Settings, Palette, Tags, CreditCard, Menu, Percent, FileText, LogOut
+  Settings, Palette, Tags, CreditCard, Menu, Percent, FileText, LogOut,
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { Avatar } from "@/components/ui/Avatar";
@@ -14,8 +15,22 @@ import { Drawer } from "@/components/ui/Drawer";
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const pathname = usePathname();
   const logout = useAuthStore((state) => state.logout);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem("admin_sidebar_open");
+    if (saved !== null) {
+      setIsSidebarOpen(saved === "true");
+    }
+  }, []);
+
+  const handleToggleSidebar = () => {
+    const nextState = !isSidebarOpen;
+    setIsSidebarOpen(nextState);
+    localStorage.setItem("admin_sidebar_open", String(nextState));
+  };
 
   const sidebarLinks = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -35,13 +50,19 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b">
-        <Link href="/admin" className="flex flex-col gap-1 items-start">
-          <Image src="/Flexsell%20Logo.png" alt="Flexsell Logo" width={150} height={40} className="h-8 md:h-10 w-auto object-contain" />
-          <span className="text-xs text-muted-foreground uppercase tracking-widest ml-1">Admin Panel</span>
-        </Link>
+  const SidebarContent = ({ isCollapsed }: { isCollapsed?: boolean }) => (
+    <div className="flex flex-col h-full select-none">
+      <div className="p-4 border-b flex items-center justify-between min-h-[73px]">
+        {!isCollapsed ? (
+          <Link href="/admin" className="flex flex-col gap-1 items-start overflow-hidden">
+            <Image src="/Flexsell%20Logo.png" alt="Flexsell Logo" width={150} height={40} className="h-8 md:h-10 w-auto object-contain" />
+            <span className="text-xs text-muted-foreground uppercase tracking-widest ml-1">Admin Panel</span>
+          </Link>
+        ) : (
+          <Link href="/admin" className="mx-auto font-black text-xl text-primary font-sans h-8 flex items-center justify-center">
+            FS
+          </Link>
+        )}
       </div>
       
       <div className="flex-1 overflow-y-auto py-6 px-3 flex flex-col justify-between">
@@ -53,26 +74,40 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               <Link
                 key={link.name}
                 href={link.href}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md transition-colors relative group ${
                   isActive 
                     ? "bg-primary/10 text-primary font-bold" 
                     : "hover:bg-secondary hover:text-primary text-foreground"
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                {link.name}
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                {!isCollapsed && <span className="transition-opacity duration-300 opacity-100">{link.name}</span>}
+                
+                {/* Tooltip on hover when collapsed */}
+                {isCollapsed && (
+                  <span className="absolute left-14 bg-popover text-popover-foreground border px-2 py-1 rounded shadow-md text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                    {link.name}
+                  </span>
+                )}
               </Link>
             );
           })}
         </nav>
-
+ 
         <div className="mt-auto pt-4 border-t">
           <button 
             onClick={logout}
-            className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md hover:bg-destructive/10 text-destructive transition-colors w-full text-left cursor-pointer"
+            className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md hover:bg-destructive/10 text-destructive transition-colors w-full text-left cursor-pointer relative group"
           >
-            <LogOut className="h-5 w-5" />
-            Logout
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {!isCollapsed && <span>Logout</span>}
+            
+            {/* Tooltip on hover when collapsed */}
+            {isCollapsed && (
+              <span className="absolute left-14 bg-popover text-destructive border border-destructive/20 px-2 py-1 rounded shadow-md text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                Logout
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -81,26 +116,43 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
   return (
     <div className="min-h-screen flex bg-secondary/10">
-      {/* Desktop Sidebar (Hidden on mobile) */}
-      <aside className="w-64 bg-card border-r hidden md:flex flex-col sticky top-0 h-screen">
-        <SidebarContent />
+      {/* Desktop Sidebar (Collapsible) */}
+      <aside className={`bg-card border-r hidden md:flex flex-col sticky top-0 h-screen transition-all duration-300 ${
+        isSidebarOpen ? "w-64" : "w-16"
+      }`}>
+        <SidebarContent isCollapsed={!isSidebarOpen} />
       </aside>
 
       {/* Mobile Drawer Navigation */}
       <Drawer isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} side="left" className="p-0 max-w-[280px] w-full">
-        <SidebarContent />
+        <SidebarContent isCollapsed={false} />
       </Drawer>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Admin Topbar */}
-        <header className="h-16 bg-card border-b flex items-center justify-between px-6 sticky top-0 z-10">
-          <button 
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="md:hidden p-1.5 rounded-md hover:bg-secondary text-foreground cursor-pointer"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+        <header className="h-16 bg-card border-b flex items-center justify-between px-6 sticky top-0 z-10 gap-4">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="md:hidden p-1.5 rounded-md hover:bg-secondary text-foreground cursor-pointer"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            
+            {/* Sidebar toggle button (Chevron Right / Chevron Left) */}
+            <button
+              onClick={handleToggleSidebar}
+              className="hidden md:flex p-1.5 rounded-md hover:bg-secondary/80 text-foreground cursor-pointer border items-center justify-center h-9 w-9 bg-card"
+              title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+            >
+              {isSidebarOpen ? (
+                <ChevronLeft className="h-4.5 w-4.5" />
+              ) : (
+                <ChevronRight className="h-4.5 w-4.5" />
+              )}
+            </button>
+          </div>
           
           <div className="flex items-center gap-4 ml-auto">
             <Link href="/" target="_blank" className="text-sm font-medium text-primary hover:underline">

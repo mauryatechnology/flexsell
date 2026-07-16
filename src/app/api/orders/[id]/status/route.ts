@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
+import Customer from "@/models/Customer";
 import { verifyToken, getTokenFromCookie } from "@/lib/auth";
+import { dispatchWebhook } from "@/lib/webhookDispatcher";
 
 const statusClasses = {
   Processing: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500",
@@ -64,6 +66,15 @@ export async function PUT(
     order.history.unshift(newEvent); // Add to the beginning of the history logs
 
     await order.save();
+
+    // Dispatch Webhook & Notification asynchronously
+    const targetCustomerId = (await Customer.findOne({ email: order.shippingAddress.email.toLowerCase() }).select("_id"))?._id || "";
+    dispatchWebhook("order.status_updated", order, targetCustomerId, {
+      title: `Order Status Updated: ${status}`,
+      message: `Your wholesale order ${order._id} status has been updated to ${status}. Description: ${description}`,
+      type: status === "Cancelled" ? "warning" : status === "Delivered" ? "success" : "info"
+    }).catch(console.error);
+
     return NextResponse.json(order);
   } catch (error: any) {
     return NextResponse.json({ message: error.message || "Failed to update order status" }, { status: 500 });
