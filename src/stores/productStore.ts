@@ -6,7 +6,7 @@ interface ProductStoreState {
   products: Product[];
   isLoading: boolean;
   error: string | null;
-  initializeProducts: (initial?: Product[]) => Promise<void>;
+  initializeProducts: (initial?: Product[], force?: boolean) => Promise<void>;
   addProduct: (product: Omit<Product, "_id" | "createdAt">) => Promise<void>;
   updateProduct: (id: string, updatedFields: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -18,19 +18,19 @@ export const useProductStore = create<ProductStoreState>()((set, get) => ({
   isLoading: false,
   error: null,
 
-  initializeProducts: async (initial) => {
-    if (initial && initial.length > 0) {
+  initializeProducts: async (initial, force = false) => {
+    if (!force && initial && initial.length > 0) {
       set({ products: initial, isLoading: false });
       return;
     }
-    if (get().products.length > 0) return;
+    if (!force && get().products.length > 0) return;
     set({ isLoading: true, error: null });
     try {
       const data = await productService.getProducts();
       set({ products: data, isLoading: false });
     } catch (err) {
       set({ 
-        products: initial || [], 
+        products: (force ? [] : initial) || [], 
         error: err instanceof Error ? err.message : "Failed to load products", 
         isLoading: false 
       });

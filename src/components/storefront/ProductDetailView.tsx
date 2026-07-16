@@ -20,7 +20,7 @@ import {
   Scale,
   Maximize2
 } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, sanitizeImgUrl } from "@/lib/utils";
 import Image from "next/image";
 import { ProductCarousel } from "./ProductCarousel";
 
@@ -300,11 +300,12 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
 
   const currentImages = activeVariant?.images || [];
   const mainImageObj = currentImages[activeImageIdx];
-  const mainImage = mainImageObj
+  const rawMainImage = mainImageObj
     ? typeof mainImageObj === "string"
       ? mainImageObj
-      : mainImageObj.url || "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80"
-    : "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80";
+      : mainImageObj.url || ""
+    : "";
+  const mainImage = sanitizeImgUrl(rawMainImage, "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80");
   const mainImageAlt = mainImageObj && typeof mainImageObj !== "string"
     ? mainImageObj.alt
     : product.title;
@@ -327,14 +328,15 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
         {/* Left: Interactive Image Slider with left-positioned thumbnails on desktop */}
-        <div className="flex flex-col-reverse md:flex-row gap-4 items-start w-full">
+        <div className="md:col-span-5 flex flex-col-reverse md:flex-row gap-4 items-start w-full">
           {/* Slider thumbnails list (Left on desktop, bottom on mobile) */}
           {visibility.showImages && currentImages.length > 1 && (
-            <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto pb-2 pr-1 md:pb-0 md:pr-0 w-full md:w-24 md:h-[400px] flex-shrink-0">
+            <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto pb-2 pr-1 md:pb-0 md:pr-0 w-full md:w-24 md:h-[380px] flex-shrink-0">
               {currentImages.map((img, i) => {
-                const url = typeof img === "string" ? img : img.url || "";
+                const rawUrl = typeof img === "string" ? img : img.url || "";
+                const url = sanitizeImgUrl(rawUrl);
                 const alt = typeof img === "string" ? `Thumbnail ${i}` : img.alt || `Thumbnail ${i}`;
                 return (
                   <button
@@ -369,7 +371,7 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
         </div>
 
         {/* Right: Product specifications & options */}
-        <div className="flex flex-col space-y-6">
+        <div className="md:col-span-7 flex flex-col space-y-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <Badge variant="secondary" className="font-semibold">FACTORY DIRECT SUPPLY</Badge>

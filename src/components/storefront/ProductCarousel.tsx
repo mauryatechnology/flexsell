@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import useEmblaCarousel from "embla-carousel-react";
 import { Product } from "@/types";
 import { ProductCard } from "./ProductCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -12,19 +13,31 @@ interface ProductCarouselProps {
 }
 
 export function ProductCarousel({ title, subtitle, products }: ProductCarouselProps) {
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    align: "start",
+  });
+
+  const scrollPrev = React.useCallback(() => {
+    if (emblaApi) emblaApi.scrollPrev();
+  }, [emblaApi]);
+
+  const scrollNext = React.useCallback(() => {
+    if (emblaApi) emblaApi.scrollNext();
+  }, [emblaApi]);
+
+  // Autoplay effect
+  React.useEffect(() => {
+    if (!emblaApi) return;
+
+    const interval = setInterval(() => {
+      emblaApi.scrollNext();
+    }, 5000); // Auto-slide every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [emblaApi]);
 
   if (!products || products.length === 0) return null;
-
-  const scroll = (direction: "left" | "right") => {
-    if (containerRef.current) {
-      const scrollAmount = 280;
-      containerRef.current.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth"
-      });
-    }
-  };
 
   return (
     <div className="space-y-6 relative group">
@@ -36,31 +49,30 @@ export function ProductCarousel({ title, subtitle, products }: ProductCarouselPr
       <div className="relative">
         {/* Navigation Buttons */}
         <button
-          onClick={() => scroll("left")}
+          onClick={scrollPrev}
           className="absolute -left-4 top-1/2 -translate-y-1/2 bg-background border border-border text-foreground p-2 rounded-full shadow hover:bg-secondary transition-all z-20 cursor-pointer opacity-0 group-hover:opacity-100"
           title="Scroll Left"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
         <button
-          onClick={() => scroll("right")}
+          onClick={scrollNext}
           className="absolute -right-4 top-1/2 -translate-y-1/2 bg-background border border-border text-foreground p-2 rounded-full shadow hover:bg-secondary transition-all z-20 cursor-pointer opacity-0 group-hover:opacity-100"
           title="Scroll Right"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
 
-        {/* Scroll Container */}
-        <div
-          ref={containerRef}
-          className="flex gap-6 overflow-x-auto py-2 px-1 snap-x scroll-smooth"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {products.map((prod) => (
-            <div key={prod._id} className="w-[240px] flex-shrink-0 snap-start">
-              <ProductCard product={prod} layout="grid" />
-            </div>
-          ))}
+        {/* Embla Viewport */}
+        <div className="overflow-hidden py-2 px-1" ref={emblaRef}>
+          {/* Embla Container */}
+          <div className="flex gap-6">
+            {products.map((prod) => (
+              <div key={prod._id} className="w-[240px] flex-shrink-0">
+                <ProductCard product={prod} layout="grid" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

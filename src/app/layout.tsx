@@ -40,6 +40,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+      </head>
+      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
         <Script
           id="theme-initializer"
           strategy="beforeInteractive"
@@ -83,8 +85,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

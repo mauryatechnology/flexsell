@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Product } from "@/types";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, sanitizeImgUrl } from "@/lib/utils";
 import { useToastStore } from "@/stores/toastStore";
 
 interface ProductCardProps {
@@ -30,11 +30,13 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
 
   // Primary image
   const firstImg = defaultVariant?.images?.[0];
-  const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
+  const rawImgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
+  const imgUrl = sanitizeImgUrl(rawImgUrl);
 
   // Hover/Secondary image
   const secondImg = defaultVariant?.images?.[1];
-  const secondImgUrl = secondImg ? (typeof secondImg === "string" ? secondImg : secondImg.url || "") : "";
+  const rawSecondImgUrl = secondImg ? (typeof secondImg === "string" ? secondImg : secondImg.url || "") : "";
+  const secondImgUrl = rawSecondImgUrl ? sanitizeImgUrl(rawSecondImgUrl) : "";
 
   const price = defaultSub?.price ?? 0;
   const mrp = defaultSub?.mrp ?? 0;

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Search, Plus, Edit, Trash2, QrCode, ExternalLink, Download, AlertCircle } from "lucide-react";
+import { Search, Plus, Edit, Trash2, QrCode, ExternalLink, Download, AlertCircle, FileSpreadsheet } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useProductStore } from "@/stores/productStore";
 import { useCategoryStore } from "@/stores/categoryStore";
@@ -18,6 +18,7 @@ import { Barcode } from "@/components/ui/Barcode";
 import { Pagination } from "@/components/ui/Pagination";
 import { getBarcodeSvgString } from "@/lib/barcodeHelper";
 import { InventoryManager } from "./InventoryManager";
+import { BulkOperationsModal } from "./BulkOperationsModal";
 
 interface AdminProductsManagerProps {
   initialProducts: Product[];
@@ -39,6 +40,7 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
   const [sortBy, setSortBy] = React.useState("title-asc");
 
   const [isScannerOpen, setIsScannerOpen] = React.useState(false);
+  const [isBulkOpen, setIsBulkOpen] = React.useState(false);
   const [barcodePrintProduct, setBarcodePrintProduct] = React.useState<Product | null>(null);
   const [activePanel, setActivePanel] = React.useState<"catalog" | "inventory">("catalog");
 
@@ -396,6 +398,9 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
           <p className="text-muted-foreground mt-1">Manage B2B inventory lines, custom MOQ, and SEO tags.</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsBulkOpen(true)}>
+            <FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" /> Bulk Operations
+          </Button>
           <Button variant="outline" onClick={() => setIsScannerOpen(true)}>
             <QrCode className="h-4 w-4 mr-2" /> Scan Barcode / Audit
           </Button>
@@ -429,38 +434,13 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
 
       {activePanel === "catalog" ? (
         <>
-          {/* Bulk Action Bar */}
-      {selectedProductIds.length > 0 && (
-        <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top duration-300">
-          <div className="text-sm font-bold text-primary">
-            {selectedProductIds.length} Products selected for batch operations
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleBulkDownloadBarcodes} 
-              className="text-xs bg-background hover:bg-secondary font-bold flex items-center gap-1.5"
-            >
-              <Download className="h-3.5 w-3.5" /> Print/Download Barcodes
-            </Button>
-            <Button 
-              variant="destructive" 
-              size="sm" 
-              onClick={handleBulkDelete} 
-              className="text-xs font-bold flex items-center gap-1.5"
-            >
-              <Trash2 className="h-3.5 w-3.5" /> Delete Selected
-            </Button>
-          </div>
-        </div>
-      )}
+
 
       {/* Advanced Filters & Sorting Bar */}
       <Card>
-        <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
           {/* Text Search */}
-          <div className="relative col-span-1 sm:col-span-2">
+          <div className="relative col-span-1 sm:col-span-2 lg:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search by title or SKU..." 
@@ -724,6 +704,23 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
 
       {/* Barcode scanner modal */}
       <BarcodeScanner isOpen={isScannerOpen} onClose={() => setIsScannerOpen(false)} />
+
+      {/* Bulk Operations Modal */}
+      <BulkOperationsModal
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        products={activeProducts}
+        categories={activeCategories}
+        hsns={hsns}
+        selectedProductIds={selectedProductIds}
+        onImportSuccess={async () => {
+          // Force refetch products from backend to update state
+          await initializeProducts(undefined, true);
+          setSelectedProductIds([]);
+        }}
+        onBulkDelete={handleBulkDelete}
+        onBulkPrintBarcodes={handleBulkDownloadBarcodes}
+      />
     </div>
   );
 }
