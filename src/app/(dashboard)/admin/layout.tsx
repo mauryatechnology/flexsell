@@ -1,13 +1,20 @@
+"use client";
+
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, ShoppingBag, FolderTree, Users, 
   Settings, Palette, Tags, CreditCard, Menu, Percent, FileText
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
+import { Drawer } from "@/components/ui/Drawer";
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const pathname = usePathname();
+
   const sidebarLinks = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Products", href: "/admin/products", icon: ShoppingBag },
@@ -21,41 +28,65 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
 
+  // Auto-close mobile drawer when pathname changes
+  React.useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b">
+        <Link href="/admin" className="flex flex-col gap-1 items-start">
+          <Image src="/Flexsell%20Logo.png" alt="Flexsell Logo" width={150} height={40} className="h-8 md:h-10 w-auto object-contain" />
+          <span className="text-xs text-muted-foreground uppercase tracking-widest ml-1">Admin Panel</span>
+        </Link>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto py-6 px-3">
+        <nav className="space-y-1">
+          {sidebarLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                  isActive 
+                    ? "bg-primary/10 text-primary font-bold" 
+                    : "hover:bg-secondary hover:text-primary text-foreground"
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                {link.name}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex bg-secondary/10">
-      {/* Admin Sidebar */}
+      {/* Desktop Sidebar (Hidden on mobile) */}
       <aside className="w-64 bg-card border-r hidden md:flex flex-col sticky top-0 h-screen">
-        <div className="p-6 border-b">
-          <Link href="/admin" className="flex flex-col gap-1 items-start">
-            <Image src="/Flexsell%20Logo.png" alt="Flexsell Logo" width={150} height={40} className="h-8 md:h-10 w-auto object-contain" />
-            <span className="text-xs text-muted-foreground uppercase tracking-widest ml-1">Admin Panel</span>
-          </Link>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto py-6 px-3">
-          <nav className="space-y-1">
-            {sidebarLinks.map((link) => {
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md hover:bg-secondary hover:text-primary transition-colors text-foreground"
-                >
-                  <Icon className="h-5 w-5" />
-                  {link.name}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+        <SidebarContent />
       </aside>
+
+      {/* Mobile Drawer Navigation */}
+      <Drawer isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} side="left" className="p-0 max-w-[280px] w-full">
+        <SidebarContent />
+      </Drawer>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Admin Topbar */}
         <header className="h-16 bg-card border-b flex items-center justify-between px-6 sticky top-0 z-10">
-          <button className="md:hidden">
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="md:hidden p-1.5 rounded-md hover:bg-secondary text-foreground cursor-pointer"
+          >
             <Menu className="h-6 w-6" />
           </button>
           
