@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Plus, Edit, Trash2, X, Check } from "lucide-react";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { useToastStore } from "@/stores/toastStore";
+import { useConfirmStore } from "@/stores/confirmStore";
 import { Category } from "@/types";
 import { Pagination } from "@/components/ui/Pagination";
 
@@ -17,6 +18,7 @@ interface AdminCategoriesManagerProps {
 export function AdminCategoriesManager({ initialCategories }: AdminCategoriesManagerProps) {
   const { categories, initializeCategories, addCategory, updateCategory, deleteCategory } = useCategoryStore();
   const { addToast } = useToastStore();
+  const confirmAction = useConfirmStore((state) => state.confirm);
 
   const [editCategoryId, setEditCategoryId] = React.useState<string | null>(null);
 
@@ -81,30 +83,51 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
       isActive: true
     };
 
-    try {
-      if (editCategoryId) {
-        await updateCategory(editCategoryId, categoryData);
-        addToast(`Category "${name}" updated successfully!`, "success");
-      } else {
-        await addCategory(categoryData);
-        addToast(`Category "${name}" created successfully!`, "success");
+    const performSave = async () => {
+      try {
+        if (editCategoryId) {
+          await updateCategory(editCategoryId, categoryData);
+          addToast(`Category "${name}" updated successfully!`, "success");
+        } else {
+          await addCategory(categoryData);
+          addToast(`Category "${name}" created successfully!`, "success");
+        }
+        handleCancelEdit();
+      } catch (error: any) {
+        addToast(error.message || "An error occurred while saving the category.", "error");
       }
-      handleCancelEdit();
-    } catch (error: any) {
-      addToast(error.message || "An error occurred while saving the category.", "error");
+    };
+
+    if (editCategoryId) {
+      confirmAction({
+        title: "Confirm Update",
+        message: `Are you sure you want to save changes to the category "${name}"?`,
+        confirmText: "Save Changes",
+        cancelText: "Cancel",
+        type: "warning",
+        onConfirm: performSave
+      });
+    } else {
+      await performSave();
     }
   };
 
-  const handleDeleteClick = async (cat: Category) => {
-    if (!confirm(`Are you sure you want to delete category "${cat.name}"?`)) {
-      return;
-    }
-    try {
-      await deleteCategory(cat._id);
-      addToast(`Category "${cat.name}" deleted successfully!`, "success");
-    } catch (error: any) {
-      addToast(error.message || "An error occurred while deleting the category.", "error");
-    }
+  const handleDeleteClick = (cat: Category) => {
+    confirmAction({
+      title: "Delete Category",
+      message: `Are you sure you want to permanently delete category "${cat.name}"? This action cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          await deleteCategory(cat._id);
+          addToast(`Category "${cat.name}" deleted successfully!`, "success");
+        } catch (error: any) {
+          addToast(error.message || "An error occurred while deleting the category.", "error");
+        }
+      }
+    });
   };
 
   return (

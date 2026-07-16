@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { useHsnStore } from "@/stores/hsnStore";
 import { Search, Plus, Edit, Trash2, Percent, CheckCircle, XCircle } from "lucide-react";
 import { useToastStore } from "@/stores/toastStore";
+import { useConfirmStore } from "@/stores/confirmStore";
 
 const INDIAN_STATES = [
   "Madhya Pradesh",
@@ -43,6 +44,7 @@ const INDIAN_STATES = [
 export function AdminHsnManager() {
   const { hsns, supplierState, initializeHsns, addHsn, updateHsn, deleteHsn, setSupplierState } = useHsnStore();
   const { addToast } = useToastStore();
+  const confirmAction = useConfirmStore((state) => state.confirm);
 
   React.useEffect(() => {
     initializeHsns();
@@ -93,27 +95,57 @@ export function AdminHsnManager() {
       isActive
     };
 
-    if (editingHsnId) {
-      updateHsn(editingHsnId, data);
-      addToast("HSN record updated successfully.", "success");
-    } else {
-      // Check for duplicates
-      if (hsns.some(h => h.code === code)) {
-        addToast(`HSN Code ${code} already exists in the system.`, "error");
-        return;
+    const performSave = async () => {
+      try {
+        if (editingHsnId) {
+          await updateHsn(editingHsnId, data);
+          addToast("HSN record updated successfully.", "success");
+        } else {
+          // Check for duplicates
+          if (hsns.some(h => h.code === code)) {
+            addToast(`HSN Code ${code} already exists in the system.`, "error");
+            return;
+          }
+          await addHsn(data);
+          addToast("New HSN tax slab added to B2B registry.", "success");
+        }
+        setIsModalOpen(false);
+      } catch (err: any) {
+        addToast(err?.message || "Failed to save HSN record", "error");
       }
-      addHsn(data);
-      addToast("New HSN tax slab added to B2B registry.", "success");
-    }
+    };
 
-    setIsModalOpen(false);
+    if (editingHsnId) {
+      confirmAction({
+        title: "Confirm Update",
+        message: `Are you sure you want to save changes to the HSN record "${code}"?`,
+        confirmText: "Save Changes",
+        cancelText: "Cancel",
+        type: "warning",
+        onConfirm: performSave
+      });
+    } else {
+      performSave();
+    }
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this HSN code from the database?")) {
-      deleteHsn(id);
-      addToast("HSN code removed.", "info");
-    }
+    const record = hsns.find(h => h._id === id);
+    confirmAction({
+      title: "Delete HSN Record",
+      message: `Are you sure you want to permanently delete the HSN code "${record?.code || 'this record'}" from the database? This action is permanent and cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          await deleteHsn(id);
+          addToast("HSN code removed.", "success");
+        } catch (err: any) {
+          addToast(err?.message || "Failed to delete HSN code", "error");
+        }
+      }
+    });
   };
 
   const filteredHsns = React.useMemo(() => {

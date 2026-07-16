@@ -11,6 +11,7 @@ import { useProductStore } from "@/stores/productStore";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { useHsnStore } from "@/stores/hsnStore";
 import { useToastStore } from "@/stores/toastStore";
+import { useConfirmStore } from "@/stores/confirmStore";
 import { Product, Category, ColorVariant, SubVariant } from "@/types";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { Barcode } from "@/components/ui/Barcode";
@@ -28,6 +29,7 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
   const { categories, initializeCategories } = useCategoryStore();
   const { hsns, initializeHsns } = useHsnStore();
   const { addToast } = useToastStore();
+  const confirmAction = useConfirmStore((state) => state.confirm);
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("all");
@@ -157,19 +159,27 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (confirm("Are you sure you want to permanently delete this product?")) {
-      try {
-        await deleteProduct(id);
-        setSelectedProductIds(prev => prev.filter(pId => pId !== id));
-        addToast("Product successfully removed from catalog.", "info");
-      } catch (err) {
-        addToast(
-          err instanceof Error ? err.message : "Failed to delete product",
-          "error"
-        );
+  const handleDeleteProduct = (id: string) => {
+    const product = activeProducts.find(p => p._id === id);
+    confirmAction({
+      title: "Delete Product",
+      message: `Are you sure you want to permanently delete the product "${product?.title || 'this item'}"? This action is permanent and cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          await deleteProduct(id);
+          setSelectedProductIds(prev => prev.filter(pId => pId !== id));
+          addToast("Product successfully removed from catalog.", "success");
+        } catch (err) {
+          addToast(
+            err instanceof Error ? err.message : "Failed to delete product",
+            "error"
+          );
+        }
       }
-    }
+    });
   };
 
   // Row selection helpers
@@ -196,20 +206,27 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
   };
 
   // Bulk actions handlers
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedProductIds.length === 0) return;
-    if (confirm(`Are you sure you want to delete the ${selectedProductIds.length} selected products?`)) {
-      try {
-        await Promise.all(selectedProductIds.map(id => deleteProduct(id)));
-        addToast(`Successfully deleted ${selectedProductIds.length} products in bulk.`, "success");
-        setSelectedProductIds([]);
-      } catch (err) {
-        addToast(
-          err instanceof Error ? err.message : "Failed to delete products",
-          "error"
-        );
+    confirmAction({
+      title: "Bulk Delete Products",
+      message: `Are you sure you want to permanently delete the ${selectedProductIds.length} selected products? This action cannot be undone.`,
+      confirmText: "Delete Bulk",
+      cancelText: "Cancel",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          await Promise.all(selectedProductIds.map(id => deleteProduct(id)));
+          addToast(`Successfully deleted ${selectedProductIds.length} products in bulk!`, "success");
+          setSelectedProductIds([]);
+        } catch (err) {
+          addToast(
+            err instanceof Error ? err.message : "Failed to delete products",
+            "error"
+          );
+        }
       }
-    }
+    });
   };
 
   const handleBulkDownloadBarcodes = () => {
