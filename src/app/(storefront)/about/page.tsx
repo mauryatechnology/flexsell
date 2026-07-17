@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { Metadata } from "next";
-import { pagesContent } from "@/data/pagesContent";
+import { pagesContent } from "@/config/pagesContent";
 
 export const metadata: Metadata = {
   title: "About Us - B2B Wholesaler Sourcing Mission",

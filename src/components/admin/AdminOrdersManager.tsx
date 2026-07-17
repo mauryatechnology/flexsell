@@ -9,15 +9,23 @@ import { useOrderStore, Order, ShipmentDetails } from "@/stores/orderStore";
 import { formatPrice } from "@/lib/utils";
 import { Pagination } from "@/components/ui/Pagination";
 import Link from "next/link";
+import { useToastStore } from "@/stores/toastStore";
 
 export function AdminOrdersManager() {
   const { orders, initializeOrders, updateOrderStatus, shipOrder } = useOrderStore();
+  const { addToast } = useToastStore();
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
 
+  const [startDate, setStartDate] = React.useState("");
+  const [endDate, setEndDate] = React.useState("");
+
   React.useEffect(() => {
-    initializeOrders();
-  }, [initializeOrders]);
+    initializeOrders({
+      startDate: startDate || undefined,
+      endDate: endDate || undefined
+    });
+  }, [initializeOrders, startDate, endDate]);
 
   // Shipment fulfillment states
   const [isFulfilling, setIsFulfilling] = React.useState(false);
@@ -60,7 +68,7 @@ export function AdminOrdersManager() {
     if (!activeSelectedOrder) return;
 
     if (shipType === "third-party" && (!carrierName || !trackingId)) {
-      alert("Please provide the Carrier Name and Tracking ID for third-party courier dispatch.");
+      addToast("Please provide the Carrier Name and Tracking ID for third-party courier dispatch.", "warning");
       return;
     }
 
@@ -77,16 +85,18 @@ export function AdminOrdersManager() {
     try {
       await shipOrder(activeSelectedOrder._id, details);
       setIsFulfilling(false);
+      addToast("Order shipped successfully.", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to ship order. Please try again.");
+      addToast(err instanceof Error ? (err as any).message : "Failed to ship order. Please try again.", "error");
     }
   };
 
   const handleUpdateStatus = async (id: string, status: Order["status"]) => {
     try {
       await updateOrderStatus(id, status);
+      addToast(`Order status updated to ${status}.`, "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update order status. Please try again.");
+      addToast(err instanceof Error ? (err as any).message : "Failed to update order status. Please try again.", "error");
     }
   };
 
@@ -135,6 +145,39 @@ export function AdminOrdersManager() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+              </div>
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground font-medium">From:</span>
+                  <Input
+                    type="date"
+                    className="w-36 text-foreground h-9 px-2.5 py-1 text-xs"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground font-medium">To:</span>
+                  <Input
+                    type="date"
+                    className="w-36 text-foreground h-9 px-2.5 py-1 text-xs"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+                {(startDate || endDate) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setStartDate("");
+                      setEndDate("");
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-0">

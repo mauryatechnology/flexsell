@@ -12,6 +12,7 @@ import { MegaMenu } from "./MegaMenu";
 import { Category } from "@/types";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
+import { useCurrencyStore } from "@/stores/currencyStore";
 
 interface HeaderProps {
   categories: Category[];
@@ -21,10 +22,12 @@ export function Header({ categories }: HeaderProps) {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
-  
+
+  const { currency, setCurrency } = useCurrencyStore();
+
   const cartItemsCount = useCartStore((state) => state.getCartItemsCount());
   const wishlistItemsCount = useWishlistStore((state) => state.items.length);
-  
+
   const topLevel = categories.filter(c => !c.parentId);
 
   const [isMounted, setIsMounted] = React.useState(false);
@@ -50,7 +53,7 @@ export function Header({ categories }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      <div className="mx-auto max-w-8xl px-4 md:px-6 h-16 flex items-center justify-between gap-4 w-full">
         {/* Mobile Menu & Logo */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMobileMenuOpen(true)}>
@@ -63,17 +66,17 @@ export function Header({ categories }: HeaderProps) {
 
         {/* Search Bar - Hidden on small screens */}
         <div className="hidden md:flex flex-1 max-w-xl mx-8 relative">
-          <Input 
-            type="search" 
-            placeholder="Search for products, categories..." 
+          <Input
+            type="search"
+            placeholder="Search for products, categories..."
             className="w-full pr-10 rounded-full text-foreground"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
           />
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="absolute right-1 top-1 h-8 w-8 rounded-full"
             onClick={handleSearchSubmit}
           >
@@ -83,6 +86,18 @@ export function Header({ categories }: HeaderProps) {
 
         {/* Utility Icons */}
         <div className="flex items-center gap-2">
+          {isMounted && (
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as any)}
+              className="text-xs font-semibold bg-secondary/50 border border-border rounded-md px-2 py-1 h-9 cursor-pointer text-foreground focus:ring-1 focus:ring-primary mr-1"
+            >
+              <option value="INR">₹ INR</option>
+              <option value="USD">$ USD</option>
+              <option value="EUR">€ EUR</option>
+              <option value="GBP">£ GBP</option>
+            </select>
+          )}
           <Link href="/client/profile">
             <Button variant="ghost" size="icon">
               <User className="h-5 w-5 text-foreground" />
@@ -110,7 +125,7 @@ export function Header({ categories }: HeaderProps) {
           </Link>
         </div>
       </div>
-      
+
       {/* Category Nav - Desktop Only */}
       <MegaMenu categories={categories} />
 
@@ -122,8 +137,8 @@ export function Header({ categories }: HeaderProps) {
           </Link>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search..." 
+            <Input
+              placeholder="Search..."
               className="w-full pl-9 text-foreground"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -142,7 +157,7 @@ export function Header({ categories }: HeaderProps) {
                 {cat.name}
               </Link>
             ))}
-            
+
             <div className="font-bold text-sm text-muted-foreground uppercase tracking-wider mt-4 mb-2">Quick Links</div>
             <Link href="/products" className="font-medium hover:text-primary pl-2 text-foreground" onClick={() => setIsMobileMenuOpen(false)}>All Products</Link>
             <Link href="/client/orders" className="font-medium hover:text-primary pl-2 text-foreground" onClick={() => setIsMobileMenuOpen(false)}>My Orders</Link>

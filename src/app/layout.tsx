@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { Analytics } from "@vercel/analytics/react";
 import { ToastContainer } from "@/components/ui/ToastContainer";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -27,7 +30,8 @@ export const metadata: Metadata = {
     title: "FlexSell Wholesale - Premium B2B Sourcing",
     description: "Source premium quality household utility gadgets directly from manufacturers. Low MOQs, dynamic pricing, and nationwide shipping.",
     siteName: "FlexSell Wholesale"
-  }
+  },
+  manifest: "/manifest.json"
 };
 
 export default function RootLayout({
@@ -38,7 +42,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script
+      </head>
+      <body className={`${inter.className} antialiased`}>
+        <Script
+          id="theme-initializer"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -79,8 +87,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -88,8 +94,27 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <Analytics />
           <ToastContainer />
+          <ConfirmDialog />
         </ThemeProvider>
+        <Script
+          id="pwa-sw-register"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                    console.log('FlexSell SW registered scope:', reg.scope);
+                  }).catch(function(err) {
+                    console.log('FlexSell SW registration failed:', err);
+                  });
+                });
+              }
+            `
+          }}
+        />
       </body>
     </html>
   );

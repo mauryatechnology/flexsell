@@ -1,8 +1,8 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { apiClient } from "@/lib/apiClient";
 
 export interface StockLog {
-  id: string;
+  _id: string;
   sku: string;
   productName: string;
   variantDetails: string;
@@ -15,26 +15,62 @@ export interface StockLog {
 
 interface InventoryHistoryState {
   logs: StockLog[];
-  addLog: (log: Omit<StockLog, "id" | "timestamp">) => void;
-  clearLogs: () => void;
+  isLoading: boolean;
+  error: string | null;
+  initializeLogs: () => Promise<void>;
+  addLog: (log: Omit<StockLog, "_id" | "timestamp">) => Promise<void>;
+  clearLogs: () => Promise<void>;
 }
 
-export const useInventoryHistoryStore = create<InventoryHistoryState>()(
-  persist(
-    (set) => ({
-      logs: [],
-      addLog: (logData) => set((state) => {
-        const newLog: StockLog = {
-          ...logData,
-          id: Math.random().toString(36).substring(2, 11),
-          timestamp: new Date().toLocaleString("en-IN"),
-        };
-        return { logs: [newLog, ...state.logs] };
-      }),
-      clearLogs: () => set({ logs: [] }),
-    }),
-    {
-      name: "flexsell-inventory-history-storage",
+export const useInventoryHistoryStore = create<InventoryHistoryState>()((set, get) => ({
+  logs: [],
+  isLoading: false,
+  error: null,
+
+  initializeLogs: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await apiClient.get<StockLog[]>("/inventory/ledger");
+      set({ logs: data, isLoading: false });
+    } catch (err) {
+      set({ 
+        error: err instanceof Error ? (err as any).message : "Failed to load ledger history", 
+        isLoading: false 
+      });
     }
-  )
-);
+  },
+
+  addLog: async (logData) => {
+    try {
+      const payload = {
+        ...logData,
+        timestamp: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+      };
+      
+      const newLog = await apiClient.post<StockLog>("/inventory/ledger", payload);
+      set((state) => ({ logs: [newLog, ...state.logs] }));
+    } catch (err) {
+      console.error("Failed to persist stock log to DB", err);
+      // Fallback: local state insert to not break UI operations
+      const newLog: StockLog = {
+        ...logData,
+        _id: Math.random().toString(36).substring(2, 11),
+        timestamp: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+      };
+      set((state) => ({ logs: [newLog, ...state.logs] }));
+    }
+  },
+
+  clearLogs: async () => {
+    set({ isLoading: true });
+    try {
+      await apiClient.delete<void>("/inventory/ledger");
+      set({ logs: [], isLoading: false });
+    } catch (err) {
+      set({ 
+        error: err instanceof Error ? (err as any).message : "Failed to clear ledger history", 
+        isLoading: false 
+      });
+    }
+  },
+}));

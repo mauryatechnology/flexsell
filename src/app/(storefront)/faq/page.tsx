@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { pagesContent } from "@/data/pagesContent";
+import { pagesContent } from "@/config/pagesContent";
 
 export const metadata: Metadata = {
   title: "B2B Sourcing FAQ & Help - Bulk Purchases",

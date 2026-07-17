@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { Category } from "@/types";
 import { categoryService } from "@/services/categoryService";
+import { handleApiError } from "@/lib/apiClient";
 
 interface CategoryStoreState {
   categories: Category[];
@@ -18,6 +19,10 @@ export const useCategoryStore = create<CategoryStoreState>()((set, get) => ({
   error: null,
 
   initializeCategories: async (initial) => {
+    if (initial && initial.length > 0) {
+      set({ categories: initial, isLoading: false });
+      return;
+    }
     if (get().categories.length > 0) return;
     set({ isLoading: true, error: null });
     try {
@@ -26,7 +31,7 @@ export const useCategoryStore = create<CategoryStoreState>()((set, get) => ({
     } catch (err) {
       set({ 
         categories: initial || [], 
-        error: err instanceof Error ? err.message : "Failed to load categories", 
+        error: handleApiError(err, "Failed to load categories"), 
         isLoading: false 
       });
     }
@@ -42,7 +47,7 @@ export const useCategoryStore = create<CategoryStoreState>()((set, get) => ({
       }));
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Failed to add category",
+        error: handleApiError(err, "Failed to add category"),
         isLoading: false
       });
       throw err;
@@ -59,7 +64,7 @@ export const useCategoryStore = create<CategoryStoreState>()((set, get) => ({
       }));
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Failed to update category",
+        error: handleApiError(err, "Failed to update category"),
         isLoading: false
       });
       throw err;
@@ -76,7 +81,7 @@ export const useCategoryStore = create<CategoryStoreState>()((set, get) => ({
       }));
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Failed to delete category",
+        error: handleApiError(err, "Failed to delete category"),
         isLoading: false
       });
       throw err;

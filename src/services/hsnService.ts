@@ -1,81 +1,14 @@
 import { HsnRecord } from "@/types";
-import { apiClient, isMockMode, delay } from "@/lib/apiClient";
-
-const MOCK_STORAGE_KEY = "flexsell-hsn-storage";
-
-function getMockHsns(): HsnRecord[] {
-  if (typeof window === "undefined") return [];
-  const stored = localStorage.getItem(MOCK_STORAGE_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      if (parsed?.state?.hsns) {
-        return parsed.state.hsns;
-      }
-      if (Array.isArray(parsed)) return parsed;
-    } catch (e) {
-      console.error("Error parsing mock hsns", e);
-    }
-  }
-
-  const defaultHsns: HsnRecord[] = [
-    {
-      _id: "hsn_3924",
-      code: "3924",
-      gstRate: 18,
-      description: "Plastics tableware, kitchenware, other household articles",
-      isActive: true
-    },
-    {
-      _id: "hsn_7323",
-      code: "7323",
-      gstRate: 12,
-      description: "Table, kitchen or other household articles of iron or steel",
-      isActive: true
-    },
-    {
-      _id: "hsn_8215",
-      code: "8215",
-      gstRate: 18,
-      description: "Spoons, forks, ladles, skimmers, cake-servers, fish-knives, butter-knives",
-      isActive: true
-    },
-    {
-      _id: "hsn_6304",
-      code: "6304",
-      gstRate: 5,
-      description: "Other furnishing articles, bedsheets, blankets, towels",
-      isActive: true
-    },
-    {
-      _id: "hsn_8509",
-      code: "8509",
-      gstRate: 18,
-      description: "Electro-mechanical domestic appliances with self-contained electric motor",
-      isActive: true
-    }
-  ];
-
-  saveMockHsns(defaultHsns);
-  return defaultHsns;
-}
-
-function saveMockHsns(hsns: HsnRecord[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(
-    MOCK_STORAGE_KEY,
-    JSON.stringify({
-      state: { hsns },
-      version: 0,
-    })
-  );
-}
+import { apiClient } from "@/lib/apiClient";
 
 export const hsnService = {
   async getHsnRecords(): Promise<HsnRecord[]> {
-    if (isMockMode) {
-      await delay();
-      return getMockHsns();
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const HsnRecordModel = (await import("@/models/HsnRecord")).default;
+      const records = await HsnRecordModel.find({}).lean();
+      return JSON.parse(JSON.stringify(records));
     }
     return apiClient.get<HsnRecord[]>("/hsn");
   },
@@ -83,16 +16,15 @@ export const hsnService = {
   async createHsnRecord(
     hsnData: Omit<HsnRecord, "_id" | "createdAt" | "updatedAt">
   ): Promise<HsnRecord> {
-    if (isMockMode) {
-      await delay();
-      const hsns = getMockHsns();
-      const newRecord: HsnRecord = {
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const HsnRecordModel = (await import("@/models/HsnRecord")).default;
+      const record = await HsnRecordModel.create({
         ...hsnData,
-        _id: `hsn_${Math.random().toString(36).substring(2, 9)}`,
-        createdAt: new Date().toISOString()
-      };
-      saveMockHsns([...hsns, newRecord]);
-      return newRecord;
+        _id: `hsn_${Math.random().toString(36).substring(2, 9)}`
+      });
+      return JSON.parse(JSON.stringify(record));
     }
     return apiClient.post<HsnRecord>("/hsn", hsnData);
   },
@@ -101,36 +33,27 @@ export const hsnService = {
     id: string,
     updatedFields: Partial<HsnRecord>
   ): Promise<HsnRecord> {
-    if (isMockMode) {
-      await delay();
-      const hsns = getMockHsns();
-      let updatedRecord: HsnRecord | null = null;
-
-      const newHsns = hsns.map((h) => {
-        if (h._id === id) {
-          updatedRecord = {
-            ...h,
-            ...updatedFields,
-            updatedAt: new Date().toISOString()
-          };
-          return updatedRecord;
-        }
-        return h;
-      });
-
-      if (!updatedRecord) throw new Error("HSN record not found");
-      saveMockHsns(newHsns);
-      return updatedRecord;
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const HsnRecordModel = (await import("@/models/HsnRecord")).default;
+      const record = await HsnRecordModel.findByIdAndUpdate(
+        id,
+        { $set: updatedFields },
+        { new: true }
+      ).lean();
+      if (!record) throw new Error("HSN record not found");
+      return JSON.parse(JSON.stringify(record));
     }
     return apiClient.put<HsnRecord>(`/hsn/${id}`, updatedFields);
   },
 
   async deleteHsnRecord(id: string): Promise<void> {
-    if (isMockMode) {
-      await delay();
-      const hsns = getMockHsns();
-      const newHsns = hsns.filter((h) => h._id !== id);
-      saveMockHsns(newHsns);
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const HsnRecordModel = (await import("@/models/HsnRecord")).default;
+      await HsnRecordModel.findByIdAndDelete(id);
       return;
     }
     return apiClient.delete<void>(`/hsn/${id}`);

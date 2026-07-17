@@ -1,13 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-export const isMockMode = 
-  process.env.NEXT_PUBLIC_USE_MOCK_API === "true" || 
-  !process.env.NEXT_PUBLIC_API_URL;
-
-// Helper to simulate network latency in mock mode
-export const delay = (ms: number = 500): Promise<void> => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
 
 export interface ApiResponse<T> {
   data: T;
@@ -36,6 +28,18 @@ async function request<T>(
   const headers = new Headers(options.headers);
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
+  }
+
+  // Inject CSRF token from cookie for state-changing methods in browser environment
+  if (typeof window !== "undefined" && typeof document !== "undefined") {
+    const method = options.method?.toUpperCase() || "GET";
+    if (["POST", "PUT", "DELETE"].includes(method)) {
+      const matches = document.cookie.match(/csrf_token=([^;]+)/);
+      const csrfToken = matches ? matches[1] : null;
+      if (csrfToken) {
+        headers.set("X-CSRF-Token", csrfToken);
+      }
+    }
   }
 
   const config: RequestInit = {
@@ -69,7 +73,7 @@ async function request<T>(
       throw error;
     }
     throw new ApiError(
-      error instanceof Error ? error.message : "Network request failed",
+      error instanceof Error ? (error as any).message : "Network request failed",
       500
     );
   }
@@ -96,3 +100,14 @@ export const apiClient = {
   delete: <T>(path: string, options?: RequestInit) => 
     request<T>(path, { ...options, method: "DELETE" }),
 };
+
+export function handleApiError(error: unknown, fallbackMessage: string = "An unexpected error occurred"): string {
+  console.error("API error encountered:", error);
+  if (error instanceof ApiError) {
+    return (error as any).message;
+  }
+  if (error instanceof Error) {
+    return (error as any).message;
+  }
+  return fallbackMessage;
+}

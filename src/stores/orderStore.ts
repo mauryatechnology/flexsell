@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { Order, ShipmentDetails, CartItem } from "@/types";
 import { orderService } from "@/services/orderService";
+import { handleApiError } from "@/lib/apiClient";
 
 export type { Order, ShipmentDetails };
 
@@ -8,11 +9,16 @@ interface OrderStoreState {
   orders: Order[];
   isLoading: boolean;
   error: string | null;
-  initializeOrders: () => Promise<void>;
+  initializeOrders: (params?: { page?: number; limit?: number; startDate?: string; endDate?: string }) => Promise<void>;
   createOrder: (
     items: CartItem[], 
     amount: number, 
-    shippingAddress: Order["shippingAddress"]
+    shippingAddress: Order["shippingAddress"],
+    paymentDetails?: {
+      paymentMethod: Order["paymentMethod"];
+      paymentStatus: Order["paymentStatus"];
+      transactionId?: string;
+    }
   ) => Promise<string>;
   updateOrderStatus: (id: string, status: Order["status"]) => Promise<void>;
   shipOrder: (id: string, shipmentDetails: ShipmentDetails) => Promise<void>;
@@ -23,23 +29,24 @@ export const useOrderStore = create<OrderStoreState>()((set) => ({
   isLoading: false,
   error: null,
 
-  initializeOrders: async () => {
+  initializeOrders: async (params) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await orderService.getOrders();
-      set({ orders: data, isLoading: false });
+      const data = await orderService.getOrders(params);
+      const ordersList = Array.isArray(data) ? data : data.orders || [];
+      set({ orders: ordersList, isLoading: false });
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Failed to load orders",
+        error: handleApiError(err, "Failed to load orders"),
         isLoading: false
       });
     }
   },
 
-  createOrder: async (items, amount, shippingAddress) => {
+  createOrder: async (items, amount, shippingAddress, paymentDetails) => {
     set({ isLoading: true, error: null });
     try {
-      const newOrder = await orderService.createOrder(items, amount, shippingAddress);
+      const newOrder = await orderService.createOrder(items, amount, shippingAddress, paymentDetails);
       set((state) => ({
         orders: [newOrder, ...state.orders],
         isLoading: false
@@ -47,7 +54,7 @@ export const useOrderStore = create<OrderStoreState>()((set) => ({
       return newOrder._id;
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Failed to create order",
+        error: handleApiError(err, "Failed to create order"),
         isLoading: false
       });
       throw err;
@@ -64,7 +71,7 @@ export const useOrderStore = create<OrderStoreState>()((set) => ({
       }));
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Failed to update order status",
+        error: handleApiError(err, "Failed to update order status"),
         isLoading: false
       });
       throw err;
@@ -81,7 +88,7 @@ export const useOrderStore = create<OrderStoreState>()((set) => ({
       }));
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Failed to ship order",
+        error: handleApiError(err, "Failed to ship order"),
         isLoading: false
       });
       throw err;

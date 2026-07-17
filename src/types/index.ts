@@ -24,12 +24,18 @@ export interface SubVariant {
   stock: number;
   sku: string;
   barcode?: string;
+  isActive?: boolean;
+}
+
+export interface ProductImage {
+  url: string;
+  alt: string;
 }
 
 export interface ColorVariant {
   color: string;
   dimensions: string;
-  images: string[];
+  images: (string | ProductImage)[];
   subVariants: SubVariant[];
 }
 
@@ -46,6 +52,7 @@ export interface APlusBlock {
   title?: string;
   content?: string;
   imageUrl?: string;
+  alt?: string;
   features?: string[];
 }
 
@@ -58,6 +65,7 @@ export interface Product extends BaseDocument {
   rating: number;
   reviewCount: number;
   tags: string[];
+  cardTags?: string[];
   isActive: boolean;
   totalStock: number;
   colorVariants: ColorVariant[];
@@ -92,6 +100,7 @@ export interface Banner extends BaseDocument {
 
 export interface CartItem {
   id: string; // Dynamic combination of productID + selected variants
+  productId?: string;
   product: Product;
   selectedVariants: Record<string, string>;
   quantity: number;
@@ -133,9 +142,88 @@ export interface Order extends BaseDocument {
     state: string;
     pinCode: string;
     phone: string;
+    gstin?: string;
   };
   items: CartItem[];
   shipmentDetails?: ShipmentDetails;
   history: HistoryEvent[];
+  paymentMethod?: "Bank Transfer" | "Razorpay" | "UPI";
+  paymentStatus?: "Pending" | "Paid" | "Failed";
+  transactionId?: string;
 }
+
+export interface SavedAddress {
+  _id: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  company?: string;
+  address: string;
+  apartment?: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  phone: string;
+  gstin?: string;
+  isDefault: boolean;
+}
+
+export interface Customer {
+  _id: string;
+  name: string;
+  email: string;
+  password?: string;
+  role?: "customer" | "admin";
+  resetPasswordToken?: string;
+  resetPasswordExpires?: string;
+  company?: string;
+  address: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  phone: string;
+  initials: string;
+  gstin?: string;
+  addresses?: SavedAddress[];
+  wishlist?: string[];
+}
+
+export interface Review extends BaseDocument {
+  productId: string;
+  customerId?: string;
+  customerName: string;
+  rating: number;
+  title: string;
+  comment: string;
+  status: "pending" | "approved" | "rejected";
+  adminResponse?: string;
+}
+
+export interface Coupon extends BaseDocument {
+  code: string;
+  discountType: "percentage" | "flat";
+  discountValue: number;
+  minOrderValue: number;
+  maxDiscount?: number;
+  expiryDate: string;
+  isActive: boolean;
+}
+
+export interface Notification extends BaseDocument {
+  customerId: string;
+  title: string;
+  message: string;
+  type: "info" | "order" | "success" | "warning";
+  isRead: boolean;
+}
+
+export interface WebhookSubscription extends BaseDocument {
+  url: string;
+  event: "order.created" | "order.status_updated" | "customer.created";
+  secret: string;
+  isActive: boolean;
+}
+
+
+
 

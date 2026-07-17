@@ -4,19 +4,23 @@ import { ProductDetailView } from "@/components/storefront/ProductDetailView";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+export const revalidate = 3600;
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   try {
     const product = await productService.getProductBySlug(slug);
     const defaultVariant = product.colorVariants?.[0];
     const sku = defaultVariant?.subVariants?.[0]?.sku || "NO SKU";
-    const imgUrl = defaultVariant?.images?.[0] || "";
+    const firstImg = defaultVariant?.images?.[0];
+    const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
     return {
-      title: `${product.title} - Factory Wholesale Price`,
-      description: `Buy ${product.title} at factory direct wholesale rates. SKU: ${sku}. ${product.description.slice(0, 150)}...`,
+      title: product.seoTitle || `${product.title} - Factory Wholesale Price`,
+      description: product.seoDescription || `Buy ${product.title} at factory direct wholesale rates. SKU: ${sku}. ${product.description.slice(0, 150)}...`,
+      keywords: product.seoKeywords || product.tags?.join(", ") || "",
       openGraph: {
-        title: `${product.title} | FlexSell Wholesale`,
-        description: product.description,
+        title: product.seoTitle || `${product.title} | FlexSell Wholesale`,
+        description: product.seoDescription || product.description,
         images: [{ url: imgUrl }]
       }
     };
@@ -44,7 +48,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       "@context": "https://schema.org",
       "@type": "Product",
       "name": product.title,
-      "image": product.colorVariants?.[0]?.images || [],
+      "image": (product.colorVariants?.[0]?.images || []).map(img => typeof img === "string" ? img : img.url || ""),
       "description": product.description,
       "sku": product.colorVariants?.[0]?.subVariants?.[0]?.sku || "NO SKU",
       "mpn": product.colorVariants?.[0]?.subVariants?.[0]?.sku || "NO SKU",
