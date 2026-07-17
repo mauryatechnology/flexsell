@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { ArrowLeft, Trash2, ShoppingBag, ShieldCheck, MapPin, FileText } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
+import { useProductStore } from "@/stores/productStore";
 import Image from "next/image";
 
 import { INDIAN_STATES } from "@/lib/constants";
@@ -16,7 +17,14 @@ export function CartView() {
   const { items, updateQuantity, removeItem, buyerState, setBuyerState, getCartSubtotal, hydrateProducts, getTaxDetails } = useCartStore();
 
   React.useEffect(() => {
-    hydrateProducts();
+    const initCartProducts = async () => {
+      const productState = useProductStore.getState();
+      if (productState.products.length === 0) {
+        await productState.initializeProducts();
+      }
+      hydrateProducts();
+    };
+    initCartProducts();
   }, [hydrateProducts]);
 
   const taxDetails = React.useMemo(() => {

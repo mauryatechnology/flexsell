@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useCartStore } from "@/stores/cartStore";
 import { useOrderStore } from "@/stores/orderStore";
+import { useProductStore } from "@/stores/productStore";
 import { useToastStore } from "@/stores/toastStore";
 import { customerService } from "@/services/customerService";
 import { couponService } from "@/services/couponService";
@@ -24,7 +25,14 @@ export function CheckoutView() {
   const { createOrder } = useOrderStore();
 
   React.useEffect(() => {
-    hydrateProducts();
+    const initCartProducts = async () => {
+      const productState = useProductStore.getState();
+      if (productState.products.length === 0) {
+        await productState.initializeProducts();
+      }
+      hydrateProducts();
+    };
+    initCartProducts();
   }, [hydrateProducts]);
 
   const taxDetails = React.useMemo(() => {
