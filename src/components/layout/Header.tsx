@@ -12,7 +12,6 @@ import { MegaMenu } from "./MegaMenu";
 import { Category } from "@/types";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
-import { useCurrencyStore } from "@/stores/currencyStore";
 
 interface HeaderProps {
   categories: Category[];
@@ -22,8 +21,6 @@ export function Header({ categories }: HeaderProps) {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
-
-  const { currency, setCurrency } = useCurrencyStore();
 
   const cartItemsCount = useCartStore((state) => state.getCartItemsCount());
   const wishlistItemsCount = useWishlistStore((state) => state.items.length);
@@ -86,18 +83,6 @@ export function Header({ categories }: HeaderProps) {
 
         {/* Utility Icons */}
         <div className="flex items-center gap-2">
-          {isMounted && (
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value as any)}
-              className="text-xs font-semibold bg-secondary/50 border border-border rounded-md px-2 py-1 h-9 cursor-pointer text-foreground focus:ring-1 focus:ring-primary mr-1"
-            >
-              <option value="INR">₹ INR</option>
-              <option value="USD">$ USD</option>
-              <option value="EUR">€ EUR</option>
-              <option value="GBP">£ GBP</option>
-            </select>
-          )}
           <Link href="/client/profile">
             <Button variant="ghost" size="icon">
               <User className="h-5 w-5 text-foreground" />

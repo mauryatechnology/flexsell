@@ -8,45 +8,17 @@ export function cn(...inputs: ClassValue[]) {
 export function formatPrice(
   price: number,
   options: {
-    currency?: "INR" | "USD" | "EUR" | "GBP";
     notation?: Intl.NumberFormatOptions["notation"];
   } = {}
 ) {
-  let { currency, notation = "standard" } = options;
+  const { notation = "standard" } = options;
 
-  if (!currency && typeof window !== "undefined") {
-    try {
-      const store = require("@/stores/currencyStore");
-      currency = store.useCurrencyStore.getState().currency;
-    } catch {
-      // Fallback
-    }
-  }
-  if (!currency) currency = "INR";
-
-  const LOCALES: Record<string, string> = {
-    INR: "en-IN",
-    USD: "en-US",
-    EUR: "de-DE",
-    GBP: "en-GB"
-  };
-
-  const exchangeRates: Record<string, number> = {
-    INR: 1.0,
-    USD: 0.012,
-    EUR: 0.011,
-    GBP: 0.0093
-  };
-
-  const rate = exchangeRates[currency] || 1.0;
-  const converted = price * rate;
-
-  return new Intl.NumberFormat(LOCALES[currency] || "en-IN", {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency,
+    currency: "INR",
     notation,
     maximumFractionDigits: 2,
-  }).format(converted);
+  }).format(price);
 }
 
 export function truncate(str: string, length: number) {
