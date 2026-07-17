@@ -3,6 +3,8 @@ import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
 import Customer from "@/models/Customer";
+import InvoiceModel from "@/models/Invoice";
+import CmsContent from "@/models/CmsContent";
 import { requireAuth } from "@/lib/authGuard";
 import { dispatchWebhook } from "@/lib/webhookDispatcher";
 import { generateNextId } from "@/lib/idGenerator";
@@ -11,6 +13,92 @@ import { ZodError } from "zod";
 import { resolveVariantKeys } from "@/lib/variantMatcher";
 import nodemailer from "nodemailer";
 import { ORDER_STATUS_CLASSES } from "@/lib/constants";
+
+async function generateInvoiceId(type: "invoice" | "receipt"): Promise<string> {
+  const prefix = type === "invoice" ? "INV" : "RCP";
+  const year = new Date().getFullYear();
+  const regex = new RegExp(`^${prefix}-${year}-`);
+  const lastDoc = await InvoiceModel.findOne({ _id: regex })
+    .sort({ _id: -1 })
+    .select("_id")
+    .lean();
+  let nextSeq = 1;
+  if (lastDoc) {
+    const parts = (lastDoc._id as string).split("-");
+    const lastSeq = parseInt(parts[2], 10);
+    if (!isNaN(lastSeq)) nextSeq = lastSeq + 1;
+  }
+  return `${prefix}-${year}-${String(nextSeq).padStart(5, "0")}`;
+}
+
+async function getSellerInfo() {
+  const brandCms = await CmsContent.findOne({ key: "brandSettings" }).lean();
+  const bs = (brandCms?.value || {}) as any;
+  return {
+    storeName: bs.storeName || "FlexSell Wholesale",
+    gstin: bs.gstin || "",
+    address: bs.companyAddress || "",
+    email: bs.supportEmail || "",
+    phone: bs.supportPhone || "",
+    logoUrl: "/Flexsell%20Logo.png",
+  };
+}
+
+function computeOrderTaxDetails(items: any[], buyerState: string, sellerState: string) {
+  const isIntrastate = buyerState.toLowerCase() === sellerState.toLowerCase();
+  const hsnMap: Record<string, any> = {};
+  let baseSubtotal = 0;
+  let totalCgst = 0;
+  let totalSgst = 0;
+  let totalIgst = 0;
+
+  items.forEach((item: any) => {
+    const rate = item.product?.gstRate ?? 18;
+    const hsn = item.product?.hsnCode ?? "3924";
+    const isIncl = item.product?.priceIncludesGst ?? true;
+    const totalAmount = item.pricePerUnit * item.quantity;
+    let itemBase = 0;
+    let itemTax = 0;
+
+    if (isIncl) {
+      itemBase = totalAmount / (1 + rate / 100);
+      itemTax = totalAmount - itemBase;
+    } else {
+      itemBase = totalAmount;
+      itemTax = itemBase * (rate / 100);
+    }
+
+    baseSubtotal += itemBase;
+    let cgst = 0, sgst = 0, igst = 0;
+    if (isIntrastate) {
+      cgst = itemTax / 2;
+      sgst = itemTax / 2;
+      totalCgst += cgst;
+      totalSgst += sgst;
+    } else {
+      igst = itemTax;
+      totalIgst += igst;
+    }
+
+    if (!hsnMap[hsn]) {
+      hsnMap[hsn] = { hsnCode: hsn, gstRate: rate, baseAmount: 0, totalTax: 0, cgst: 0, sgst: 0, igst: 0 };
+    }
+    hsnMap[hsn].baseAmount += itemBase;
+    hsnMap[hsn].totalTax += itemTax;
+    hsnMap[hsn].cgst += cgst;
+    hsnMap[hsn].sgst += sgst;
+    hsnMap[hsn].igst += igst;
+  });
+
+  return {
+    isIntrastate,
+    baseSubtotal,
+    cgst: totalCgst,
+    sgst: totalSgst,
+    igst: totalIgst,
+    hsnSlabs: Object.values(hsnMap),
+  };
+}
 
 export async function GET(request: Request) {
   try {
@@ -95,15 +183,15 @@ export async function POST(request: Request) {
       const { color: selectedColor, size: selectedSize, weight: selectedWeight } = resolveVariantKeys(item.selectedVariants);
 
       const cv = dbProduct.colorVariants?.find(
-        (c: any) => c.color.toLowerCase() === selectedColor.toLowerCase()
+        (c: any) => c.color?.toLowerCase() === selectedColor.toLowerCase()
       );
       if (!cv) {
         return NextResponse.json({ message: `Color variant "${selectedColor}" not found for product "${dbProduct.title}"` }, { status: 400 });
       }
 
       const sv = cv.subVariants?.find((s: any) => 
-        (!selectedSize || s.size.toLowerCase() === selectedSize.toLowerCase()) && 
-        (!selectedWeight || s.weight.toLowerCase() === selectedWeight.toLowerCase())
+        (!selectedSize || s.size?.toLowerCase() === selectedSize.toLowerCase()) && 
+        (!selectedWeight || s.weight?.toLowerCase() === selectedWeight.toLowerCase())
       );
       if (!sv) {
         return NextResponse.json({ message: `Variant size/weight option not found for product "${dbProduct.title}"` }, { status: 400 });
@@ -171,8 +259,8 @@ export async function POST(request: Request) {
       statusClass: ORDER_STATUS_CLASSES["Processing"],
       itemsCount: items.reduce((sum: number, item: any) => sum + item.quantity, 0),
       customerName,
-      shippingAddress,
-      items,
+      shippingAddress: shippingAddress as any,
+      items: items as any,
       paymentMethod: paymentDetails?.paymentMethod,
       paymentStatus: paymentDetails?.paymentStatus,
       transactionId: paymentDetails?.transactionId,
@@ -185,7 +273,46 @@ export async function POST(request: Request) {
             : "Wholesale order generated successfully. Payment pending verification."
         }
       ]
-    });
+    } as any);
+
+    // ═══ AUTO-GENERATE INVOICE / RECEIPT ═══
+    const pStatus = paymentDetails?.paymentStatus || "Pending";
+    try {
+      const docType = pStatus === "Paid" ? "invoice" : "receipt";
+        const sellerInfo = await getSellerInfo();
+        const sellerState = sellerInfo.address.match(/(?:,\s*)([A-Za-z\s]+?)(?:\s*-\s*\d|$)/)?.[1]?.trim() || "Madhya Pradesh";
+        const taxDetails = computeOrderTaxDetails(items, shippingAddress.state, sellerState);
+        const invoiceId = await generateInvoiceId(docType);
+        const generatedAt = new Date().toLocaleDateString("en-IN", {
+          day: "2-digit", month: "long", year: "numeric",
+        });
+
+        await InvoiceModel.create({
+          _id: invoiceId,
+          type: docType,
+          orderId,
+          customerId: payload.userId,
+          customerName,
+          customerEmail: shippingAddress.email.toLowerCase(),
+          customerGstin: shippingAddress.gstin || "",
+          items,
+          amount,
+          taxDetails,
+          shippingAddress,
+          paymentMethod: paymentDetails?.paymentMethod,
+          paymentStatus: pStatus,
+          transactionId: paymentDetails?.transactionId,
+          sellerInfo,
+          generatedAt,
+          generatedBy: "system",
+          status: "issued",
+        });
+
+        // Link invoice to order
+        await Order.findByIdAndUpdate(orderId, { invoiceId });
+      } catch (invoiceErr) {
+        console.error("Auto-invoice generation failed (non-blocking):", invoiceErr);
+      }
 
     // Fire webhook and in-app notifications asynchronously
     const targetCustomerId = payload.role === "admin"
@@ -240,6 +367,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error: unknown) {
+    console.error("Orders API POST error details:", error);
     if (error instanceof ZodError) {
       return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
     }

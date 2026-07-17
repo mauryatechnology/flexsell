@@ -150,6 +150,56 @@ export interface Order extends BaseDocument {
   paymentMethod?: "Bank Transfer" | "Razorpay" | "UPI" | "COD";
   paymentStatus?: "Pending" | "Paid" | "Failed";
   transactionId?: string;
+  invoiceId?: string;
+}
+
+export interface HsnSlab {
+  hsnCode: string;
+  gstRate: number;
+  baseAmount: number;
+  totalTax: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+}
+
+export interface TaxBreakdown {
+  isIntrastate: boolean;
+  baseSubtotal: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  hsnSlabs: HsnSlab[];
+}
+
+export interface SellerInfo {
+  storeName: string;
+  gstin: string;
+  address: string;
+  email: string;
+  phone: string;
+  logoUrl?: string;
+}
+
+export interface Invoice extends BaseDocument {
+  type: "invoice" | "receipt";
+  orderId?: string;
+  customerId?: string;
+  customerName: string;
+  customerEmail: string;
+  customerGstin?: string;
+  items: CartItem[];
+  amount: number;
+  taxDetails: TaxBreakdown;
+  shippingAddress: Order["shippingAddress"];
+  paymentMethod?: string;
+  paymentStatus?: string;
+  transactionId?: string;
+  sellerInfo: SellerInfo;
+  notes?: string;
+  generatedAt: string;
+  generatedBy: string;
+  status: "draft" | "issued" | "cancelled" | "void";
 }
 
 export interface SavedAddress {

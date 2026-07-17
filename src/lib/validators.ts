@@ -60,6 +60,8 @@ export const reviewSchema = z.object({
 // Order validation schema
 export const orderSchema = z.object({
   items: z.array(z.object({
+    id: z.string(),
+    productId: z.string(),
     product: z.object({
       _id: z.string(),
       title: z.string(),

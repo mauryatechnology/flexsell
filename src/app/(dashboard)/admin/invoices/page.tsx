@@ -1,0 +1,1035 @@
+"use client";
+
+import * as React from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Search, Eye, Plus, Trash2, Calendar, FileText, X, Check, Loader2, ArrowLeft, Printer, RefreshCw } from "lucide-react";
+import { useInvoiceStore } from "@/stores/invoiceStore";
+import { useProductStore } from "@/stores/productStore";
+import { useToastStore } from "@/stores/toastStore";
+import { customerService } from "@/services/customerService";
+import { InvoiceDocument } from "@/components/documents/InvoiceDocument";
+import { formatPrice } from "@/lib/utils";
+import { Customer, Product, Invoice, CartItem, TaxBreakdown } from "@/types";
+import { INDIAN_STATES } from "@/lib/constants";
+
+export default function AdminInvoicesPage() {
+  const { invoices, total, page, totalPages, initializeInvoices, createInvoice, voidInvoice, deleteInvoice, isLoading } = useInvoiceStore();
+  const { products, initializeProducts } = useProductStore();
+  const { addToast } = useToastStore();
+
+  const [activeTab, setActiveTab] = React.useState<"invoice" | "receipt">("invoice");
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState("");
+  const [startDate, setStartDate] = React.useState("");
+  const [endDate, setEndDate] = React.useState("");
+  const [currentPage, setCurrentPage] = React.useState(1);
+
+  // Detail View State
+  const [selectedInvoice, setSelectedInvoice] = React.useState<Invoice | null>(null);
+
+  // Creation Form State
+  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+  const [customers, setCustomers] = React.useState<Customer[]>([]);
+  const [customerMode, setCustomerMode] = React.useState<"existing" | "new">("existing");
+  const [selectedCustomerId, setSelectedCustomerId] = React.useState("");
+  
+  // New Customer Fields
+  const [newCustName, setNewCustName] = React.useState("");
+  const [newCustEmail, setNewCustEmail] = React.useState("");
+  const [newCustPhone, setNewCustPhone] = React.useState("");
+  const [newCustCompany, setNewCustCompany] = React.useState("");
+  const [newCustGstin, setNewCustGstin] = React.useState("");
+  const [newCustAddress, setNewCustAddress] = React.useState("");
+  const [newCustCity, setNewCustCity] = React.useState("");
+  const [newCustState, setNewCustState] = React.useState(INDIAN_STATES[0]);
+  const [newCustPinCode, setNewCustPinCode] = React.useState("");
+
+  // Invoice Items
+  const [formItems, setFormItems] = React.useState<any[]>([]);
+  const [selectedProductId, setSelectedProductId] = React.useState("");
+  const [selectedColor, setSelectedColor] = React.useState("");
+  const [selectedSize, setSelectedSize] = React.useState("");
+  const [selectedWeight, setSelectedWeight] = React.useState("");
+  const [itemQty, setItemQty] = React.useState(1);
+  const [itemPrice, setItemPrice] = React.useState(0);
+
+  // Payment details for creation
+  const [paymentMethod, setPaymentMethod] = React.useState("Bank Transfer");
+  const [paymentStatus, setPaymentStatus] = React.useState("Paid");
+  const [transactionId, setTransactionId] = React.useState("");
+  const [invoiceNotes, setInvoiceNotes] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  // Fetch data
+  const loadData = React.useCallback(async () => {
+    initializeInvoices({
+      type: activeTab,
+      status: statusFilter || undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      search: searchTerm || undefined,
+      page: currentPage,
+      limit: 10
+    });
+  }, [activeTab, statusFilter, startDate, endDate, searchTerm, currentPage, initializeInvoices]);
+
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  React.useEffect(() => {
+    // Load products and customers for generation modal
+    if (isCreateModalOpen) {
+      initializeProducts();
+      customerService.getCustomers()
+        .then(setCustomers)
+        .catch(err => console.error("Failed to load customers:", err));
+    }
+  }, [isCreateModalOpen, initializeProducts]);
+
+  // Handle Product Select in Creation Form to setup variant drop downs
+  const currentSelectedProduct = React.useMemo(() => {
+    return products.find(p => p._id === selectedProductId) || null;
+  }, [products, selectedProductId]);
+
+  const availableColors = React.useMemo(() => {
+    if (!currentSelectedProduct) return [];
+    return currentSelectedProduct.colorVariants?.map(v => v.color) || [];
+  }, [currentSelectedProduct]);
+
+  const currentSelectedColorVariant = React.useMemo(() => {
+    if (!currentSelectedProduct || !selectedColor) return null;
+    return currentSelectedProduct.colorVariants?.find(v => v.color === selectedColor) || null;
+  }, [currentSelectedProduct, selectedColor]);
+
+  const availableSizes = React.useMemo(() => {
+    if (!currentSelectedColorVariant) return [];
+    return Array.from(new Set(currentSelectedColorVariant.subVariants.map(sv => sv.size).filter(Boolean)));
+  }, [currentSelectedColorVariant]);
+
+  const availableWeights = React.useMemo(() => {
+    if (!currentSelectedColorVariant) return [];
+    return Array.from(new Set(currentSelectedColorVariant.subVariants.map(sv => sv.weight).filter(Boolean)));
+  }, [currentSelectedColorVariant]);
+
+  // Set default price when variant is matched
+  React.useEffect(() => {
+    if (!currentSelectedColorVariant) return;
+    const sub = currentSelectedColorVariant.subVariants.find(sv => 
+      (!selectedSize || sv.size === selectedSize) &&
+      (!selectedWeight || sv.weight === selectedWeight)
+    ) || currentSelectedColorVariant.subVariants[0];
+
+    if (sub) {
+      setItemPrice(sub.price);
+    }
+  }, [currentSelectedColorVariant, selectedSize, selectedWeight]);
+
+  // Reset variant selections when selected product changes
+  React.useEffect(() => {
+    if (currentSelectedProduct) {
+      const defaultColor = currentSelectedProduct.colorVariants?.[0]?.color || "";
+      setSelectedColor(defaultColor);
+      setSelectedSize("");
+      setSelectedWeight("");
+    } else {
+      setSelectedColor("");
+      setSelectedSize("");
+      setSelectedWeight("");
+    }
+  }, [currentSelectedProduct]);
+
+  // Add Item to creation list
+  const handleAddItem = () => {
+    if (!currentSelectedProduct) return;
+    
+    const subVar = currentSelectedColorVariant?.subVariants.find(sv => 
+      (!selectedSize || sv.size === selectedSize) &&
+      (!selectedWeight || sv.weight === selectedWeight)
+    ) || currentSelectedColorVariant?.subVariants[0];
+
+    if (!subVar) {
+      addToast("Failed to match variant details.", "error");
+      return;
+    }
+
+    const uniqueId = `${selectedProductId}-${selectedColor}-${selectedSize}-${selectedWeight}`;
+    
+    // Check duplicate
+    if (formItems.some(i => i.id === uniqueId)) {
+      addToast("This item option is already added to the list.", "warning");
+      return;
+    }
+
+    const selectedVariants: Record<string, string> = {};
+    if (selectedColor) selectedVariants["Color"] = selectedColor;
+    if (selectedSize) selectedVariants["Size"] = selectedSize;
+    if (selectedWeight) selectedVariants["Weight"] = selectedWeight;
+
+    const newItem = {
+      id: uniqueId,
+      productId: selectedProductId,
+      product: {
+        _id: currentSelectedProduct._id,
+        title: currentSelectedProduct.title,
+        categoryId: currentSelectedProduct.categoryId,
+        gstRate: currentSelectedProduct.gstRate || 18,
+        priceIncludesGst: currentSelectedProduct.priceIncludesGst ?? true,
+        hsnCode: currentSelectedProduct.hsnCode || "3924"
+      },
+      selectedVariants,
+      quantity: itemQty,
+      pricePerUnit: itemPrice || subVar.price
+    };
+
+    setFormItems(prev => [...prev, newItem]);
+    addToast("Item added to summary.", "success");
+
+    // Reset selection
+    setSelectedProductId("");
+    setItemQty(1);
+    setItemPrice(0);
+  };
+
+  const handleRemoveItem = (id: string) => {
+    setFormItems(prev => prev.filter(i => i.id !== id));
+  };
+
+  // Determine buyer state for tax preview
+  const buyerStateForForm = React.useMemo(() => {
+    if (customerMode === "new") return newCustState;
+    const cust = customers.find(c => c._id === selectedCustomerId);
+    return cust?.state || INDIAN_STATES[0];
+  }, [customerMode, selectedCustomerId, customers, newCustState]);
+
+  // Calculate summary totals dynamically
+  const formTaxBreakdown = React.useMemo(() => {
+    const isIntrastate = buyerStateForForm.toLowerCase() === "madhya pradesh"; // matching seller default
+    let baseSubtotal = 0;
+    let totalCgst = 0;
+    let totalSgst = 0;
+    let totalIgst = 0;
+    const hsnMap: Record<string, any> = {};
+
+    formItems.forEach((item) => {
+      const rate = item.product.gstRate ?? 18;
+      const hsn = item.product.hsnCode ?? "3924";
+      const isIncl = item.product.priceIncludesGst ?? true;
+      const totalItemAmount = item.pricePerUnit * item.quantity;
+
+      let itemBase = 0;
+      let itemTax = 0;
+
+      if (isIncl) {
+        itemBase = totalItemAmount / (1 + rate / 100);
+        itemTax = totalItemAmount - itemBase;
+      } else {
+        itemBase = totalItemAmount;
+        itemTax = itemBase * (rate / 100);
+      }
+
+      baseSubtotal += itemBase;
+      let cgst = 0, sgst = 0, igst = 0;
+      if (isIntrastate) {
+        cgst = itemTax / 2;
+        sgst = itemTax / 2;
+        totalCgst += cgst;
+        totalSgst += sgst;
+      } else {
+        igst = itemTax;
+        totalIgst += igst;
+      }
+
+      if (!hsnMap[hsn]) {
+        hsnMap[hsn] = { hsnCode: hsn, gstRate: rate, baseAmount: 0, totalTax: 0, cgst: 0, sgst: 0, igst: 0 };
+      }
+      hsnMap[hsn].baseAmount += itemBase;
+      hsnMap[hsn].totalTax += itemTax;
+      hsnMap[hsn].cgst += cgst;
+      hsnMap[hsn].sgst += sgst;
+      hsnMap[hsn].igst += igst;
+    });
+
+    return {
+      isIntrastate,
+      baseSubtotal,
+      cgst: totalCgst,
+      sgst: totalSgst,
+      igst: totalIgst,
+      hsnSlabs: Object.values(hsnMap)
+    };
+  }, [formItems, buyerStateForForm]);
+
+  const formGrandTotal = React.useMemo(() => {
+    return formItems.reduce((sum, item) => sum + (item.pricePerUnit * item.quantity), 0);
+  }, [formItems]);
+
+  // Submit invoice creation
+  const handleSaveInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (formItems.length === 0) {
+      addToast("Please add at least one item to generate an invoice.", "warning");
+      return;
+    }
+
+    let customerPayload: any = {};
+    if (customerMode === "existing") {
+      if (!selectedCustomerId) {
+        addToast("Please select a customer.", "warning");
+        return;
+      }
+      const cust = customers.find(c => c._id === selectedCustomerId);
+      if (!cust) return;
+      customerPayload = {
+        customerId: cust._id,
+        customerName: cust.name,
+        customerEmail: cust.email,
+        customerGstin: cust.gstin,
+        shippingAddress: {
+          firstName: cust.name.split(" ")[0] || "Client",
+          lastName: cust.name.split(" ").slice(1).join(" ") || "B2B",
+          email: cust.email,
+          company: cust.company,
+          address: cust.address || "Main Street",
+          city: cust.city || "Indore",
+          state: cust.state || "Madhya Pradesh",
+          pinCode: cust.pinCode || "452001",
+          phone: cust.phone || "0000000000",
+          gstin: cust.gstin
+        }
+      };
+    } else {
+      if (!newCustName || !newCustEmail || !newCustAddress || !newCustCity || !newCustPinCode || !newCustPhone) {
+        addToast("Please fill in all required new customer fields.", "warning");
+        return;
+      }
+      customerPayload = {
+        newCustomer: {
+          name: newCustName,
+          email: newCustEmail,
+          phone: newCustPhone,
+          company: newCustCompany || undefined,
+          gstin: newCustGstin || undefined,
+          address: newCustAddress,
+          city: newCustCity,
+          state: newCustState,
+          pinCode: newCustPinCode
+        },
+        customerName: newCustName,
+        customerEmail: newCustEmail.toLowerCase(),
+        customerGstin: newCustGstin || undefined,
+        shippingAddress: {
+          firstName: newCustName.split(" ")[0] || "Client",
+          lastName: newCustName.split(" ").slice(1).join(" ") || "B2B",
+          email: newCustEmail.toLowerCase(),
+          company: newCustCompany || undefined,
+          address: newCustAddress,
+          city: newCustCity,
+          state: newCustState,
+          pinCode: newCustPinCode,
+          phone: newCustPhone,
+          gstin: newCustGstin || undefined
+        }
+      };
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createInvoice({
+        type: activeTab,
+        ...customerPayload,
+        items: formItems,
+        amount: formGrandTotal,
+        taxDetails: formTaxBreakdown,
+        paymentMethod,
+        paymentStatus,
+        transactionId: transactionId || undefined,
+        notes: invoiceNotes || undefined
+      });
+
+      addToast(`${activeTab === "invoice" ? "Invoice" : "Receipt"} generated successfully!`, "success");
+      setIsCreateModalOpen(false);
+      
+      // Reset form
+      setFormItems([]);
+      setSelectedCustomerId("");
+      setNewCustName("");
+      setNewCustEmail("");
+      setNewCustPhone("");
+      setNewCustCompany("");
+      setNewCustGstin("");
+      setNewCustAddress("");
+      setNewCustCity("");
+      setNewCustPinCode("");
+      setTransactionId("");
+      setInvoiceNotes("");
+      
+      loadData();
+    } catch (err: any) {
+      addToast(err.message || "Failed to generate document", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVoidInvoice = async (id: string) => {
+    if (!confirm(`Are you sure you want to void this ${activeTab}? This action cannot be undone.`)) return;
+    try {
+      await voidInvoice(id);
+      addToast("Document has been voided successfully.", "success");
+      loadData();
+    } catch (err: any) {
+      addToast(err.message || "Failed to void document", "error");
+    }
+  };
+
+  return (
+    <div className="space-y-6 text-foreground">
+      {/* ─── TITLE & TABS ─── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Invoice & Receipt Manager</h1>
+          <p className="text-muted-foreground mt-1"> Persist, monitor, and print B2B commercial invoices and transaction logs.</p>
+        </div>
+        <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center gap-1.5 font-semibold">
+          <Plus className="h-4.5 w-4.5" /> Generate Document
+        </Button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-border/80">
+        <button
+          onClick={() => { setActiveTab("invoice"); setCurrentPage(1); }}
+          className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "invoice"
+              ? "border-primary text-primary font-bold bg-primary/5"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <FileText className="h-4 w-4" /> B2B Commercial Invoices
+        </button>
+        <button
+          onClick={() => { setActiveTab("receipt"); setCurrentPage(1); }}
+          className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "receipt"
+              ? "border-primary text-primary font-bold bg-primary/5"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Check className="h-4 w-4" /> Payment Receipts (Failed/Draft)
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        {/* ─── INVOICE LIST TABLE ─── */}
+        <div className="xl:col-span-2">
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 border-b">
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={`Search ${activeTab === "invoice" ? "invoices" : "receipts"}...`}
+                  className="pl-9 text-foreground text-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="bg-background text-foreground text-xs font-semibold px-3 py-2 border rounded-md"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="issued">Issued</option>
+                  <option value="void">Void</option>
+                  <option value="draft">Draft</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="date"
+                    className="h-8 py-0 px-2 text-xs w-28"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                  <span className="text-xs text-muted-foreground">to</span>
+                  <Input
+                    type="date"
+                    className="h-8 py-0 px-2 text-xs w-28"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b bg-secondary/15 text-muted-foreground uppercase font-bold tracking-wider text-[10px]">
+                      <th className="p-4">Doc Number</th>
+                      <th className="p-4">Customer</th>
+                      <th className="p-4 text-right">Amount</th>
+                      <th className="p-4">Payment Method</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4">Date</th>
+                      <th className="p-4 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
+                          <span>Fetching records from DB...</span>
+                        </td>
+                      </tr>
+                    ) : invoices.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-muted-foreground italic">
+                          No B2B {activeTab === "invoice" ? "invoices" : "receipts"} found matching the query.
+                        </td>
+                      </tr>
+                    ) : (
+                      invoices.map((inv) => (
+                        <tr key={inv._id} className="border-b hover:bg-secondary/10 transition-colors">
+                          <td className="p-4 font-mono font-bold">{inv._id}</td>
+                          <td className="p-4">
+                            <p className="font-semibold text-foreground">{inv.customerName}</p>
+                            <p className="text-[10px] text-muted-foreground">{inv.customerEmail}</p>
+                          </td>
+                          <td className="p-4 text-right font-bold text-foreground">{formatPrice(inv.amount)}</td>
+                          <td className="p-4 font-medium text-foreground">{inv.paymentMethod || "N/A"}</td>
+                          <td className="p-4">
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                              inv.status === "void" ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-400" :
+                              inv.status === "issued" ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-400" :
+                              "bg-gray-100 text-gray-800 dark:bg-gray-950 dark:text-gray-400"
+                            }`}>
+                              {inv.status}
+                            </span>
+                          </td>
+                          <td className="p-4 font-semibold text-muted-foreground">{inv.generatedAt}</td>
+                          <td className="p-4 text-center flex items-center justify-center gap-1.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 w-7 p-0 cursor-pointer"
+                              title="View Document"
+                              onClick={() => setSelectedInvoice(inv)}
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </Button>
+                            {inv.status !== "void" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 border-destructive/20 cursor-pointer"
+                                title="Void Document"
+                                onClick={() => handleVoidInvoice(inv._id)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 1 && (
+                <div className="p-4 border-t flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground">Showing page {page} of {totalPages}</span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page === 1}
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page === totalPages}
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ─── LIVE PREVIEW SIDE PANEL ─── */}
+        <div className="xl:col-span-1">
+          {selectedInvoice ? (
+            <Card className="border border-border">
+              <CardHeader className="flex flex-row justify-between items-center border-b p-4">
+                <div>
+                  <CardTitle className="text-sm font-bold uppercase">Document Viewer</CardTitle>
+                  <CardDescription className="text-[10px] font-mono">{selectedInvoice._id}</CardDescription>
+                </div>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setSelectedInvoice(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="p-4 overflow-y-auto max-h-[75vh]">
+                <InvoiceDocument
+                  type={selectedInvoice.type}
+                  documentNumber={selectedInvoice._id}
+                  order={{
+                    _id: selectedInvoice.orderId || "",
+                    date: selectedInvoice.generatedAt,
+                    amount: selectedInvoice.amount,
+                    status: "Processing",
+                    statusClass: "",
+                    itemsCount: selectedInvoice.items.reduce((acc, item) => acc + item.quantity, 0),
+                    customerName: selectedInvoice.customerName,
+                    shippingAddress: selectedInvoice.shippingAddress,
+                    items: selectedInvoice.items,
+                    history: [],
+                    paymentMethod: selectedInvoice.paymentMethod as any,
+                    paymentStatus: selectedInvoice.paymentStatus as any,
+                    transactionId: selectedInvoice.transactionId
+                  }}
+                  sellerInfo={selectedInvoice.sellerInfo}
+                  taxBreakdown={selectedInvoice.taxDetails}
+                  showActions={true}
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border border-dashed border-border bg-secondary/5 text-center p-8">
+              <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+              <h3 className="font-bold text-sm text-foreground">Select a Document</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
+                Click on the eye icon next to any invoice or receipt to load its print preview and details panel.
+              </p>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* ─── CREATE DOCUMENT MODAL ─── */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-background border rounded-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
+            <div className="p-6 border-b sticky top-0 bg-background z-10 flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Generate New B2B {activeTab === "invoice" ? "Invoice" : "Receipt"}</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Input billing, product items, and payment details to build a sequential record.</p>
+              </div>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setIsCreateModalOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <form onSubmit={handleSaveInvoice} className="p-6 space-y-6">
+              {/* Customer selection */}
+              <div className="space-y-4">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-primary border-b pb-1.5">1. B2B Client Details</h3>
+                <div className="flex border-b border-border/60 max-w-xs">
+                  <button
+                    type="button"
+                    onClick={() => setCustomerMode("existing")}
+                    className={`flex-1 py-1.5 text-xs font-semibold text-center border-b-2 cursor-pointer ${
+                      customerMode === "existing" ? "border-primary text-primary font-bold" : "border-transparent text-muted-foreground"
+                    }`}
+                  >
+                    Registered Client
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCustomerMode("new")}
+                    className={`flex-1 py-1.5 text-xs font-semibold text-center border-b-2 cursor-pointer ${
+                      customerMode === "new" ? "border-primary text-primary font-bold" : "border-transparent text-muted-foreground"
+                    }`}
+                  >
+                    New Client (Auto-Create)
+                  </button>
+                </div>
+
+                {customerMode === "existing" ? (
+                  <div className="max-w-md">
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Select Buyer</label>
+                    <select
+                      value={selectedCustomerId}
+                      onChange={(e) => setSelectedCustomerId(e.target.value)}
+                      className="bg-background text-foreground text-sm w-full px-3 py-2 border rounded-md font-medium"
+                    >
+                      <option value="">-- Choose Buyer Profile --</option>
+                      {customers.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.name} ({c.email}) {c.company ? ` - ${c.company}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Full Name *</label>
+                      <Input
+                        required
+                        value={newCustName}
+                        onChange={(e) => setNewCustName(e.target.value)}
+                        placeholder="John Doe"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Email Address *</label>
+                      <Input
+                        required
+                        type="email"
+                        value={newCustEmail}
+                        onChange={(e) => setNewCustEmail(e.target.value)}
+                        placeholder="john@example.com"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Phone Number *</label>
+                      <Input
+                        required
+                        value={newCustPhone}
+                        onChange={(e) => setNewCustPhone(e.target.value)}
+                        placeholder="9876543210"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Company / Organization</label>
+                      <Input
+                        value={newCustCompany}
+                        onChange={(e) => setNewCustCompany(e.target.value)}
+                        placeholder="XYZ Solutions Ltd"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">GSTIN</label>
+                      <Input
+                        value={newCustGstin}
+                        onChange={(e) => setNewCustGstin(e.target.value)}
+                        placeholder="24AAACF1001M1Z5"
+                        className="text-sm uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Shipping State *</label>
+                      <select
+                        value={newCustState}
+                        onChange={(e) => setNewCustState(e.target.value)}
+                        className="bg-background text-foreground text-sm w-full px-3 py-2.5 border rounded-md"
+                      >
+                        {INDIAN_STATES.map((st) => (
+                          <option key={st} value={st}>{st}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Address *</label>
+                      <Input
+                        required
+                        value={newCustAddress}
+                        onChange={(e) => setNewCustAddress(e.target.value)}
+                        placeholder="2nd Floor, Sector B, Plot 3"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">City *</label>
+                      <Input
+                        required
+                        value={newCustCity}
+                        onChange={(e) => setNewCustCity(e.target.value)}
+                        placeholder="Surat"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Pin Code *</label>
+                      <Input
+                        required
+                        value={newCustPinCode}
+                        onChange={(e) => setNewCustPinCode(e.target.value)}
+                        placeholder="395001"
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Items Section */}
+              <div className="space-y-4">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-primary border-b pb-1.5">2. Add Product Items</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-secondary/10 p-4 rounded-lg border">
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Search Product</label>
+                    <select
+                      value={selectedProductId}
+                      onChange={(e) => setSelectedProductId(e.target.value)}
+                      className="bg-background text-foreground text-sm w-full px-3 py-2.5 border rounded-md"
+                    >
+                      <option value="">-- Choose Wholesale Product --</option>
+                      {products.map((p) => (
+                        <option key={p._id} value={p._id}>
+                          {p.title} (Stock: {p.totalStock} | HSN: {p.hsnCode || "N/A"})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {currentSelectedProduct && (
+                    <>
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground block mb-1">Color Option</label>
+                        <select
+                          value={selectedColor}
+                          onChange={(e) => setSelectedColor(e.target.value)}
+                          className="bg-background text-foreground text-sm w-full px-3 py-2.5 border rounded-md"
+                        >
+                          <option value="">-- Choose Color --</option>
+                          {availableColors.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {availableSizes.length > 0 && (
+                        <div>
+                          <label className="text-xs font-semibold text-muted-foreground block mb-1">Size Option</label>
+                          <select
+                            value={selectedSize}
+                            onChange={(e) => setSelectedSize(e.target.value)}
+                            className="bg-background text-foreground text-sm w-full px-3 py-2.5 border rounded-md"
+                          >
+                            <option value="">-- Choose Size --</option>
+                            {availableSizes.map(s => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {availableWeights.length > 0 && (
+                        <div>
+                          <label className="text-xs font-semibold text-muted-foreground block mb-1">Weight Option</label>
+                          <select
+                            value={selectedWeight}
+                            onChange={(e) => setSelectedWeight(e.target.value)}
+                            className="bg-background text-foreground text-sm w-full px-3 py-2.5 border rounded-md"
+                          >
+                            <option value="">-- Choose Weight --</option>
+                            {availableWeights.map(w => (
+                              <option key={w} value={w}>{w}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground block mb-1">Price per Unit (Overridable)</label>
+                        <Input
+                          type="number"
+                          value={itemPrice || ""}
+                          onChange={(e) => setItemPrice(parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                          className="text-sm font-semibold"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground block mb-1">Order Qty</label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={itemQty}
+                          onChange={(e) => setItemQty(parseInt(e.target.value, 10) || 1)}
+                          className="text-sm font-semibold"
+                        />
+                      </div>
+
+                      <div>
+                        <Button type="button" onClick={handleAddItem} className="w-full">
+                          Add Item Option
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Items Summary List */}
+                {formItems.length > 0 && (
+                  <div className="border border-border/80 rounded-lg overflow-hidden">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b bg-secondary/15 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">
+                          <th className="p-3">Product Description</th>
+                          <th className="p-3 text-center">HSN</th>
+                          <th className="p-3 text-center">Qty</th>
+                          <th className="p-3 text-right">Price Per Unit</th>
+                          <th className="p-3 text-center">GST Rate</th>
+                          <th className="p-3 text-right">Subtotal</th>
+                          <th className="p-3 text-center">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {formItems.map((item) => {
+                          const formattedVariants = Object.entries(item.selectedVariants)
+                            .map(([key, val]) => `${key}: ${val}`)
+                            .join(" • ");
+                          return (
+                            <tr key={item.id} className="border-b hover:bg-secondary/5">
+                              <td className="p-3">
+                                <p className="font-semibold text-foreground">{item.product.title}</p>
+                                <p className="text-[10px] text-muted-foreground">{formattedVariants}</p>
+                              </td>
+                              <td className="p-3 text-center font-mono">{item.product.hsnCode}</td>
+                              <td className="p-3 text-center font-bold">{item.quantity}</td>
+                              <td className="p-3 text-right font-semibold">₹{item.pricePerUnit.toFixed(2)}</td>
+                              <td className="p-3 text-center font-medium">{item.product.gstRate}%</td>
+                              <td className="p-3 text-right font-bold text-foreground">
+                                ₹{(item.pricePerUnit * item.quantity).toFixed(2)}
+                              </td>
+                              <td className="p-3 text-center">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  type="button"
+                                  className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleRemoveItem(item.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Payment Details & Notes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t pt-6">
+                <div className="space-y-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-primary border-b pb-1.5">3. Payment & Logs</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Payment Method</label>
+                      <select
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="bg-background text-foreground text-sm w-full px-3 py-2 border rounded-md"
+                      >
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Razorpay">Online (Razorpay)</option>
+                        <option value="UPI">UPI</option>
+                        <option value="COD">Cash on Delivery (COD)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Payment Status</label>
+                      <select
+                        value={paymentStatus}
+                        onChange={(e) => setPaymentStatus(e.target.value)}
+                        className="bg-background text-foreground text-sm w-full px-3 py-2 border rounded-md"
+                      >
+                        <option value="Paid">Paid (Completed)</option>
+                        <option value="Pending">Pending (COD/Transfer)</option>
+                        <option value="Failed">Failed (Log Failure)</option>
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Transaction Ref / Reference ID</label>
+                      <Input
+                        value={transactionId}
+                        onChange={(e) => setTransactionId(e.target.value)}
+                        placeholder="e.g. pay_N1oH5mC17842"
+                        className="text-sm font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tax Breakdown Preview */}
+                <div className="bg-secondary/15 p-4 rounded-lg border space-y-3 text-xs">
+                  <h4 className="font-bold text-[10px] text-muted-foreground uppercase tracking-widest border-b pb-1">
+                    GST Computation Preview
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Taxable Value:</span>
+                      <span className="font-semibold">₹{formTaxBreakdown.baseSubtotal.toFixed(2)}</span>
+                    </div>
+                    {formTaxBreakdown.isIntrastate ? (
+                      <>
+                        <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                          <span>CGST (Central Tax 9%):</span>
+                          <span>₹{formTaxBreakdown.cgst.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                          <span>SGST (State Tax 9%):</span>
+                          <span>₹{formTaxBreakdown.sgst.toFixed(2)}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between text-blue-600 dark:text-blue-400">
+                        <span>IGST (Integrated Tax 18%):</span>
+                        <span>₹{formTaxBreakdown.igst.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-border pt-2 font-bold text-sm text-foreground">
+                      <span>Total (incl. GST):</span>
+                      <span className="text-primary text-base">₹{formGrandTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="text-xs font-semibold text-muted-foreground block mb-1">Admin Notes (Will appear on print)</label>
+                  <textarea
+                    value={invoiceNotes}
+                    onChange={(e) => setInvoiceNotes(e.target.value)}
+                    placeholder="Add shipping references, discount adjustments or terms override..."
+                    className="bg-background text-foreground text-sm w-full px-3 py-2 border rounded-md h-20"
+                  />
+                </div>
+              </div>
+
+              {/* Form submit */}
+              <div className="flex justify-end gap-3 border-t pt-4">
+                <Button variant="outline" type="button" onClick={() => setIsCreateModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting} className="font-semibold">
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Save & Issue Document"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

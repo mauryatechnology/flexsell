@@ -156,13 +156,13 @@ export async function PUT(request: Request, { params }: RouteProps) {
         }
       }
 
-      order.items = items;
+      order.items = items as any;
       order.itemsCount = items.reduce((sum: number, i: any) => sum + i.quantity, 0);
     }
 
     if (amount !== undefined) order.amount = amount;
     if (shippingAddress) {
-      order.shippingAddress = shippingAddress;
+      order.shippingAddress = shippingAddress as any;
       order.customerName = `${shippingAddress.firstName} ${shippingAddress.lastName}${
         shippingAddress.company ? ` (${shippingAddress.company})` : ""
       }`;
