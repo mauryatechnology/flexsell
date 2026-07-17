@@ -68,6 +68,7 @@ export default function AdminCustomersPage() {
   const [pinCode, setPinCode] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [gstin, setGstin] = React.useState("");
+  const [businessType, setBusinessType] = React.useState("wholesaler");
 
   const fetchCustomers = async () => {
     try {
@@ -106,6 +107,7 @@ export default function AdminCustomersPage() {
     setPinCode("");
     setPhone("");
     setGstin("");
+    setBusinessType("wholesaler");
   };
 
   const handleOpenAddModal = () => {
@@ -125,6 +127,7 @@ export default function AdminCustomersPage() {
     setPinCode(cust.pinCode);
     setPhone(cust.phone);
     setGstin(cust.gstin || "");
+    setBusinessType(cust.businessType || "wholesaler");
     setIsModalOpen(true);
   };
 
@@ -152,7 +155,8 @@ export default function AdminCustomersPage() {
         state,
         pinCode,
         phone,
-        gstin
+        gstin,
+        businessType
       };
 
       let res;
@@ -345,6 +349,15 @@ export default function AdminCustomersPage() {
                   <label className="font-bold text-muted-foreground">GSTIN</label>
                   <Input placeholder="Buyer GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value)} className="font-mono" />
                 </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-bold text-muted-foreground">Business Type</label>
+                <select value={businessType} onChange={(e) => setBusinessType(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                  <option value="distributor">Distributor / Dealer</option>
+                  <option value="wholesaler">Wholesaler</option>
+                  <option value="retailer">Retailer</option>
+                </select>
               </div>
 
               <div className="space-y-1.5">

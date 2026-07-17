@@ -31,6 +31,7 @@ export default function ClientProfilePage() {
   const [city, setCity] = React.useState("");
   const [state, setState] = React.useState(INDIAN_STATES[0]);
   const [pinCode, setPinCode] = React.useState("");
+  const [businessType, setBusinessType] = React.useState("wholesaler");
   
   const [isSubmittingPersonal, setIsSubmittingPersonal] = React.useState(false);
   const [isSubmittingBusiness, setIsSubmittingBusiness] = React.useState(false);
@@ -48,6 +49,7 @@ export default function ClientProfilePage() {
       setCity(cust.city || "");
       setState(cust.state || INDIAN_STATES[0]);
       setPinCode(cust.pinCode || "");
+      setBusinessType(cust.businessType || "wholesaler");
     }).catch(console.error);
   }, []);
 
@@ -79,7 +81,8 @@ export default function ClientProfilePage() {
         address,
         city,
         state,
-        pinCode
+        pinCode,
+        businessType: businessType as "distributor" | "wholesaler" | "retailer"
       });
       setActiveCustomer(updated);
       addToast("Business information updated successfully!", "success");
@@ -187,7 +190,8 @@ export default function ClientProfilePage() {
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">Business Type</label>
                 <select 
-                  defaultValue="wholesaler"
+                  value={businessType}
+                  onChange={(e) => setBusinessType(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option value="distributor">Distributor / Dealer</option>

@@ -86,7 +86,7 @@ export const orderSchema = z.object({
   }),
   status: z.enum(["Processing", "Shipped", "Delivered", "Cancelled"]).optional(),
   paymentDetails: z.object({
-    paymentMethod: z.enum(["Bank Transfer", "Razorpay", "UPI"]),
+    paymentMethod: z.enum(["Bank Transfer", "Razorpay", "UPI", "COD"]),
     paymentStatus: z.enum(["Pending", "Paid", "Failed"]),
     transactionId: z.string().optional(),
   }).optional(),

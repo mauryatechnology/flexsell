@@ -376,18 +376,18 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-dashed">
                 <div className="space-y-3 text-xs">
                   <div>
-                    <h4 className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Bank Transfer Details for B2B Payments:</h4>
-                    <div className="bg-secondary/20 p-3 rounded-lg border font-mono text-[11px] text-foreground space-y-1">
-                      <p><span className="text-muted-foreground font-sans">Beneficiary:</span> {cmsData?.brandSettings?.bankDetails?.beneficiaryName || "FlexSell B2B Private Limited"}</p>
-                      <p><span className="text-muted-foreground font-sans">Bank Name:</span> {cmsData?.brandSettings?.bankDetails?.bankName || "HDFC Bank"}</p>
-                      <p><span className="text-muted-foreground font-sans">Account No:</span> {cmsData?.brandSettings?.bankDetails?.accountNo || "50200084729104"}</p>
-                      <p><span className="text-muted-foreground font-sans">IFSC Code:</span> {cmsData?.brandSettings?.bankDetails?.ifscCode || "HDFC0000024"}</p>
-                      <p><span className="text-muted-foreground font-sans">Branch:</span> {cmsData?.brandSettings?.bankDetails?.branch || "Sachin GIDC, Surat"}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Terms of Payment:</h4>
-                    <p className="text-muted-foreground italic">100% advance wire transfer or credit terms subject to credit limit approval.</p>
+                    <h4 className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Payment Details:</h4>
+                    <p className="font-bold text-foreground bg-secondary/10 inline-block px-2 py-1 rounded border">
+                      {order.paymentMethod === "COD" ? "Cash on Delivery (COD)" : 
+                       order.paymentMethod === "Razorpay" ? "Online Payment (UPI/Cards)" : 
+                       order.paymentMethod || "N/A"}
+                    </p>
+                    <p className="text-muted-foreground mt-2">Status: <span className="font-bold">{order.paymentStatus || "Pending"}</span></p>
+                    {order.transactionId && (
+                      <p className="text-muted-foreground mt-1 font-mono text-[11px]">
+                        Txn ID: {order.transactionId}
+                      </p>
+                    )}
                   </div>
                 </div>
                 

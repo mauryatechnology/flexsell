@@ -126,7 +126,7 @@ export function AdminOverview({ dbData }: AdminOverviewProps) {
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(value) => `₹${value / 1000}k`} />
                 <Tooltip 
-                  formatter={(value: number) => [formatPrice(value), "Revenue"]}
+                  formatter={(value: any) => [formatPrice(Number(value) || 0), "Revenue"]}
                   contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))", borderRadius: "8px", fontSize: "14px" }}
                   itemStyle={{ color: "hsl(var(--foreground))" }}
                 />

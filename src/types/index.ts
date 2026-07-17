@@ -147,7 +147,7 @@ export interface Order extends BaseDocument {
   items: CartItem[];
   shipmentDetails?: ShipmentDetails;
   history: HistoryEvent[];
-  paymentMethod?: "Bank Transfer" | "Razorpay" | "UPI";
+  paymentMethod?: "Bank Transfer" | "Razorpay" | "UPI" | "COD";
   paymentStatus?: "Pending" | "Paid" | "Failed";
   transactionId?: string;
 }
@@ -184,6 +184,7 @@ export interface Customer {
   phone: string;
   initials: string;
   gstin?: string;
+  businessType?: "distributor" | "wholesaler" | "retailer";
   addresses?: SavedAddress[];
   wishlist?: string[];
 }

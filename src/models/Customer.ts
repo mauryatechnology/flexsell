@@ -33,6 +33,7 @@ const CustomerSchema = new Schema<CustomerType & Document>(
     phone: { type: String, required: true },
     initials: { type: String, required: true },
     gstin: { type: String },
+    businessType: { type: String, enum: ["distributor", "wholesaler", "retailer"], default: "wholesaler" },
     addresses: [SavedAddressSchema],
     wishlist: [{ type: String }]
   },

@@ -47,8 +47,9 @@ export function CheckoutView() {
   const [phone, setPhone] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const [paymentMethod, setPaymentMethod] = React.useState<"Razorpay" | "Bank Transfer">("Razorpay");
-  const [bankRefNumber, setBankRefNumber] = React.useState("");
+  const [paymentMethod, setPaymentMethod] = React.useState<"Razorpay" | "COD">("Razorpay");
+  const [enableCod, setEnableCod] = React.useState(true);
+  const [enableOnlinePayment, setEnableOnlinePayment] = React.useState(true);
   const [isPaying, setIsPaying] = React.useState(false);
   const { Razorpay } = useRazorpay();
 
@@ -119,6 +120,27 @@ export function CheckoutView() {
         router.push("/login?callbackUrl=/checkout");
       }
     };
+
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("/api/cms");
+        if (res.ok) {
+          const data = await res.json();
+          const settings = data.commerceSettings || {};
+          const codEnabled = settings.enableCod ?? true;
+          const onlineEnabled = settings.enableOnlinePayment ?? true;
+          setEnableCod(codEnabled);
+          setEnableOnlinePayment(onlineEnabled);
+          
+          if (onlineEnabled) setPaymentMethod("Razorpay");
+          else if (codEnabled) setPaymentMethod("COD");
+        }
+      } catch (err) {
+        console.error("Failed to fetch settings", err);
+      }
+    };
+
+    fetchSettings();
     loadCustomer();
   }, [setBuyerState, router]);
 
@@ -230,74 +252,88 @@ export function CheckoutView() {
 
     if (paymentMethod === "Razorpay") {
       const amountToPay = Math.max(0, grandTotal - couponDiscount);
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder",
-        amount: Math.round(amountToPay * 100).toString(),
-        currency: "INR",
-        name: "FlexSell Wholesale",
-        description: "B2B Order Payment",
-        handler: async function (response: any) {
-          setIsSubmitting(true);
-          try {
-            const orderId = await createOrder(
-              items,
-              amountToPay,
-              shippingAddress,
-              {
-                paymentMethod: "Razorpay",
-                paymentStatus: "Paid",
-                transactionId: response.razorpay_payment_id
-              }
-            );
-            clearCart();
-            router.push(`/order-confirmation/${orderId}`);
-          } catch (err: unknown) {
-            alert(err instanceof Error ? (err as any).message : "Failed to save order. Please contact support.");
-          } finally {
-            setIsSubmitting(false);
+      setIsSubmitting(true);
+      
+      try {
+        const rzpOrderRes = await fetch("/api/razorpay/order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: amountToPay }),
+        });
+        const rzpOrderData = await rzpOrderRes.json();
+        
+        if (!rzpOrderRes.ok || !rzpOrderData.orderId) {
+          throw new Error(rzpOrderData.error || "Failed to initialize payment gateway");
+        }
+
+        const options = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder",
+          amount: Math.round(amountToPay * 100).toString(),
+          currency: "INR",
+          name: "FlexSell Wholesale",
+          description: "B2B Order Payment",
+          order_id: rzpOrderData.orderId,
+          handler: async function (response: any) {
+            try {
+              const orderId = await createOrder(
+                items,
+                amountToPay,
+                shippingAddress,
+                {
+                  paymentMethod: "Razorpay",
+                  paymentStatus: "Paid",
+                  transactionId: response.razorpay_payment_id
+                }
+              );
+              clearCart();
+              router.push(`/order-confirmation/${orderId}`);
+            } catch (err: unknown) {
+              alert(err instanceof Error ? (err as any).message : "Failed to save order. Please contact support.");
+              setIsSubmitting(false);
+            }
+          },
+          prefill: {
+            name: `${firstName} ${lastName}`,
+            email: email,
+            contact: phone
+          },
+          theme: {
+            color: "#10b981"
           }
-        },
-        prefill: {
-          name: `${firstName} ${lastName}`,
-          email: email,
-          contact: phone
-        },
-        theme: {
-          color: "#10b981"
-        }
-      };
+        };
 
-      const rzp = new (Razorpay as any)(options as any);
-      rzp.on("payment.failed", function (response: any) {
-        alert("Payment failed: " + response.error.description);
-      });
-      rzp.open();
+        const rzp = new (Razorpay as any)(options as any);
+        rzp.on("payment.failed", function (response: any) {
+          alert("Payment failed: " + response.error.description);
+          setIsSubmitting(false);
+        });
+        rzp.open();
+      } catch (err: any) {
+        alert(err.message);
+        setIsSubmitting(false);
+      }
       return;
     }
 
-    if (paymentMethod === "Bank Transfer" && !bankRefNumber) {
-      alert("Please enter the transaction reference number (UTR) for the bank wire transfer.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const orderId = await createOrder(
-        items, 
-        Math.max(0, grandTotal - couponDiscount), 
-        shippingAddress,
-        {
-          paymentMethod: "Bank Transfer",
-          paymentStatus: "Pending",
-          transactionId: bankRefNumber
-        }
-      );
-      clearCart();
-      router.push(`/order-confirmation/${orderId}`);
-    } catch (err) {
-      alert(err instanceof Error ? (err as any).message : "Failed to place order. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    if (paymentMethod === "COD") {
+      setIsSubmitting(true);
+      try {
+        const orderId = await createOrder(
+          items, 
+          Math.max(0, grandTotal - couponDiscount), 
+          shippingAddress,
+          {
+            paymentMethod: "COD",
+            paymentStatus: "Pending"
+          }
+        );
+        clearCart();
+        router.push(`/order-confirmation/${orderId}`);
+      } catch (err) {
+        alert(err instanceof Error ? (err as any).message : "Failed to place order. Please try again.");
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -341,7 +377,7 @@ export function CheckoutView() {
           />
           <PaymentSection 
             paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
-            bankRefNumber={bankRefNumber} setBankRefNumber={setBankRefNumber}
+            enableCod={enableCod} enableOnlinePayment={enableOnlinePayment}
           />
         </div>
 

@@ -39,7 +39,7 @@ export function OrderSummary({
         {items.map((item) => (
           <div key={item.id} className="flex justify-between text-sm">
             <span className="text-muted-foreground max-w-[70%] line-clamp-1">
-              {item.product.title} <span className="text-xs font-semibold text-primary">x{item.quantity}</span>
+              {item.product?.title || "Loading Product..."} <span className="text-xs font-semibold text-primary">x{item.quantity}</span>
             </span>
             <span>{formatPrice(item.pricePerUnit * item.quantity)}</span>
           </div>
