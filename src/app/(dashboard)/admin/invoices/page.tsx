@@ -385,15 +385,23 @@ export default function AdminInvoicesPage() {
     }
   };
 
-  const handleVoidInvoice = async (id: string) => {
-    if (!confirm(`Are you sure you want to void this ${activeTab}? This action cannot be undone.`)) return;
-    try {
-      await voidInvoice(id);
-      addToast("Document has been voided successfully.", "success");
-      loadData();
-    } catch (err: any) {
-      addToast(err.message || "Failed to void document", "error");
-    }
+  const handleVoidInvoice = (id: string) => {
+    confirmAction({
+      title: `Void B2B ${activeTab === "invoice" ? "Invoice" : "Receipt"}`,
+      message: `Are you sure you want to void this B2B ${activeTab}? This action cannot be undone.`,
+      confirmText: "Yes, Void Document",
+      cancelText: "Cancel",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          await voidInvoice(id);
+          addToast("Document has been voided successfully.", "success");
+          loadData();
+        } catch (err: any) {
+          addToast(err.message || "Failed to void document", "error");
+        }
+      }
+    });
   };
 
   const handleMarkAsPaid = async () => {
