@@ -45,6 +45,13 @@ A custom configuration editor inside the admin panel. Adjust primary brand color
 - **Stock Log Ledger:** A persisted audit trail logging every inventory change (manual adjustments, barcode scanner adjustments, order sales, CSV bulk imports) for warehouse transparency.
 - **CSV Bulk Import/Export:** Warehouse managers can export their current stock levels to CSV, edit values in any spreadsheet editor, and upload the CSV to bulk update stock counts.
 
+### 9. Unified B2B Service Layer & Mock Sandbox
+All dynamic client interactions have been consolidated into dedicated service objects inside `src/services/` to eliminate direct endpoint fetching from view components. Each service detects `isMockMode` and supports:
+- **Addresses:** `customerService.ts` ➔ Persistent address lists under mock key `"flexsell-addresses-storage"`.
+- **Product Reviews:** `reviewService.ts` ➔ Client submissions and admin moderation under mock key `"flexsell-reviews-storage"`.
+- **Coupons:** `couponService.ts` ➔ B2B coupon generation and validation under mock key `"flexsell-coupons-storage"`.
+- **Notifications/Webhooks:** `notificationService.ts` ➔ Real-time dashboard logs and integration webhooks under mock keys `"flexsell-notifications-storage"` and `"flexsell-webhooks-storage"`.
+
 ---
 
 ## 🛠️ Tech Stack & Architecture
@@ -74,6 +81,7 @@ A custom configuration editor inside the admin panel. Adjust primary brand color
 │   ├── data/               # Large scale realistic B2B mock dataset files
 │   ├── lib/                # apiClient, helper utilities, and price formatting
 │   ├── providers/          # Theme context provider
+│   ├── services/           # Unified B2B Service Layer (Addresses, Coupons, Reviews, Webhooks)
 │   ├── stores/             # Zustand state managers (cart, products, toasts)
 │   └── types/              # Unified TypeScript definitions
 ```
