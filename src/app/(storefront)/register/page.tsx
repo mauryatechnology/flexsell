@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useToastStore } from "@/stores/toastStore";
 
@@ -22,6 +23,7 @@ export default function RegisterPage() {
   const [state, setState] = React.useState("");
   const [pinCode, setPinCode] = React.useState("");
   const [gstin, setGstin] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const { registerCustomer, error, clearError } = useAuthStore();
@@ -102,7 +104,17 @@ export default function RegisterPage() {
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-medium">Password *</label>
-                  <Input type="password" placeholder="Create a strong password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isSubmitting} />
+                  <div className="relative">
+                    <Input type={showPassword ? "text" : "password"} placeholder="Create a strong password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isSubmitting} className="pr-10" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
