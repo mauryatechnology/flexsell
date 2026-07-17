@@ -5,12 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToastStore } from "@/stores/toastStore";
-import { Plus, Trash2, Edit2, Ticket, Percent, Check, X, Calendar } from "lucide-react";
-import { Coupon } from "@/types";
+import { Plus, Trash2, Edit2, Ticket, Percent, Check, X, Calendar, Search } from "lucide-react";
+import { Coupon, Customer } from "@/types";
 import { couponService } from "@/services/couponService";
+import { customerService } from "@/services/customerService";
+import { useConfirmStore } from "@/stores/confirmStore";
 
 export default function AdminCouponsPage() {
   const { addToast } = useToastStore();
+  const confirmAction = useConfirmStore((state) => state.confirm);
   const [coupons, setCoupons] = React.useState<Coupon[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -26,6 +29,23 @@ export default function AdminCouponsPage() {
   const [expiryDate, setExpiryDate] = React.useState("");
   const [isActive, setIsActive] = React.useState(true);
 
+  // Personalized & limits states
+  const [isPersonalized, setIsPersonalized] = React.useState(false);
+  const [allowedCustomers, setAllowedCustomers] = React.useState<string[]>([]);
+  const [usageLimit, setUsageLimit] = React.useState("");
+  const [usageLimitPerCustomer, setUsageLimitPerCustomer] = React.useState("1");
+  const [customersList, setCustomersList] = React.useState<Customer[]>([]);
+  const [customerSearch, setCustomerSearch] = React.useState("");
+
+  const filteredCustomers = React.useMemo(() => {
+    if (!customerSearch.trim()) return customersList;
+    return customersList.filter(
+      (c) =>
+        (c.name || "").toLowerCase().includes(customerSearch.toLowerCase()) ||
+        (c.email || "").toLowerCase().includes(customerSearch.toLowerCase())
+    );
+  }, [customersList, customerSearch]);
+
   const fetchCoupons = async () => {
     try {
       setIsLoading(true);
@@ -39,8 +59,23 @@ export default function AdminCouponsPage() {
     }
   };
 
+  const fetchCustomers = async () => {
+    try {
+      const response = await customerService.getCustomers();
+      const list = Array.isArray(response)
+        ? response
+        : (response && typeof response === "object" && Array.isArray((response as any).customers)
+            ? (response as any).customers
+            : []);
+      setCustomersList(list);
+    } catch (err) {
+      console.error("Failed to load customers list:", err);
+    }
+  };
+
   React.useEffect(() => {
     fetchCoupons();
+    fetchCustomers();
   }, []);
 
   const resetForm = () => {
@@ -52,10 +87,16 @@ export default function AdminCouponsPage() {
     setMaxDiscount("");
     setExpiryDate("");
     setIsActive(true);
+    setIsPersonalized(false);
+    setAllowedCustomers([]);
+    setUsageLimit("");
+    setUsageLimitPerCustomer("1");
+    setCustomerSearch("");
   };
 
   const handleOpenAddModal = () => {
     resetForm();
+    fetchCustomers();
     setIsModalOpen(true);
   };
 
@@ -68,6 +109,12 @@ export default function AdminCouponsPage() {
     setMaxDiscount(String(coupon.maxDiscount || ""));
     setExpiryDate(coupon.expiryDate);
     setIsActive(coupon.isActive);
+    setIsPersonalized(coupon.isPersonalized || false);
+    setAllowedCustomers(coupon.allowedCustomers || []);
+    setUsageLimit(coupon.usageLimit ? String(coupon.usageLimit) : "");
+    setUsageLimitPerCustomer(String(coupon.usageLimitPerCustomer ?? 1));
+    setCustomerSearch("");
+    fetchCustomers();
     setIsModalOpen(true);
   };
 
@@ -87,7 +134,11 @@ export default function AdminCouponsPage() {
         minOrderValue: parseFloat(minOrderValue) || 0,
         maxDiscount: maxDiscount ? parseFloat(maxDiscount) : undefined,
         expiryDate,
-        isActive
+        isActive,
+        isPersonalized,
+        allowedCustomers,
+        usageLimit: usageLimit ? parseInt(usageLimit, 10) : null,
+        usageLimitPerCustomer: parseInt(usageLimitPerCustomer, 10) || 1
       };
 
       if (editingId) {
@@ -107,25 +158,43 @@ export default function AdminCouponsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this coupon permanently?")) return;
-    try {
-      await couponService.deleteCoupon(id);
-      addToast("Coupon deleted successfully!", "success");
-      fetchCoupons();
-    } catch (err: unknown) {
-      addToast((err as any).message || "Failed to delete coupon", "error");
-    }
+  const handleDelete = (id: string) => {
+    confirmAction({
+      title: "Delete Coupon",
+      message: "Are you sure you want to delete this coupon permanently? This action cannot be undone.",
+      confirmText: "Yes, Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          await couponService.deleteCoupon(id);
+          addToast("Coupon deleted successfully!", "success");
+          fetchCoupons();
+        } catch (err: unknown) {
+          addToast((err as any).message || "Failed to delete coupon", "error");
+        }
+      }
+    });
   };
 
-  const handleToggleActive = async (coupon: Coupon) => {
-    try {
-      await couponService.updateCoupon(coupon._id, { isActive: !coupon.isActive });
-      addToast(`Coupon status updated!`, "success");
-      fetchCoupons();
-    } catch (err: unknown) {
-      addToast((err as any).message || "Failed to update coupon status", "error");
-    }
+  const handleToggleActive = (coupon: Coupon) => {
+    const nextState = !coupon.isActive;
+    confirmAction({
+      title: `${nextState ? "Activate" : "Deactivate"} Coupon`,
+      message: `Are you sure you want to ${nextState ? "activate" : "deactivate"} coupon "${coupon.code}"?`,
+      confirmText: nextState ? "Activate" : "Deactivate",
+      cancelText: "Cancel",
+      type: nextState ? "info" : "warning",
+      onConfirm: async () => {
+        try {
+          await couponService.updateCoupon(coupon._id, { isActive: nextState });
+          addToast(`Coupon status updated!`, "success");
+          fetchCoupons();
+        } catch (err: unknown) {
+          addToast((err as any).message || "Failed to update coupon status", "error");
+        }
+      }
+    });
   };
 
   return (
@@ -162,6 +231,8 @@ export default function AdminCouponsPage() {
                   <tr>
                     <th className="px-6 py-3.5">Code</th>
                     <th className="px-6 py-3.5">Discount Value</th>
+                    <th className="px-6 py-3.5">Target Scope</th>
+                    <th className="px-6 py-3.5">Usage Stats</th>
                     <th className="px-6 py-3.5">Min Order value</th>
                     <th className="px-6 py-3.5">Expiry Date</th>
                     <th className="px-6 py-3.5 text-center">Status</th>
@@ -173,7 +244,7 @@ export default function AdminCouponsPage() {
                     const todayStr = new Date().toISOString().split("T")[0];
                     const isExpired = coupon.expiryDate < todayStr;
                     return (
-                      <tr key={coupon._id} className="hover:bg-secondary/15 transition-colors">
+                       <tr key={coupon._id} className="hover:bg-secondary/15 transition-colors">
                         <td className="px-6 py-4">
                           <span className="font-mono font-black text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded text-xs">
                             {coupon.code}
@@ -182,6 +253,28 @@ export default function AdminCouponsPage() {
                         <td className="px-6 py-4 font-bold text-foreground">
                           {coupon.discountType === "flat" ? `₹${coupon.discountValue}` : `${coupon.discountValue}%`}
                           {coupon.maxDiscount && <span className="text-[10px] text-muted-foreground block font-normal">Max cap: ₹{coupon.maxDiscount}</span>}
+                        </td>
+                        <td className="px-6 py-4">
+                          {coupon.isPersonalized ? (
+                            <div className="space-y-0.5">
+                              <span className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 rounded-full px-2 py-0.5 text-[10px] font-bold">
+                                Personal ({coupon.allowedCustomers?.length || 0})
+                              </span>
+                              <span className="text-[9px] text-muted-foreground block truncate max-w-[120px]" title={coupon.allowedCustomers?.join(", ")}>
+                                {coupon.allowedCustomers?.join(", ")}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded-full px-2 py-0.5 text-[10px] font-bold">
+                              Public
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-foreground">
+                          <div className="space-y-0.5 text-xs">
+                            <div>{coupon.usedCount || 0} / {coupon.usageLimit ?? "∞"}</div>
+                            <span className="text-[9px] text-muted-foreground block font-normal">Limit: {coupon.usageLimitPerCustomer || 1}/user</span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 font-semibold text-foreground">
                           ₹{coupon.minOrderValue}
@@ -262,6 +355,113 @@ export default function AdminCouponsPage() {
               <div className="space-y-1.5">
                 <label className="font-bold text-muted-foreground">Expiration Date *</label>
                 <Input value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} required type="date" />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1.5">
+                <input
+                  type="checkbox"
+                  id="coupon-personalized"
+                  checked={isPersonalized}
+                  onChange={(e) => setIsPersonalized(e.target.checked)}
+                  className="h-4 w-4 rounded text-primary focus:ring-primary bg-background border-border cursor-pointer"
+                />
+                <label htmlFor="coupon-personalized" className="font-semibold cursor-pointer">Personalized (Restrict to specific customers)</label>
+              </div>
+
+              {isPersonalized && (
+                <div className="space-y-2 border border-purple-500/20 bg-purple-500/5 p-3 rounded-lg animate-in fade-in slide-in-from-top-1 duration-150">
+                  <label className="font-bold text-purple-700 dark:text-purple-400">Target Customers (Select one or more) *</label>
+                  
+                  {/* Selected customers as tags/pills */}
+                  {allowedCustomers.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {allowedCustomers.map((email) => {
+                        const cust = customersList.find((c) => c.email === email);
+                        const displayName = cust ? cust.name : email;
+                        return (
+                          <span
+                            key={email}
+                            className="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 font-bold px-2 py-0.5 rounded text-[10px]"
+                          >
+                            {displayName}
+                            <button
+                              type="button"
+                              onClick={() => setAllowedCustomers(allowedCustomers.filter((e) => e !== email))}
+                              className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-200 cursor-pointer"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Search input */}
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search customers by name or email..."
+                      value={customerSearch}
+                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      className="pl-8 text-xs h-8 mb-2 bg-background"
+                    />
+                  </div>
+
+                  {/* Scrollable list */}
+                  <div className="max-h-32 overflow-y-auto border border-border bg-background rounded-md p-1 space-y-0.5">
+                    {filteredCustomers.map((cust) => {
+                      const isSelected = allowedCustomers.includes(cust.email);
+                      return (
+                        <button
+                          type="button"
+                          key={cust._id}
+                          onClick={() => {
+                            if (isSelected) {
+                              setAllowedCustomers(allowedCustomers.filter((e) => e !== cust.email));
+                            } else {
+                              setAllowedCustomers([...allowedCustomers, cust.email]);
+                            }
+                          }}
+                          className={`w-full text-left flex items-center justify-between p-1.5 rounded text-xs transition-colors cursor-pointer ${
+                            isSelected
+                              ? "bg-purple-50 dark:bg-purple-950/20 text-purple-900 dark:text-purple-400 font-bold"
+                              : "hover:bg-secondary/20 text-foreground"
+                          }`}
+                        >
+                          <span>{cust.name} ({cust.email})</span>
+                          {isSelected && <Check className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />}
+                        </button>
+                      );
+                    })}
+                    {filteredCustomers.length === 0 && (
+                      <div className="text-muted-foreground text-center py-4">No matching customers found.</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-muted-foreground">Total Usage Limit (Optional)</label>
+                  <Input
+                    placeholder="e.g. 100 (leave blank for unlimited)"
+                    value={usageLimit}
+                    onChange={(e) => setUsageLimit(e.target.value)}
+                    type="number"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="font-bold text-muted-foreground">Usage Limit Per Customer</label>
+                  <Input
+                    placeholder="e.g. 1"
+                    value={usageLimitPerCustomer}
+                    onChange={(e) => setUsageLimitPerCustomer(e.target.value)}
+                    type="number"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-2 pt-2">

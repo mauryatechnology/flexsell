@@ -45,6 +45,7 @@ async function request<T>(
   const config: RequestInit = {
     ...options,
     headers,
+    cache: "no-store",
   };
 
   try {

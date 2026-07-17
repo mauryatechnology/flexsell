@@ -4,7 +4,7 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Plus, Edit, Trash2, X, Check } from "lucide-react";
+import { Plus, Edit, Trash2, X, Check, Image as ImageIcon, Search, Filter, SortAsc } from "lucide-react";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { useToastStore } from "@/stores/toastStore";
 import { useConfirmStore } from "@/stores/confirmStore";
@@ -25,9 +25,14 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
   // Form states
   const [name, setName] = React.useState("");
   const [slug, setSlug] = React.useState("");
+  const [image, setImage] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [parentId, setParentId] = React.useState("");
-  const [order, setOrder] = React.useState(1);
+
+  // Search, Sort, Filter states
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [sortBy, setSortBy] = React.useState("name-asc"); // name-asc, name-desc, newest
+  const [filterParent, setFilterParent] = React.useState("all");
 
   React.useEffect(() => {
     initializeCategories(initialCategories);
@@ -39,30 +44,125 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  const totalPages = Math.ceil(activeCategories.length / ITEMS_PER_PAGE);
+  const filteredAndSortedCategories = React.useMemo(() => {
+    let result = [...activeCategories];
+
+    // Search
+    if (searchQuery) {
+      const lowerQ = searchQuery.toLowerCase();
+      result = result.filter(c => 
+        c.name.toLowerCase().includes(lowerQ) || 
+        c.slug.toLowerCase().includes(lowerQ)
+      );
+    }
+
+    // Filter
+    if (filterParent !== "all") {
+      if (filterParent === "root") {
+        result = result.filter(c => !c.parentId);
+      } else {
+        result = result.filter(c => c.parentId === filterParent);
+      }
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      if (sortBy === "name-asc") return a.name.localeCompare(b.name);
+      if (sortBy === "name-desc") return b.name.localeCompare(a.name);
+      if (sortBy === "newest") {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      }
+      return 0;
+    });
+
+    return result;
+  }, [activeCategories, searchQuery, filterParent, sortBy]);
+
+  const totalPages = Math.ceil(filteredAndSortedCategories.length / ITEMS_PER_PAGE);
 
   const paginatedCategories = React.useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return activeCategories.slice(start, start + ITEMS_PER_PAGE);
-  }, [activeCategories, currentPage]);
+    return filteredAndSortedCategories.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredAndSortedCategories, currentPage]);
 
   // Load selected category into the form
   const handleEditClick = (cat: Category) => {
     setEditCategoryId(cat._id);
     setName(cat.name);
     setSlug(cat.slug);
+    setImage(cat.image || "");
     setDescription(cat.description || "");
     setParentId(cat.parentId || "");
-    setOrder(cat.order);
   };
 
   const handleCancelEdit = () => {
     setEditCategoryId(null);
     setName("");
     setSlug("");
+    setImage("");
     setDescription("");
     setParentId("");
-    setOrder(1);
+  };
+
+  const validateImageAspectRatio = (src: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        if (Math.abs(ratio - 1) <= 0.01) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      };
+      img.onerror = () => {
+        resolve(false);
+      };
+      img.src = src;
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const objectUrl = URL.createObjectURL(file);
+    const isValid = await validateImageAspectRatio(objectUrl);
+    URL.revokeObjectURL(objectUrl);
+
+    if (!isValid) {
+      addToast("Category image must have an exact 1:1 (square) aspect ratio.", "error");
+      e.target.value = "";
+      return;
+    }
+
+    addToast("Uploading category image...", "info");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to upload image");
+      }
+
+      const { url } = await res.json();
+      setImage(url);
+      addToast("Category image uploaded successfully.", "success");
+    } catch (err: unknown) {
+      console.error(err);
+      addToast(err instanceof Error ? (err as any).message : "Failed to upload image.", "error");
+    } finally {
+      e.target.value = "";
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -76,10 +176,10 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
     const categoryData = {
       name,
       slug: slug.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      image: image || ("https://placehold.co/400x400/10b981/ffffff?text=" + name.split(" ")[0]),
       description,
       parentId: parentId || null,
-      order: Number(order),
-      image: "https://placehold.co/400x400/10b981/ffffff?text=" + name.split(" ")[0],
+      order: 1, // Defaulting to 1 as requested to remove it from UI but keep DB schema valid
       isActive: true
     };
 
@@ -139,7 +239,39 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Left/Middle Column: List of Categories */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search categories..." 
+                className="pl-9" 
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              />
+            </div>
+            <select 
+              value={filterParent}
+              onChange={(e) => { setFilterParent(e.target.value); setCurrentPage(1); }}
+              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-foreground"
+            >
+              <option value="all">All Categories</option>
+              <option value="root">Root Categories Only</option>
+              {parentCategories.map(cat => (
+                <option key={cat._id} value={cat._id}>Child of: {cat.name}</option>
+              ))}
+            </select>
+            <select 
+              value={sortBy}
+              onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
+              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-foreground"
+            >
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+              <option value="newest">Recently Added</option>
+            </select>
+          </div>
+
           <Card>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -147,9 +279,9 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
                   <thead className="text-xs text-muted-foreground uppercase bg-secondary/50">
                     <tr>
                       <th className="px-6 py-4">Category Name</th>
+                      <th className="px-6 py-4">Image</th>
                       <th className="px-6 py-4">Slug</th>
                       <th className="px-6 py-4">Parent Category</th>
-                      <th className="px-6 py-4">Sort Order</th>
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -164,11 +296,19 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
                             ) : null}
                             {cat.name}
                           </td>
+                          <td className="px-6 py-4">
+                            {cat.image ? (
+                              <img src={cat.image} alt={cat.name} className="h-10 w-10 object-cover rounded border" />
+                            ) : (
+                              <div className="h-10 w-10 bg-secondary rounded border flex items-center justify-center text-muted-foreground">
+                                <ImageIcon className="h-4 w-4" />
+                              </div>
+                            )}
+                          </td>
                           <td className="px-6 py-4 font-mono text-xs">{cat.slug}</td>
                           <td className="px-6 py-4 text-muted-foreground">
                             {parent ? parent.name : "None (Root)"}
                           </td>
-                          <td className="px-6 py-4 font-medium">{cat.order}</td>
                           <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap">
                             <Button 
                               variant="ghost" 
@@ -193,11 +333,11 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
                 </table>
               </div>
               <div className="px-4 pb-4">
-                <Pagination
+                  <Pagination
                   currentPage={currentPage}
-                  totalPages={totalPages}
+                  totalPages={totalPages || 1}
                   onPageChange={setCurrentPage}
-                  totalItems={activeCategories.length}
+                  totalItems={filteredAndSortedCategories.length}
                   itemsPerPage={ITEMS_PER_PAGE}
                 />
               </div>
@@ -244,6 +384,38 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
                 </div>
 
                 <div className="space-y-2">
+                  <label className="text-sm font-medium flex justify-between">
+                    Category Image
+                    <span className="text-xs text-muted-foreground font-normal">* 1:1 aspect ratio mandated</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="https://example.com/image.jpg" 
+                      value={image}
+                      onChange={(e) => setImage(e.target.value)}
+                      className="flex-1"
+                    />
+                    <div className="relative">
+                      <Button type="button" variant="outline" className="w-[100px]">
+                        Upload
+                      </Button>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageUpload}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      />
+                    </div>
+                  </div>
+                  {image && (
+                    <div className="mt-2">
+                      <p className="text-xs text-muted-foreground mb-1">Preview (Square Crop):</p>
+                      <img src={image} alt="Preview" className="h-20 w-20 object-cover rounded border" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Description</label>
                   <Input 
                     placeholder="Description..." 
@@ -266,15 +438,6 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
                         <option key={cat._id} value={cat._id}>{cat.name}</option>
                       ))}
                   </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Sort Order in Dropdown</label>
-                  <Input 
-                    type="number" 
-                    value={order || ""}
-                    onChange={(e) => setOrder(Number(e.target.value))}
-                  />
                 </div>
 
                 <div className="flex gap-3 pt-2">

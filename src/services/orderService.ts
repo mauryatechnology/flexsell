@@ -24,9 +24,18 @@ export const orderService = {
       paymentMethod: Order["paymentMethod"];
       paymentStatus: Order["paymentStatus"];
       transactionId?: string;
-    }
+    },
+    couponCode?: string,
+    couponDiscount?: number
   ): Promise<Order> {
-    return apiClient.post<Order>("/orders", { items, amount, shippingAddress, paymentDetails });
+    return apiClient.post<Order>("/orders", { 
+      items, 
+      amount, 
+      shippingAddress, 
+      paymentDetails,
+      couponCode,
+      couponDiscount
+    });
   },
 
   async updateOrderStatus(id: string, status: Order["status"]): Promise<Order> {

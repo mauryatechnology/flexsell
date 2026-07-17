@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/utils";
 import { ArrowLeft, Printer, Truck, Calendar, CheckCircle, Clock, AlertTriangle, FileText, Check } from "lucide-react";
+import { InvoiceDocument } from "@/components/documents/InvoiceDocument";
+import { SellerInfo } from "@/types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -18,6 +20,7 @@ export default function ClientOrderDetailPage({ params }: PageProps) {
 
   const { orders, initializeOrders, isLoading } = useOrderStore();
   const [cmsData, setCmsData] = React.useState<any>(null);
+  const [invoice, setInvoice] = React.useState<any>(null);
 
   React.useEffect(() => {
     initializeOrders();
@@ -25,7 +28,17 @@ export default function ClientOrderDetailPage({ params }: PageProps) {
       .then(res => res.json())
       .then(data => setCmsData(data))
       .catch(err => console.error("Failed to load CMS data:", err));
-  }, [initializeOrders]);
+
+    fetch(`/api/invoices?orderId=${orderId}`)
+      .then(res => res.json())
+      .then(data => {
+        const invs = Array.isArray(data) ? data : data.invoices || [];
+        if (invs.length > 0) {
+          setInvoice(invs[0]);
+        }
+      })
+      .catch(err => console.error("Failed to load invoice:", err));
+  }, [initializeOrders, orderId]);
 
   const order = React.useMemo(() => orders.find(o => o._id === orderId), [orders, orderId]);
 
@@ -121,130 +134,21 @@ export default function ClientOrderDetailPage({ params }: PageProps) {
         {/* Left Column: Items details */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="border border-border">
-            <CardHeader className="border-b pb-4">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" /> Invoice Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-6">
-              
-              {/* Billing and shipping Address info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pb-4 border-b">
-                <div>
-                  <h4 className="font-bold text-[10px] text-muted-foreground uppercase mb-1">Shipping To:</h4>
-                  <p className="font-bold">{order.customerName}</p>
-                  {order.shippingAddress.company && (
-                    <p className="text-muted-foreground font-semibold">{order.shippingAddress.company}</p>
-                  )}
-                  <p className="text-muted-foreground mt-1">{order.shippingAddress.address}</p>
-                  <p className="text-muted-foreground">{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pinCode}</p>
-                </div>
-                <div>
-                  <h4 className="font-bold text-[10px] text-muted-foreground uppercase mb-1">Billing Details:</h4>
-                  <p className="text-muted-foreground">Order Ref ID: <span className="font-mono font-bold text-foreground">{order._id}</span></p>
-                  <p className="text-muted-foreground mt-0.5">Order Date: {order.date}</p>
-                  <p className="text-muted-foreground">GST Status: {cmsData?.commerceSettings?.defaultTaxRate || 18}% GST claimable invoice</p>
-                  {order.shippingAddress.gstin && (
-                    <p className="font-mono font-bold text-primary mt-1">Customer GSTIN: {order.shippingAddress.gstin}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Items List */}
-              <div className="space-y-4">
-                <h4 className="font-bold text-[10px] text-muted-foreground uppercase">Invoice Items:</h4>
-                <div className="divide-y border rounded-lg overflow-hidden bg-secondary/5">
-                  {order.items.map((item) => {
-                    const matchingColor = item.selectedVariants?.["Color"] || item.selectedVariants?.["color"];
-                    const activeVariant = item.product.colorVariants?.find(cv => cv.color === matchingColor) 
-                      || item.product.colorVariants?.[0];
-                    const activeSubVariant = activeVariant?.subVariants?.find(sv => 
-                      (!item.selectedVariants?.["Size"] || sv.size === item.selectedVariants?.["Size"]) &&
-                      (!item.selectedVariants?.["Weight"] || sv.weight === item.selectedVariants?.["Weight"])
-                    ) || activeVariant?.subVariants?.[0];
-                    const sku = activeSubVariant?.sku || "NO SKU";
-                    const formattedVariants = Object.entries(item.selectedVariants || {})
-                      .map(([key, val]) => `${key}: ${val}`)
-                      .join(" • ");
-
-                    return (
-                      <div key={item.id} className="p-4 flex justify-between items-center text-xs">
-                        <div>
-                          <p className="font-bold text-foreground">{item.product.title}</p>
-                          <p className="text-muted-foreground mt-1 font-mono">
-                            SKU: {sku} | Option: {formattedVariants}
-                          </p>
-                          <p className="text-muted-foreground mt-0.5 font-semibold">Qty: {item.quantity} x {formatPrice(item.pricePerUnit)}</p>
-                        </div>
-                        <span className="font-bold text-foreground text-sm">{formatPrice(item.pricePerUnit * item.quantity)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Pricing breakdown */}
-              <div className="flex flex-col md:flex-row md:justify-between items-start gap-6 pt-4 border-t">
-                <div className="text-[10px] text-muted-foreground max-w-sm">
-                  <p className="font-semibold uppercase text-foreground mb-0.5">Note:</p>
-                  <p>Invoices are inclusive of standard {cmsData?.commerceSettings?.defaultTaxRate || 18}% GST. GSTIN claims are processed during invoice download validation.</p>
-                  {cmsData?.brandSettings?.gstin && (
-                    <p className="mt-1 font-semibold text-foreground">Seller GSTIN: {cmsData.brandSettings.gstin}</p>
-                  )}
-                  {cmsData?.brandSettings?.companyAddress && (
-                    <p className="text-muted-foreground">Office: {cmsData.brandSettings.companyAddress}</p>
-                  )}
-                </div>
-                <div className="w-full md:w-56 space-y-1.5 text-xs">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Taxable Base Value:</span>
-                    <span>{formatPrice(order.amount / (1 + (cmsData?.commerceSettings?.defaultTaxRate || 18) / 100))}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>CGST/SGST ({cmsData?.commerceSettings?.defaultTaxRate || 18}%):</span>
-                    <span>{formatPrice(order.amount - (order.amount / (1 + (cmsData?.commerceSettings?.defaultTaxRate || 18) / 100)))}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-base text-foreground border-t pt-2 mt-2">
-                    <span>Total (incl. GST):</span>
-                    <span>{formatPrice(order.amount)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment & Authorized Signatory Block (Premium B2B Invoice style) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-dashed">
-                <div className="space-y-3 text-xs">
-                  <div>
-                    <h4 className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Bank Transfer Details for B2B Payments:</h4>
-                    <div className="bg-secondary/20 p-3 rounded-lg border font-mono text-[11px] text-foreground space-y-1">
-                      <p><span className="text-muted-foreground font-sans">Beneficiary:</span> {cmsData?.brandSettings?.bankDetails?.beneficiaryName || "FlexSell B2B Private Limited"}</p>
-                      <p><span className="text-muted-foreground font-sans">Bank Name:</span> {cmsData?.brandSettings?.bankDetails?.bankName || "HDFC Bank"}</p>
-                      <p><span className="text-muted-foreground font-sans">Account No:</span> {cmsData?.brandSettings?.bankDetails?.accountNo || "50200084729104"}</p>
-                      <p><span className="text-muted-foreground font-sans">IFSC Code:</span> {cmsData?.brandSettings?.bankDetails?.ifscCode || "HDFC0000024"}</p>
-                      <p><span className="text-muted-foreground font-sans">Branch:</span> {cmsData?.brandSettings?.bankDetails?.branch || "Sachin GIDC, Surat"}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Terms of Payment:</h4>
-                    <p className="text-muted-foreground italic">100% advance wire transfer or credit terms subject to credit limit approval.</p>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col justify-between items-end h-full pt-4 md:pt-0">
-                  <div className="text-center w-56 border border-border/85 p-3 rounded-lg bg-secondary/10 relative">
-                    <div className="border border-primary/25 border-dashed rounded text-[9px] font-bold text-primary px-2 py-1 rotate-[-4deg] absolute left-2 top-2 opacity-80 uppercase tracking-widest no-print">
-                      {cmsData?.brandSettings?.storeName || "FlexSell"} B2B Verified
-                    </div>
-                    <div className="h-16 flex items-center justify-center">
-                      <span className="text-[10px] text-muted-foreground italic font-serif">Authorized Signatory</span>
-                    </div>
-                    <div className="border-t border-border pt-1.5 font-bold text-[10px] text-foreground uppercase tracking-wider">
-                      For {cmsData?.brandSettings?.storeName || "FlexSell Wholesale"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
+            <CardContent className="p-6">
+              <InvoiceDocument
+                type={invoice?.type || (order.paymentStatus === "Paid" ? "invoice" : "receipt")}
+                documentNumber={invoice?._id || "DRAFT-PREVIEW"}
+                order={order}
+                customerId={invoice?.customerId}
+                sellerInfo={{
+                  storeName: cmsData?.brandSettings?.storeName || "FlexSell Wholesale",
+                  gstin: cmsData?.brandSettings?.gstin || "24AAACF1001M1Z5",
+                  address: cmsData?.brandSettings?.companyAddress || "Plot No. 12, GIDC Industrial Estate, Sachin, Surat, Gujarat - 394230",
+                  email: cmsData?.brandSettings?.supportEmail || "support@flexsell.in",
+                  phone: cmsData?.brandSettings?.supportPhone || "+91 261 2409000",
+                }}
+                showActions={false}
+              />
             </CardContent>
           </Card>
         </div>

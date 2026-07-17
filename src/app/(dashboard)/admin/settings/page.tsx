@@ -30,6 +30,7 @@ export default function AdminSettingsPage() {
   const [minOrderValue, setMinOrderValue] = React.useState("1000");
   const [defaultTaxRate, setDefaultTaxRate] = React.useState("18");
   const [enableCod, setEnableCod] = React.useState(true);
+  const [enableOnlinePayment, setEnableOnlinePayment] = React.useState(true);
 
   // Active tab and ID Format states
   const [activeTab, setActiveTab] = React.useState<"general" | "id">("general");
@@ -123,6 +124,7 @@ export default function AdminSettingsPage() {
           setMinOrderValue(String(cs.minOrderValue ?? "1000"));
           setDefaultTaxRate(String(cs.defaultTaxRate ?? "18"));
           setEnableCod(cs.enableCod ?? true);
+          setEnableOnlinePayment(cs.enableOnlinePayment ?? true);
         }
 
         if (data.idSettings) {
@@ -179,7 +181,8 @@ export default function AdminSettingsPage() {
           value: {
             minOrderValue: parseFloat(minOrderValue) || 0,
             defaultTaxRate: parseFloat(defaultTaxRate) || 0,
-            enableCod
+            enableCod,
+            enableOnlinePayment
           }
         })
       });
@@ -304,7 +307,7 @@ export default function AdminSettingsPage() {
               </div>
               <div className="flex items-center justify-between pt-2">
                 <div className="space-y-0.5">
-                  <label className="text-sm font-medium">Enable Cash on Delivery</label>
+                  <label className="text-sm font-medium">Enable Cash on Delivery (COD)</label>
                   <p className="text-xs text-muted-foreground">Allow COD payment method for buyers.</p>
                 </div>
                 <input 
@@ -314,40 +317,22 @@ export default function AdminSettingsPage() {
                   className="h-4 w-4 rounded text-primary focus:ring-primary bg-background border-border cursor-pointer" 
                 />
               </div>
+              <div className="flex items-center justify-between pt-2">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium">Enable Online Payments</label>
+                  <p className="text-xs text-muted-foreground">Allow Razorpay (UPI, Cards, Netbanking).</p>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={enableOnlinePayment} 
+                  onChange={(e) => setEnableOnlinePayment(e.target.checked)} 
+                  className="h-4 w-4 rounded text-primary focus:ring-primary bg-background border-border cursor-pointer" 
+                />
+              </div>
             </CardContent>
           </Card>
 
-          {/* Bank Wire Details */}
-          <Card className="border border-border lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Bank Transfer Details</CardTitle>
-              <CardDescription>Wholesale wire transfer details displayed on commercial invoices.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Beneficiary Name</label>
-                <Input value={beneficiaryName} onChange={(e) => setBeneficiaryName(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Bank Name</label>
-                <Input value={bankName} onChange={(e) => setBankName(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Account Number</label>
-                <Input value={accountNo} onChange={(e) => setAccountNo(e.target.value)} className="font-mono" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">IFSC Code</label>
-                  <Input value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} className="font-mono" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Branch</label>
-                  <Input value={branch} onChange={(e) => setBranch(e.target.value)} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
 
           {/* Webhook Settings Panel */}
           <Card className="border border-border lg:col-span-2">

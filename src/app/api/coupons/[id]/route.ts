@@ -47,6 +47,10 @@ export async function PUT(request: Request, { params }: RouteProps) {
     if (validatedData.maxDiscount !== undefined) coupon.maxDiscount = validatedData.maxDiscount;
     if (validatedData.expiryDate !== undefined) coupon.expiryDate = validatedData.expiryDate;
     if (validatedData.isActive !== undefined) coupon.isActive = validatedData.isActive;
+    if (validatedData.isPersonalized !== undefined) coupon.isPersonalized = validatedData.isPersonalized;
+    if (validatedData.allowedCustomers !== undefined) coupon.allowedCustomers = validatedData.allowedCustomers.map((e: string) => e.toLowerCase().trim());
+    if (validatedData.usageLimit !== undefined) coupon.usageLimit = validatedData.usageLimit;
+    if (validatedData.usageLimitPerCustomer !== undefined) coupon.usageLimitPerCustomer = validatedData.usageLimitPerCustomer;
 
     await coupon.save();
 

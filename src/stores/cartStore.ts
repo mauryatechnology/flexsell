@@ -206,10 +206,10 @@ export const useCartStore = create<CartState>()(
         const storeProducts = useProductStore.getState().products;
 
         get().items.forEach((item) => {
-          const p = storeProducts.find(prod => prod._id === item.productId) || item.product;
-          const rate = p.gstRate ?? 18;
-          const hsn = p.hsnCode ?? "3924";
-          const isIncl = p.priceIncludesGst ?? true;
+          const p = storeProducts.find(prod => prod._id === (item.productId || item.product?._id)) || item.product;
+          const rate = p?.gstRate ?? 18;
+          const hsn = p?.hsnCode ?? "3924";
+          const isIncl = p?.priceIncludesGst ?? true;
           
           const unitPrice = item.pricePerUnit;
           const qty = item.quantity;

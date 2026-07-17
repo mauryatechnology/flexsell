@@ -189,8 +189,8 @@ export function ClientOrdersView() {
                   <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-3">Itemized Invoice:</h4>
                   {selectedOrder.items && selectedOrder.items.length > 0 ? (
                     <div className="space-y-3">
-                      {selectedOrder.items.map((item) => (
-                        <div key={item.id} className="flex justify-between items-start">
+                      {selectedOrder.items.map((item, index) => (
+                        <div key={`${item.product._id}-${index}`} className="flex justify-between items-start">
                           <div className="max-w-[70%]">
                             <p className="font-semibold text-foreground line-clamp-1">{item.product.title}</p>
                             <p className="text-xs text-muted-foreground">Qty: {item.quantity} x {formatPrice(item.pricePerUnit)}</p>

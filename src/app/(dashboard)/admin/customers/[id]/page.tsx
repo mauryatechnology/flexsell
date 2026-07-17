@@ -163,6 +163,10 @@ export default function AdminCustomerDetailPage({ params }: PageProps) {
                 <span className="text-muted-foreground font-semibold flex items-center gap-1.5"><Building className="h-3.5 w-3.5" /> Business Company:</span>
                 <p className="font-bold text-foreground pl-5">{customer.company || "Individual / Direct"}</p>
               </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground font-semibold flex items-center gap-1.5"><Building className="h-3.5 w-3.5" /> Business Type:</span>
+                <p className="font-bold text-foreground pl-5 capitalize">{customer.businessType || "Wholesaler"}</p>
+              </div>
               {customer.gstin && (
                 <div className="space-y-1">
                   <span className="text-muted-foreground font-semibold flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5" /> B2B GSTIN Code:</span>

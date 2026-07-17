@@ -63,6 +63,11 @@ export default function ClientCouponsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {coupons.map((coupon) => (
             <Card key={coupon._id} className="border border-primary/20 shadow-sm relative overflow-hidden bg-gradient-to-br from-card to-secondary/5">
+              {coupon.isPersonalized && (
+                <div className="absolute top-0 right-0 bg-purple-600 text-white font-bold text-[8px] px-2 py-0.5 rounded-bl uppercase tracking-wider z-10 shadow-xs">
+                  Exclusive Offer
+                </div>
+              )}
               {/* Scissors design line */}
               <div className="absolute top-0 bottom-0 left-[35%] border-l-2 border-dashed border-border pointer-events-none" />
               

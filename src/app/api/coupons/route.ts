@@ -13,20 +13,29 @@ export async function GET() {
     const token = await getTokenFromCookie();
     
     let isAdmin = false;
+    let userEmail = "";
     if (token) {
       const payload = verifyToken(token);
-      if (payload && payload.role === "admin") {
-        isAdmin = true;
+      if (payload) {
+        if (payload.role === "admin") {
+          isAdmin = true;
+        } else {
+          userEmail = payload.email?.toLowerCase() || "";
+        }
       }
     }
 
     const todayStr = new Date().toISOString().split("T")[0];
 
-    let query = {};
+    let query: any = {};
     if (!isAdmin) {
       query = {
         isActive: true,
-        expiryDate: { $gte: todayStr }
+        expiryDate: { $gte: todayStr },
+        $or: [
+          { isPersonalized: { $ne: true } },
+          { isPersonalized: true, allowedCustomers: userEmail }
+        ]
       };
     }
 
@@ -62,8 +71,12 @@ export async function POST(request: Request) {
       minOrderValue: validatedData.minOrderValue,
       maxDiscount: validatedData.maxDiscount,
       expiryDate: validatedData.expiryDate,
-      isActive: validatedData.isActive
-    });
+      isActive: validatedData.isActive,
+      isPersonalized: validatedData.isPersonalized,
+      allowedCustomers: validatedData.allowedCustomers?.map((e: string) => e.toLowerCase().trim()) || [],
+      usageLimit: validatedData.usageLimit,
+      usageLimitPerCustomer: validatedData.usageLimitPerCustomer
+    } as any);
 
     return NextResponse.json(newCoupon, { status: 201 });
   } catch (error: unknown) {

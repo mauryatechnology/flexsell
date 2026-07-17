@@ -47,9 +47,12 @@ const OrderSchema = new Schema<OrderType & Document>(
     items: [{ type: Schema.Types.Mixed, required: true }],
     shipmentDetails: { type: ShipmentDetailsSchema },
     history: [HistoryEventSchema],
-    paymentMethod: { type: String, enum: ["Bank Transfer", "Razorpay", "UPI"] },
+    paymentMethod: { type: String, enum: ["Bank Transfer", "Razorpay", "UPI", "COD"] },
     paymentStatus: { type: String, enum: ["Pending", "Paid", "Failed"], default: "Pending" },
     transactionId: { type: String },
+    invoiceId: { type: String, ref: "Invoice" },
+    couponCode: { type: String },
+    couponDiscount: { type: Number },
   },
   { timestamps: true }
 );
@@ -58,4 +61,8 @@ OrderSchema.index({ status: 1 });
 OrderSchema.index({ customerName: 1 });
 OrderSchema.index({ date: -1 });
 
-export default mongoose.models.Order || mongoose.model("Order", OrderSchema);
+if (mongoose.models.Order) {
+  mongoose.deleteModel("Order");
+}
+
+export default mongoose.model("Order", OrderSchema);

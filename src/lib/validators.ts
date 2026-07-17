@@ -31,8 +31,11 @@ export const resetPasswordSchema = z.object({
 export const categorySchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   slug: z.string().min(2, "Slug must be at least 2 characters"),
+  image: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
   order: z.number().int().optional(),
-  parentId: z.string().optional(),
+  parentId: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
 });
 
 // Coupon validation schema
@@ -44,6 +47,10 @@ export const couponSchema = z.object({
   maxDiscount: z.number().positive().optional(),
   expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expiry date must be YYYY-MM-DD"),
   isActive: z.boolean().default(true),
+  isPersonalized: z.boolean().default(false).optional(),
+  allowedCustomers: z.array(z.string()).default([]).optional(),
+  usageLimit: z.number().positive().optional().nullable(),
+  usageLimitPerCustomer: z.number().positive().default(1).optional(),
 });
 
 // Review validation schema
@@ -57,6 +64,8 @@ export const reviewSchema = z.object({
 // Order validation schema
 export const orderSchema = z.object({
   items: z.array(z.object({
+    id: z.string(),
+    productId: z.string(),
     product: z.object({
       _id: z.string(),
       title: z.string(),
@@ -83,10 +92,12 @@ export const orderSchema = z.object({
   }),
   status: z.enum(["Processing", "Shipped", "Delivered", "Cancelled"]).optional(),
   paymentDetails: z.object({
-    paymentMethod: z.enum(["Bank Transfer", "Razorpay", "UPI"]),
+    paymentMethod: z.enum(["Bank Transfer", "Razorpay", "UPI", "COD"]),
     paymentStatus: z.enum(["Pending", "Paid", "Failed"]),
     transactionId: z.string().optional(),
   }).optional(),
+  couponCode: z.string().optional(),
+  couponDiscount: z.number().optional(),
 });
 
 // Product validation schema

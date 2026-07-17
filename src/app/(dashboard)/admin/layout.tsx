@@ -39,6 +39,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     { name: "Categories", href: "/admin/categories", icon: FolderTree },
     { name: "Collections", href: "/admin/collections", icon: Layers },
     { name: "Orders", href: "/admin/orders", icon: CreditCard },
+    { name: "Invoices", href: "/admin/invoices", icon: FileText },
     { name: "Customers", href: "/admin/customers", icon: Users },
     { name: "Vendors", href: "/admin/vendors", icon: Store },
     { name: "Reviews", href: "/admin/reviews", icon: MessageSquare },

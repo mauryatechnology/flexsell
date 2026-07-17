@@ -8,6 +8,15 @@ import { customerService } from "@/services/customerService";
 import { Customer } from "@/types";
 import { useToastStore } from "@/stores/toastStore";
 
+const INDIAN_STATES = [
+  "Madhya Pradesh", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", 
+  "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", 
+  "Karnataka", "Kerala", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", 
+  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", 
+  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", 
+  "Delhi", "Union Territory"
+];
+
 export default function ClientProfilePage() {
   const { addToast } = useToastStore();
   const [activeCustomer, setActiveCustomer] = React.useState<Customer | null>(null);
@@ -15,8 +24,15 @@ export default function ClientProfilePage() {
   const [lastName, setLastName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
+  
   const [company, setCompany] = React.useState("");
   const [gstin, setGstin] = React.useState("");
+  const [address, setAddress] = React.useState("");
+  const [city, setCity] = React.useState("");
+  const [state, setState] = React.useState(INDIAN_STATES[0]);
+  const [pinCode, setPinCode] = React.useState("");
+  const [businessType, setBusinessType] = React.useState("wholesaler");
+  
   const [isSubmittingPersonal, setIsSubmittingPersonal] = React.useState(false);
   const [isSubmittingBusiness, setIsSubmittingBusiness] = React.useState(false);
 
@@ -29,6 +45,11 @@ export default function ClientProfilePage() {
       setPhone(cust.phone || "");
       setCompany(cust.company || "");
       setGstin(cust.gstin || "");
+      setAddress(cust.address || "");
+      setCity(cust.city || "");
+      setState(cust.state || INDIAN_STATES[0]);
+      setPinCode(cust.pinCode || "");
+      setBusinessType(cust.businessType || "wholesaler");
     }).catch(console.error);
   }, []);
 
@@ -56,7 +77,12 @@ export default function ClientProfilePage() {
     try {
       const updated = await customerService.updateActiveCustomer({
         company,
-        gstin
+        gstin,
+        address,
+        city,
+        state,
+        pinCode,
+        businessType: businessType as "distributor" | "wholesaler" | "retailer"
       });
       setActiveCustomer(updated);
       addToast("Business information updated successfully!", "success");
@@ -82,59 +108,90 @@ export default function ClientProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Personal Details */}
-        <Card className="border border-border">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold">Personal Information</CardTitle>
-            <CardDescription>Update your basic profile details.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSavePersonal} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-muted-foreground">First Name</label>
-                  <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="text-sm font-semibold" />
+        <div className="space-y-8">
+          <Card className="border border-border">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold">Personal Information</CardTitle>
+              <CardDescription>Update your basic profile details.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSavePersonal} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-muted-foreground">First Name</label>
+                    <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="text-sm font-semibold" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-muted-foreground">Last Name</label>
+                    <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required className="text-sm font-semibold" />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-muted-foreground">Last Name</label>
-                  <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required className="text-sm font-semibold" />
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Email Address</label>
+                  <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className="text-sm font-semibold" />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Email Address</label>
-                <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className="text-sm font-semibold" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Phone Number</label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} required className="text-sm font-semibold" />
-              </div>
-              <Button type="submit" className="font-bold" disabled={isSubmittingPersonal}>
-                {isSubmittingPersonal ? "Saving..." : "Save Changes"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Phone Number</label>
+                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} required className="text-sm font-semibold" />
+                </div>
+                <Button type="submit" className="font-bold" disabled={isSubmittingPersonal}>
+                  {isSubmittingPersonal ? "Saving..." : "Save Changes"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Business details */}
         <Card className="border border-border">
           <CardHeader>
             <CardTitle className="text-lg font-bold">Business Information</CardTitle>
-            <CardDescription>B2B credentials for wholesale billing.</CardDescription>
+            <CardDescription>B2B credentials and billing address details.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSaveBusiness} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Company Name</label>
-                <Input value={company} onChange={(e) => setCompany(e.target.value)} required className="text-sm font-semibold" />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Company Name</label>
+                  <Input value={company} onChange={(e) => setCompany(e.target.value)} className="text-sm font-semibold" placeholder="Your Business Name" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">GSTIN</label>
+                  <Input value={gstin} onChange={(e) => setGstin(e.target.value)} className="text-sm font-mono font-bold" placeholder="Optional" />
+                </div>
               </div>
+              
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">GSTIN (Input Tax Claim)</label>
-                <Input value={gstin} onChange={(e) => setGstin(e.target.value)} required className="text-sm font-mono font-bold" />
-                <p className="text-[10px] text-muted-foreground">Required for claiming Input Tax Credit (ITC).</p>
+                <label className="text-xs font-bold uppercase text-muted-foreground">Billing Address *</label>
+                <Input value={address} onChange={(e) => setAddress(e.target.value)} required className="text-sm font-semibold" placeholder="Street Address" />
               </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">City *</label>
+                  <Input value={city} onChange={(e) => setCity(e.target.value)} required className="text-sm font-semibold" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">State *</label>
+                  <select 
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Pin Code *</label>
+                  <Input value={pinCode} onChange={(e) => setPinCode(e.target.value)} required className="text-sm font-mono font-bold" />
+                </div>
+              </div>
+              
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">Business Type</label>
                 <select 
-                  defaultValue="wholesaler"
+                  value={businessType}
+                  onChange={(e) => setBusinessType(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option value="distributor">Distributor / Dealer</option>
@@ -142,6 +199,7 @@ export default function ClientProfilePage() {
                   <option value="retailer">Retailer</option>
                 </select>
               </div>
+              
               <Button type="submit" className="font-bold" disabled={isSubmittingBusiness}>
                 {isSubmittingBusiness ? "Saving..." : "Update Business Profile"}
               </Button>
