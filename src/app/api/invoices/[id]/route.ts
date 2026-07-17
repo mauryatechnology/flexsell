@@ -55,6 +55,7 @@ export async function PUT(
     const allowedFields = [
       "status", "notes", "items", "amount", "taxDetails",
       "shippingAddress", "paymentStatus", "customerName", "customerGstin",
+      "paymentMethod", "transactionId",
     ];
 
     const updateData: Record<string, any> = {};
@@ -79,9 +80,13 @@ export async function PUT(
       return NextResponse.json({ message: "Invoice not found" }, { status: 404 });
     }
 
-    // Sync order paymentStatus if orderId is linked
+    // Sync order details if orderId is linked
     if (updated.orderId && updated.status === "paid") {
-      await Order.findByIdAndUpdate(updated.orderId, { paymentStatus: "Paid" });
+      await Order.findByIdAndUpdate(updated.orderId, {
+        paymentStatus: "Paid",
+        paymentMethod: updated.paymentMethod,
+        transactionId: updated.transactionId
+      });
     }
 
     return NextResponse.json(updated);

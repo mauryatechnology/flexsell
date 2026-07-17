@@ -48,6 +48,14 @@ export default function AdminInvoicesPage() {
   const [newCustState, setNewCustState] = React.useState(INDIAN_STATES[0]);
   const [newCustPinCode, setNewCustPinCode] = React.useState("");
 
+  // Pay Modal State
+  const [isPayModalOpen, setIsPayModalOpen] = React.useState(false);
+  const [payInvoiceId, setPayInvoiceId] = React.useState<string | null>(null);
+  const [payInvoiceType, setPayInvoiceType] = React.useState<"invoice" | "receipt">("receipt");
+  const [paymentType, setPaymentType] = React.useState<"cash" | "online">("cash");
+  const [onlineMethod, setOnlineMethod] = React.useState<"UPI" | "Razorpay" | "Bank Transfer">("UPI");
+  const [txnId, setTxnId] = React.useState("");
+
   // Invoice Items
   const [formItems, setFormItems] = React.useState<any[]>([]);
   const [selectedProductId, setSelectedProductId] = React.useState("");
@@ -388,6 +396,38 @@ export default function AdminInvoicesPage() {
     }
   };
 
+  const handleMarkAsPaid = async () => {
+    if (!payInvoiceId) return;
+    if (paymentType === "online" && !txnId.trim()) {
+      addToast("Please enter a Transaction ID for online payment.", "warning");
+      return;
+    }
+
+    try {
+      const finalMethod = paymentType === "cash" ? "COD" : onlineMethod;
+      const finalTxnId = paymentType === "cash" ? "" : txnId.trim();
+
+      await updateInvoice(payInvoiceId, {
+        status: "paid",
+        paymentMethod: finalMethod,
+        transactionId: finalTxnId
+      });
+
+      addToast("Document marked as Paid successfully.", "success");
+      setSelectedInvoice(prev => prev ? { 
+        ...prev, 
+        status: "paid", 
+        paymentMethod: finalMethod, 
+        transactionId: finalTxnId, 
+        type: "invoice" 
+      } : null);
+      setIsPayModalOpen(false);
+      loadData();
+    } catch (err: any) {
+      addToast(err.message || "Failed to update status to paid", "error");
+    }
+  };
+
   return (
     <div className="space-y-6 text-foreground">
       {/* ─── TITLE & TABS ─── */}
@@ -586,23 +626,12 @@ export default function AdminInvoicesPage() {
                     onChange={(e) => {
                       const newStatus = e.target.value;
                       if (newStatus === "paid") {
-                        confirmAction({
-                          title: "Mark Document as Paid",
-                          message: `Are you sure you want to mark this B2B ${selectedInvoice.type} (${selectedInvoice._id}) as PAID? This indicates funds have been successfully received.`,
-                          confirmText: "Yes, Mark Paid",
-                          cancelText: "Cancel",
-                          type: "warning",
-                          onConfirm: async () => {
-                            try {
-                              await updateInvoice(selectedInvoice._id, { status: "paid" });
-                              addToast("Document status updated to paid.", "success");
-                              setSelectedInvoice(prev => prev ? { ...prev, status: "paid" } : null);
-                              loadData();
-                            } catch (err: any) {
-                              addToast(err.message || "Failed to update status", "error");
-                            }
-                          }
-                        });
+                        setPayInvoiceId(selectedInvoice._id);
+                        setPayInvoiceType(selectedInvoice.type);
+                        setPaymentType("cash");
+                        setOnlineMethod("UPI");
+                        setTxnId("");
+                        setIsPayModalOpen(true);
                       } else {
                         (async () => {
                           try {
@@ -1074,6 +1103,92 @@ export default function AdminInvoicesPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* ─── PAYMENT DETAILS / MARK PAID MODAL ─── */}
+      {isPayModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-background border rounded-xl max-w-md w-full shadow-2xl p-6 relative">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-foreground">Receive Payment</h3>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setIsPayModalOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <p className="text-xs text-muted-foreground mb-4">
+              Mark document <span className="font-mono font-bold text-foreground">{payInvoiceId}</span> as Paid. 
+              This will convert the receipt to a Tax Invoice and sync payment details onto the linked order.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground block mb-2">Payment Method</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentType("cash")}
+                    className={`p-3 border rounded-lg text-left transition-all ${
+                      paymentType === "cash"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border hover:bg-secondary/5 text-muted-foreground"
+                    }`}
+                  >
+                    <div className="font-bold text-xs">Cash / COD</div>
+                    <div className="text-[10px] opacity-80 mt-0.5">Physical cash collected</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentType("online")}
+                    className={`p-3 border rounded-lg text-left transition-all ${
+                      paymentType === "online"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border hover:bg-secondary/5 text-muted-foreground"
+                    }`}
+                  >
+                    <div className="font-bold text-xs">Online Payment</div>
+                    <div className="text-[10px] opacity-80 mt-0.5">UPI, Cards, Netbanking</div>
+                  </button>
+                </div>
+              </div>
+
+              {paymentType === "online" && (
+                <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Online Method</label>
+                    <select
+                      value={onlineMethod}
+                      onChange={(e) => setOnlineMethod(e.target.value as any)}
+                      className="text-xs w-full bg-background border rounded px-2.5 py-1.5 focus:outline-none font-semibold text-foreground"
+                    >
+                      <option value="UPI">UPI / Instant Transfer</option>
+                      <option value="Razorpay">Razorpay Gateway</option>
+                      <option value="Bank Transfer">Direct Bank Transfer</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Transaction ID / Reference #</label>
+                    <Input
+                      type="text"
+                      value={txnId}
+                      onChange={(e) => setTxnId(e.target.value)}
+                      placeholder="e.g. UPI Ref # or Bank Txn ID"
+                      className="text-xs font-semibold"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 border-t pt-4 mt-6">
+              <Button variant="outline" size="sm" type="button" onClick={() => setIsPayModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleMarkAsPaid} className="font-semibold">
+                Confirm & Mark Paid
+              </Button>
+            </div>
           </div>
         </div>
       )}
