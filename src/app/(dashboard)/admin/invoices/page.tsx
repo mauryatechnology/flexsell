@@ -8,6 +8,7 @@ import { Search, Eye, Plus, Trash2, Calendar, FileText, X, Check, Loader2, Arrow
 import { useInvoiceStore } from "@/stores/invoiceStore";
 import { useProductStore } from "@/stores/productStore";
 import { useToastStore } from "@/stores/toastStore";
+import { useConfirmStore } from "@/stores/confirmStore";
 import { customerService } from "@/services/customerService";
 import { InvoiceDocument } from "@/components/documents/InvoiceDocument";
 import { formatPrice } from "@/lib/utils";
@@ -15,9 +16,10 @@ import { Customer, Product, Invoice, CartItem, TaxBreakdown } from "@/types";
 import { INDIAN_STATES } from "@/lib/constants";
 
 export default function AdminInvoicesPage() {
-  const { invoices, total, page, totalPages, initializeInvoices, createInvoice, voidInvoice, deleteInvoice, isLoading } = useInvoiceStore();
+  const { invoices, total, page, totalPages, initializeInvoices, createInvoice, updateInvoice, voidInvoice, deleteInvoice, isLoading } = useInvoiceStore();
   const { products, initializeProducts } = useProductStore();
   const { addToast } = useToastStore();
+  const confirmAction = useConfirmStore((state) => state.confirm);
 
   const [activeTab, setActiveTab] = React.useState<"invoice" | "receipt">("invoice");
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -578,14 +580,59 @@ export default function AdminInvoicesPage() {
                   <CardTitle className="text-sm font-bold uppercase">Document Viewer</CardTitle>
                   <CardDescription className="text-[10px] font-mono">{selectedInvoice._id}</CardDescription>
                 </div>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setSelectedInvoice(null)}>
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedInvoice.status}
+                    onChange={(e) => {
+                      const newStatus = e.target.value;
+                      if (newStatus === "paid") {
+                        confirmAction({
+                          title: "Mark Document as Paid",
+                          message: `Are you sure you want to mark this B2B ${selectedInvoice.type} (${selectedInvoice._id}) as PAID? This indicates funds have been successfully received.`,
+                          confirmText: "Yes, Mark Paid",
+                          cancelText: "Cancel",
+                          type: "warning",
+                          onConfirm: async () => {
+                            try {
+                              await updateInvoice(selectedInvoice._id, { status: "paid" });
+                              addToast("Document status updated to paid.", "success");
+                              setSelectedInvoice(prev => prev ? { ...prev, status: "paid" } : null);
+                              loadData();
+                            } catch (err: any) {
+                              addToast(err.message || "Failed to update status", "error");
+                            }
+                          }
+                        });
+                      } else {
+                        (async () => {
+                          try {
+                            await updateInvoice(selectedInvoice._id, { status: newStatus as any });
+                            addToast(`Document status updated to ${newStatus}.`, "success");
+                            setSelectedInvoice(prev => prev ? { ...prev, status: newStatus as any } : null);
+                            loadData();
+                          } catch (err: any) {
+                            addToast(err.message || "Failed to update status", "error");
+                          }
+                        })();
+                      }
+                    }}
+                    className="text-xs bg-background border rounded px-2 py-1.5 font-semibold focus:outline-none"
+                  >
+                    <option value="issued">Issued</option>
+                    <option value="paid">Paid</option>
+                    <option value="void">Void</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border border-transparent hover:border-border" onClick={() => setSelectedInvoice(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="p-4 overflow-y-auto max-h-[75vh]">
                 <InvoiceDocument
                   type={selectedInvoice.type}
                   documentNumber={selectedInvoice._id}
+                  customerId={selectedInvoice.customerId}
                   order={{
                     _id: selectedInvoice.orderId || "",
                     date: selectedInvoice.generatedAt,

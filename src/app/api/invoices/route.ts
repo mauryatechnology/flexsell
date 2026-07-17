@@ -364,7 +364,7 @@ export async function POST(request: Request) {
       generatedAt,
       generatedBy: payload.role === "admin" ? payload.userId : "system",
       status: "issued",
-    });
+    } as any);
 
     // If linked to an order, update the order with the invoice ID
     if (orderId) {

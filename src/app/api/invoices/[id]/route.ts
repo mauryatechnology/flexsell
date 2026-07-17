@@ -64,6 +64,11 @@ export async function PUT(
       }
     }
 
+    if (updateData.status === "paid") {
+      updateData.type = "invoice";
+      updateData.paymentStatus = "Paid";
+    }
+
     const updated = await InvoiceModel.findByIdAndUpdate(
       id,
       { $set: updateData },
@@ -72,6 +77,11 @@ export async function PUT(
 
     if (!updated) {
       return NextResponse.json({ message: "Invoice not found" }, { status: 404 });
+    }
+
+    // Sync order paymentStatus if orderId is linked
+    if (updated.orderId && updated.status === "paid") {
+      await Order.findByIdAndUpdate(updated.orderId, { paymentStatus: "Paid" });
     }
 
     return NextResponse.json(updated);

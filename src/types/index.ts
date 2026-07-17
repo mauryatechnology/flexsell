@@ -199,7 +199,7 @@ export interface Invoice extends BaseDocument {
   notes?: string;
   generatedAt: string;
   generatedBy: string;
-  status: "draft" | "issued" | "cancelled" | "void";
+  status: "draft" | "issued" | "paid" | "cancelled" | "void";
 }
 
 export interface SavedAddress {

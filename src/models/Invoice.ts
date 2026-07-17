@@ -63,7 +63,7 @@ const InvoiceSchema = new Schema<InvoiceType & Document>(
     generatedBy: { type: String, required: true, default: "system" },
     status: {
       type: String,
-      enum: ["draft", "issued", "cancelled", "void"],
+      enum: ["draft", "issued", "paid", "cancelled", "void"],
       default: "issued",
     },
   },
@@ -76,4 +76,8 @@ InvoiceSchema.index({ customerId: 1 });
 InvoiceSchema.index({ status: 1 });
 InvoiceSchema.index({ createdAt: -1 });
 
-export default mongoose.models.Invoice || mongoose.model("Invoice", InvoiceSchema);
+if (mongoose.models.Invoice) {
+  mongoose.deleteModel("Invoice");
+}
+
+export default mongoose.model("Invoice", InvoiceSchema);

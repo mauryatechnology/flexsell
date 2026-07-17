@@ -139,6 +139,7 @@ export default function ClientOrderDetailPage({ params }: PageProps) {
                 type={invoice?.type || (order.paymentStatus === "Paid" ? "invoice" : "receipt")}
                 documentNumber={invoice?._id || "DRAFT-PREVIEW"}
                 order={order}
+                customerId={invoice?.customerId}
                 sellerInfo={{
                   storeName: cmsData?.brandSettings?.storeName || "FlexSell Wholesale",
                   gstin: cmsData?.brandSettings?.gstin || "24AAACF1001M1Z5",

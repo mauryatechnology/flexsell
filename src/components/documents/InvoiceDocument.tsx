@@ -12,6 +12,7 @@ export interface InvoiceDocumentProps {
   sellerInfo: SellerInfo;
   taxBreakdown?: TaxBreakdown;
   showActions?: boolean;
+  customerId?: string;
 }
 
 function computeTaxBreakdown(order: Order, sellerState: string): TaxBreakdown {
@@ -80,6 +81,7 @@ export function InvoiceDocument({
   sellerInfo,
   taxBreakdown: providedTaxBreakdown,
   showActions = true,
+  customerId,
 }: InvoiceDocumentProps) {
   // Extract seller state from address for tax computation
   const sellerStateMatch = sellerInfo.address.match(/(?:,\s*)([A-Za-z\s]+?)(?:\s*-\s*\d|$)/);
@@ -167,6 +169,11 @@ export function InvoiceDocument({
               Bill To / Ship To:
             </h3>
             <p className="font-bold text-gray-900 text-sm">{order.customerName}</p>
+            {customerId && (
+              <p className="font-mono text-gray-700 mt-0.5">
+                Client ID: <span className="font-bold text-gray-950">{customerId}</span>
+              </p>
+            )}
             {order.shippingAddress.company && (
               <p className="text-gray-600 font-semibold">{order.shippingAddress.company}</p>
             )}

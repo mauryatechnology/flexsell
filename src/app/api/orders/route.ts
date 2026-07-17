@@ -306,7 +306,7 @@ export async function POST(request: Request) {
           generatedAt,
           generatedBy: "system",
           status: "issued",
-        });
+        } as any);
 
         // Link invoice to order
         await Order.findByIdAndUpdate(orderId, { invoiceId });
