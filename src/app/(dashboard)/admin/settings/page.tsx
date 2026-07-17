@@ -64,8 +64,8 @@ export default function AdminSettingsPage() {
       addToast("Webhook subscription added successfully!", "success");
       setWebhookUrl("");
       fetchWebhooks();
-    } catch (err: any) {
-      addToast(err.message || "Failed to save webhook", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to save webhook", "error");
     } finally {
       setIsSubmittingWebhook(false);
     }
@@ -77,8 +77,8 @@ export default function AdminSettingsPage() {
       await notificationService.deleteWebhookAdmin(id);
       addToast("Webhook subscription deleted!", "success");
       fetchWebhooks();
-    } catch (err: any) {
-      addToast(err.message || "Failed to delete subscription", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to delete subscription", "error");
     }
   };
 
@@ -87,8 +87,8 @@ export default function AdminSettingsPage() {
       await notificationService.toggleWebhookAdmin(id, active);
       addToast("Subscription status updated", "success");
       fetchWebhooks();
-    } catch (err: any) {
-      addToast(err.message || "Failed to toggle status", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to toggle status", "error");
     }
   };
 
@@ -206,8 +206,8 @@ export default function AdminSettingsPage() {
       }
 
       addToast("Settings saved successfully!", "success");
-    } catch (err: any) {
-      addToast(err.message || "Failed to save settings", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to save settings", "error");
     } finally {
       setIsSaving(false);
     }

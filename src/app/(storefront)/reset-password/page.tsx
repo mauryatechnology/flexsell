@@ -62,9 +62,9 @@ function ResetPasswordContent() {
 
       setIsSuccess(true);
       addToast("Password updated successfully!", "success");
-    } catch (err: any) {
-      setError(err.message);
-      addToast(err.message || "Something went wrong", "error");
+    } catch (err: unknown) {
+      setError((err as any).message);
+      addToast((err as any).message || "Something went wrong", "error");
     } finally {
       setIsSubmitting(false);
     }

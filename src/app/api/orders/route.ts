@@ -10,13 +10,7 @@ import { orderSchema } from "@/lib/validators";
 import { ZodError } from "zod";
 import { resolveVariantKeys } from "@/lib/variantMatcher";
 import nodemailer from "nodemailer";
-
-const statusClasses = {
-  Processing: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500",
-  Shipped: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-500",
-  Delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500",
-  Cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500"
-};
+import { ORDER_STATUS_CLASSES } from "@/lib/constants";
 
 export async function GET(request: Request) {
   try {
@@ -56,7 +50,7 @@ export async function GET(request: Request) {
       const skip = (pageNum - 1) * limitNum;
 
       const [orders, total] = await Promise.all([
-        Order.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+        Order.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
         Order.countDocuments(query)
       ]);
 
@@ -68,10 +62,10 @@ export async function GET(request: Request) {
       });
     }
 
-    const orders = await Order.find(query).sort({ createdAt: -1 });
+    const orders = await Order.find(query).sort({ createdAt: -1 }).lean();
     return NextResponse.json(orders);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch orders" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch orders" }, { status: 500 });
   }
 }
 
@@ -174,7 +168,7 @@ export async function POST(request: Request) {
       date: orderDate,
       amount,
       status: "Processing",
-      statusClass: statusClasses["Processing"],
+      statusClass: ORDER_STATUS_CLASSES["Processing"],
       itemsCount: items.reduce((sum: number, item: any) => sum + item.quantity, 0),
       customerName,
       shippingAddress,
@@ -245,10 +239,10 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(newOrder, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
     }
-    return NextResponse.json({ message: error.message || "Failed to create order" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Failed to create order" }, { status: 500 });
   }
 }

@@ -23,8 +23,8 @@ export async function GET() {
     }).sort({ createdAt: -1 }).lean();
 
     return NextResponse.json(notifications);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch notifications" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch notifications" }, { status: 500 });
   }
 }
 
@@ -62,8 +62,8 @@ export async function PUT(request: Request) {
     await notif.save();
 
     return NextResponse.json(notif);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to update notification" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to update notification" }, { status: 500 });
   }
 }
 
@@ -99,7 +99,7 @@ export async function DELETE(request: Request) {
     await Notification.findByIdAndDelete(id);
 
     return NextResponse.json({ message: "Notification deleted successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to delete notification" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to delete notification" }, { status: 500 });
   }
 }

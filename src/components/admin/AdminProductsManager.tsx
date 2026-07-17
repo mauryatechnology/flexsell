@@ -20,6 +20,8 @@ import { Pagination } from "@/components/ui/Pagination";
 import { getBarcodeSvgString } from "@/lib/barcodeHelper";
 import { InventoryManager } from "./InventoryManager";
 import { BulkOperationsModal } from "./BulkOperationsModal";
+import { ProductFilters } from "./products/ProductFilters";
+import { ProductTable } from "./products/ProductTable";
 
 interface AdminProductsManagerProps {
   initialProducts: Product[];
@@ -164,7 +166,7 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
           );
         } catch (err) {
           addToast(
-            err instanceof Error ? err.message : "Failed to toggle product status",
+            err instanceof Error ? (err as any).message : "Failed to toggle product status",
             "error"
           );
         }
@@ -187,7 +189,7 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
           addToast("Product successfully removed from catalog.", "success");
         } catch (err) {
           addToast(
-            err instanceof Error ? err.message : "Failed to delete product",
+            err instanceof Error ? (err as any).message : "Failed to delete product",
             "error"
           );
         }
@@ -234,7 +236,7 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
           setSelectedProductIds([]);
         } catch (err) {
           addToast(
-            err instanceof Error ? err.message : "Failed to delete products",
+            err instanceof Error ? (err as any).message : "Failed to delete products",
             "error"
           );
         }
@@ -448,218 +450,33 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
 
 
       {/* Advanced Filters & Sorting Bar */}
-      <Card>
-        <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
-          {/* Text Search */}
-          <div className="relative col-span-1 sm:col-span-2 lg:col-span-2">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search by title or SKU..." 
-              className="pl-9" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          {/* Category Filter */}
-          <select
-            className="h-10 rounded-md border bg-background px-3 py-2 text-xs focus:ring-2 focus:ring-primary font-semibold text-foreground w-full"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            <option value="all">All Categories</option>
-            {activeCategories.map(cat => (
-              <option key={cat._id} value={cat._id}>{cat.name}</option>
-            ))}
-          </select>
-
-          {/* HSN Filter */}
-          <select
-            className="h-10 rounded-md border bg-background px-3 py-2 text-xs focus:ring-2 focus:ring-primary font-semibold text-foreground w-full"
-            value={selectedHsn}
-            onChange={(e) => setSelectedHsn(e.target.value)}
-          >
-            <option value="all">All HSN Codes</option>
-            {hsns.map(h => (
-              <option key={h._id} value={h.code}>HSN {h.code}</option>
-            ))}
-          </select>
-
-          {/* Status Filter */}
-          <select
-            className="h-10 rounded-md border bg-background px-3 py-2 text-xs focus:ring-2 focus:ring-primary font-semibold text-foreground w-full"
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-          >
-            <option value="all">All Statuses</option>
-            <option value="active">Active only</option>
-            <option value="inactive">Inactive only</option>
-          </select>
-
-          {/* Stock Filter */}
-          <select
-            className="h-10 rounded-md border bg-background px-3 py-2 text-xs focus:ring-2 focus:ring-primary font-semibold text-foreground w-full"
-            value={selectedStockStatus}
-            onChange={(e) => setSelectedStockStatus(e.target.value)}
-          >
-            <option value="all">All Stock Status</option>
-            <option value="instock">In Stock (&gt;20)</option>
-            <option value="lowstock">Low Stock (1-20)</option>
-            <option value="outofstock">Out of Stock</option>
-          </select>
-
-          {/* Sorter */}
-          <select
-            className="h-10 rounded-md border bg-background px-3 py-2 text-xs focus:ring-2 focus:ring-primary font-semibold text-foreground w-full col-span-1 sm:col-span-2 md:col-span-1 lg:col-span-1"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="title-asc">Title: A to Z</option>
-            <option value="title-desc">Title: Z to A</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="stock-asc">Stock: Low to High</option>
-            <option value="stock-desc">Stock: High to Low</option>
-          </select>
-        </CardContent>
-      </Card>
+      <ProductFilters
+        searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+        selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory}
+        selectedHsn={selectedHsn} setSelectedHsn={setSelectedHsn}
+        selectedStatus={selectedStatus} setSelectedStatus={setSelectedStatus}
+        selectedStockStatus={selectedStockStatus} setSelectedStockStatus={setSelectedStockStatus}
+        sortBy={sortBy} setSortBy={setSortBy}
+        activeCategories={activeCategories} hsns={hsns}
+      />
 
       {/* Table Card */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-muted-foreground uppercase bg-secondary/50">
-                <tr>
-                  <th className="px-6 py-4 w-12 text-center">
-                    <input 
-                      type="checkbox" 
-                      className="rounded text-primary focus:ring-primary bg-background border-border cursor-pointer h-4 w-4"
-                      checked={isAllPageSelected}
-                      onChange={handleSelectAllOnPage}
-                    />
-                  </th>
-                  <th className="px-6 py-4">Product Details</th>
-                  <th className="px-6 py-4 font-mono">Tax HSN</th>
-                  <th className="px-6 py-4">Wholesale Price</th>
-                  <th className="px-6 py-4">Total Stock</th>
-                  <th className="px-6 py-4">Active</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {processedProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-muted-foreground">
-                      No matching wholesale products found. Change filters or search terms.
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedProducts.map((product) => {
-                    const defaultVariant = product.colorVariants?.[0] || { price: 0, mrp: 0, stock: 0, sku: "NO SKU", images: [] };
-                    const firstImg = defaultVariant.images?.[0];
-                    const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
-                    const variantsCount = product.colorVariants?.length || 0;
-                    const isSelected = selectedProductIds.includes(product._id);
-
-                    return (
-                      <tr key={product._id} className={`hover:bg-secondary/20 transition-colors ${!product.isActive ? "opacity-60" : ""} ${isSelected ? "bg-primary/5" : ""}`}>
-                        <td className="px-6 py-4 text-center">
-                          <input 
-                            type="checkbox" 
-                            className="rounded text-primary focus:ring-primary bg-background border-border cursor-pointer h-4 w-4"
-                            checked={isSelected}
-                            onChange={() => handleSelectRow(product._id)}
-                          />
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-md bg-secondary overflow-hidden flex-shrink-0 border">
-                              {imgUrl && <Image src={imgUrl} alt={product.title} width={40} height={40} className="w-full h-full object-cover" />}
-                            </div>
-                            <div>
-                              <p className="font-bold line-clamp-1">{product.title}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                Category: {getCategoryName(product.categoryId)} | {variantsCount} variants | MOQ: {product.moq || 1}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
-                          {product.hsnCode ? (
-                            <div>HSN {product.hsnCode} ({product.gstRate}% GST)</div>
-                          ) : (
-                            <span className="text-warning">Not Set</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                           <div className="font-bold text-foreground">{formatPrice(defaultVariant?.subVariants?.[0]?.price ?? 0)}</div>
-                          <div className="text-[10px] text-muted-foreground">MRP: {formatPrice(defaultVariant?.subVariants?.[0]?.mrp ?? 0)}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          {product.totalStock > 20 ? (
-                            <span className="bg-success/10 text-success px-2 py-0.5 rounded-full text-xs font-semibold">{product.totalStock} units</span>
-                          ) : product.totalStock > 0 ? (
-                            <span className="bg-warning/10 text-warning px-2 py-0.5 rounded-full text-xs font-semibold">{product.totalStock} units (Low)</span>
-                          ) : (
-                            <span className="bg-destructive/10 text-destructive px-2 py-0.5 rounded-full text-xs font-semibold">Out of Stock</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          {/* Active / Inactive Toggle Switch */}
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              className="sr-only peer"
-                              checked={product.isActive}
-                              onChange={() => toggleProductActive(product._id, product.isActive)}
-                            />
-                            <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                          </label>
-                        </td>
-                        <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap">
-                          {/* View in New Tab */}
-                          <a href={`/products/${product.slug}`} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="icon" title="View Storefront">
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </a>
-                          {/* Download all barcodes sheet */}
-                          <Button variant="ghost" size="icon" title="Download Barcodes" onClick={() => setBarcodePrintProduct(product)}>
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Link href={`/admin/products/${product._id}`}>
-                            <Button variant="ghost" size="icon">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive hover:bg-destructive/10"
-                            onClick={() => handleDeleteProduct(product._id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="px-4 pb-4">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={processedProducts.length}
-              itemsPerPage={ITEMS_PER_PAGE}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <ProductTable
+        isAllPageSelected={isAllPageSelected}
+        handleSelectAllOnPage={handleSelectAllOnPage}
+        processedProducts={processedProducts}
+        paginatedProducts={paginatedProducts}
+        selectedProductIds={selectedProductIds}
+        handleSelectRow={handleSelectRow}
+        getCategoryName={getCategoryName}
+        toggleProductActive={toggleProductActive}
+        handleDeleteProduct={handleDeleteProduct}
+        setBarcodePrintProduct={setBarcodePrintProduct}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        totalPages={totalPages}
+        ITEMS_PER_PAGE={ITEMS_PER_PAGE}
+      />
         </>
       ) : (
         <InventoryManager />

@@ -5,7 +5,7 @@ export async function POST() {
   try {
     await removeTokenCookie();
     return NextResponse.json({ message: "Logged out successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Logout failed" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Logout failed" }, { status: 500 });
   }
 }

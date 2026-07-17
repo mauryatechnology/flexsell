@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Heart } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Product } from "@/types";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { ProductDetailProvider, useProductDetail } from "./product-detail/ProductDetailContext";
 import { ImageGallery } from "./product-detail/ImageGallery";
 import { AddToCartPanel } from "./product-detail/AddToCartPanel";
@@ -38,10 +39,11 @@ function ProductDetailInner() {
   return (
     <div className="mx-auto max-w-8xl px-4 md:px-6 py-8 text-foreground w-full">
       {/* Breadcrumb Header */}
-      <div className="mb-6 flex justify-between items-center">
-        <Link href="/products" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center font-medium">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Products
-        </Link>
+      <div className="mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <Breadcrumb items={[
+          { label: "Products", href: "/products" },
+          { label: product.title }
+        ]} />
         <Button
           variant="outline"
           size="sm"

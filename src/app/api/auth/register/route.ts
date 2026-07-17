@@ -10,17 +10,15 @@ import { registerSchema } from "@/lib/validators";
 import { ZodError } from "zod";
 
 export async function POST(req: Request) {
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  const ip = forwardedFor ? forwardedFor.split(",")[0] : "127.0.0.1";
   try {
-    const ip = req.headers.get("x-forwarded-for") || "unknown";
-    const limitCheck = rateLimit(ip, 3, 60000); // 3 registrations per minute max
+    await rateLimit(ip);
+  } catch (err) {
+    return NextResponse.json({ message: "Too many registration attempts. Try again later." }, { status: 429 });
+  }
 
-    if (!limitCheck.allowed) {
-      return NextResponse.json(
-        { message: "Too many registration attempts. Please try again later." },
-        { status: 429 }
-      );
-    }
-
+  try {
     await dbConnect();
     const body = await req.json();
     const validatedData = registerSchema.parse(body);
@@ -94,12 +92,12 @@ export async function POST(req: Request) {
       message: "Customer registered successfully",
       customer: customerObj,
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ZodError) {
       const firstError = error.issues[0]?.message || "Validation failed";
       return NextResponse.json({ message: firstError }, { status: 400 });
     }
     console.error("Register error:", error);
-    return NextResponse.json({ message: error.message || "Registration failed" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Registration failed" }, { status: 500 });
   }
 }

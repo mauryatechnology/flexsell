@@ -87,10 +87,8 @@ export async function generateNextId(type: "customer" | "order" | "product"): Pr
         return `FS-${result.seq}`;
       }
     } else {
-      // Default product ID: random 24-char hex string
-      return Array.from({ length: 24 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("");
+      // Default product ID: proper ObjectId
+      return new mongoose.Types.ObjectId().toHexString();
     }
   }
 

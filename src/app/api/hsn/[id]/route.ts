@@ -33,8 +33,8 @@ export async function PUT(
     }
     
     return NextResponse.json(updatedRecord);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to update HSN record" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to update HSN record" }, { status: 500 });
   }
 }
 
@@ -63,7 +63,7 @@ export async function DELETE(
     }
     
     return NextResponse.json({ message: "HSN record deleted successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to delete HSN record" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to delete HSN record" }, { status: 500 });
   }
 }

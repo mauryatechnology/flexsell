@@ -65,6 +65,11 @@ const ProductSchema = new Schema<ProductType & Document>(
   { timestamps: true }
 );
 
+ProductSchema.index({ slug: 1 });
+ProductSchema.index({ categoryId: 1 });
+ProductSchema.index({ isActive: 1 });
+ProductSchema.index({ "colorVariants.subVariants.sku": 1 });
+
 // Schema-cache buster for Next.js hot-reloading in development
 if (mongoose.models.Product) {
   const colorVariantsSchema = mongoose.models.Product.schema.path("colorVariants");

@@ -51,11 +51,11 @@ export async function PUT(request: Request, { params }: RouteProps) {
     await coupon.save();
 
     return NextResponse.json(coupon);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
     }
-    return NextResponse.json({ message: error.message || "Failed to update coupon" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Failed to update coupon" }, { status: 500 });
   }
 }
 
@@ -77,7 +77,7 @@ export async function DELETE(request: Request, { params }: RouteProps) {
     await Coupon.findByIdAndDelete(id);
 
     return NextResponse.json({ message: "Coupon deleted successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to delete coupon" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to delete coupon" }, { status: 500 });
   }
 }

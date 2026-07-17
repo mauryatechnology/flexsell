@@ -45,8 +45,8 @@ export async function GET(request: Request) {
     );
 
     return NextResponse.json(populatedReviews);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch reviews" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch reviews" }, { status: 500 });
   }
 }
 
@@ -97,11 +97,11 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(newReview, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
     }
-    return NextResponse.json({ message: error.message || "Failed to submit review" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Failed to submit review" }, { status: 500 });
   }
 }
 
@@ -142,7 +142,7 @@ export async function DELETE(request: Request) {
     });
 
     return NextResponse.json({ message: "Review deleted successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to delete review" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to delete review" }, { status: 500 });
   }
 }

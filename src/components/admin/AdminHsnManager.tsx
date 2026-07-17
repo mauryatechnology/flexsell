@@ -110,8 +110,8 @@ export function AdminHsnManager() {
           addToast("New HSN tax slab added to B2B registry.", "success");
         }
         setIsModalOpen(false);
-      } catch (err: any) {
-        addToast(err?.message || "Failed to save HSN record", "error");
+      } catch (err: unknown) {
+        addToast((err as any)?.message || "Failed to save HSN record", "error");
       }
     };
 
@@ -141,8 +141,8 @@ export function AdminHsnManager() {
         try {
           await deleteHsn(id);
           addToast("HSN code removed.", "success");
-        } catch (err: any) {
-          addToast(err?.message || "Failed to delete HSN code", "error");
+        } catch (err: unknown) {
+          addToast((err as any)?.message || "Failed to delete HSN code", "error");
         }
       }
     });

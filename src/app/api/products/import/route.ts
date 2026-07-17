@@ -44,10 +44,10 @@ export async function POST(request: Request) {
       errors: result.errors,
       stats: result.stats
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Products Excel Import Error:", error);
     return NextResponse.json(
-      { message: error.message || "Failed to process imported Excel file" },
+      { message: (error as any).message || "Failed to process imported Excel file" },
       { status: 500 }
     );
   }

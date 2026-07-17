@@ -30,10 +30,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     return NextResponse.json({ url: blob.url });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Vercel Blob upload failed:", error);
     return NextResponse.json(
-      { message: error.message || "Failed to upload file to Vercel Blob" },
+      { message: (error as any).message || "Failed to upload file to Vercel Blob" },
       { status: 500 }
     );
   }

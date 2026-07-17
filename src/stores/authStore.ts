@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { Customer } from "@/types";
+import { apiClient } from "@/lib/apiClient";
 
 interface AuthState {
   customer: Customer | null;
@@ -22,17 +23,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (identifier, password) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
+      const data = await apiClient.post<{ customer: Customer; message: string }>("/auth/login", { identifier, password });
       set({ customer: data.customer, isLoading: false });
       return true;
-    } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+    } catch (err: unknown) {
+      set({ error: err instanceof Error ? (err as any).message : "Login failed", isLoading: false });
       return false;
     }
   },
@@ -40,17 +35,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   registerCustomer: async (customerData) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(customerData),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Registration failed");
+      const data = await apiClient.post<{ customer: Customer; message: string }>("/auth/register", customerData);
       set({ customer: data.customer, isLoading: false });
       return true;
-    } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+    } catch (err: unknown) {
+      set({ error: err instanceof Error ? (err as any).message : "Registration failed", isLoading: false });
       return false;
     }
   },
@@ -58,17 +47,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   loginWithGoogle: async (idToken) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await fetch("/api/auth/google-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Google authentication failed");
+      const data = await apiClient.post<{ customer: Customer; message: string }>("/auth/google-login", { idToken });
       set({ customer: data.customer, isLoading: false });
       return true;
-    } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+    } catch (err: unknown) {
+      set({ error: err instanceof Error ? (err as any).message : "Google authentication failed", isLoading: false });
       return false;
     }
   },
@@ -76,7 +59,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     set({ isLoading: true });
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await apiClient.post("/auth/logout");
     } catch (err) {
       console.error("Logout API failed", err);
     } finally {
@@ -88,13 +71,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkSession: async () => {
     set({ isLoading: true });
     try {
-      const res = await fetch("/api/customers/active");
-      if (res.ok) {
-        const data = await res.json();
-        set({ customer: data });
-      } else {
-        set({ customer: null });
-      }
+      const data = await apiClient.get<Customer>("/customers/active");
+      set({ customer: data });
     } catch (err) {
       set({ customer: null });
     } finally {

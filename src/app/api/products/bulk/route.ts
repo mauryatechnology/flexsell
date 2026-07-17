@@ -17,6 +17,9 @@ function generateSlug(title: string): string {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAuth("admin");
+    if (auth.error) return auth.error;
+
     await dbConnect();
     const { products: importedProducts } = await request.json();
 
@@ -258,8 +261,8 @@ export async function POST(request: Request) {
           await Product.create(newProductData);
           results.inserted++;
         }
-      } catch (err: any) {
-        results.errors.push(`Product "${imported.title}": ${err.message || err}`);
+      } catch (err: unknown) {
+        results.errors.push(`Product "${imported.title}": ${(err as any).message || err}`);
       }
     }
 
@@ -267,9 +270,9 @@ export async function POST(request: Request) {
       success: true,
       summary: results,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { message: error.message || "Failed to process bulk upload" },
+      { message: (error as any).message || "Failed to process bulk upload" },
       { status: 500 }
     );
   }
@@ -296,9 +299,9 @@ export async function DELETE(request: Request) {
       message: `Successfully deleted ${deleteResult.deletedCount} products in bulk.`,
       deletedCount: deleteResult.deletedCount
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { message: error.message || "Failed to bulk delete products" },
+      { message: (error as any).message || "Failed to bulk delete products" },
       { status: 500 }
     );
   }

@@ -26,8 +26,8 @@ export default function OrderConfirmationPage() {
       try {
         const fetched = await orderService.getOrderById(orderId);
         setOrder(fetched);
-      } catch (err: any) {
-        setError(err.message || "Failed to load order confirmation details.");
+      } catch (err: unknown) {
+        setError((err as any).message || "Failed to load order confirmation details.");
       } finally {
         setLoading(false);
       }

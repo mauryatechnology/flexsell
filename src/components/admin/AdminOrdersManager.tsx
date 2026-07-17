@@ -9,9 +9,11 @@ import { useOrderStore, Order, ShipmentDetails } from "@/stores/orderStore";
 import { formatPrice } from "@/lib/utils";
 import { Pagination } from "@/components/ui/Pagination";
 import Link from "next/link";
+import { useToastStore } from "@/stores/toastStore";
 
 export function AdminOrdersManager() {
   const { orders, initializeOrders, updateOrderStatus, shipOrder } = useOrderStore();
+  const { addToast } = useToastStore();
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
 
@@ -66,7 +68,7 @@ export function AdminOrdersManager() {
     if (!activeSelectedOrder) return;
 
     if (shipType === "third-party" && (!carrierName || !trackingId)) {
-      alert("Please provide the Carrier Name and Tracking ID for third-party courier dispatch.");
+      addToast("Please provide the Carrier Name and Tracking ID for third-party courier dispatch.", "warning");
       return;
     }
 
@@ -83,16 +85,18 @@ export function AdminOrdersManager() {
     try {
       await shipOrder(activeSelectedOrder._id, details);
       setIsFulfilling(false);
+      addToast("Order shipped successfully.", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to ship order. Please try again.");
+      addToast(err instanceof Error ? (err as any).message : "Failed to ship order. Please try again.", "error");
     }
   };
 
   const handleUpdateStatus = async (id: string, status: Order["status"]) => {
     try {
       await updateOrderStatus(id, status);
+      addToast(`Order status updated to ${status}.`, "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update order status. Please try again.");
+      addToast(err instanceof Error ? (err as any).message : "Failed to update order status. Please try again.", "error");
     }
   };
 

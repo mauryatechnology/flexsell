@@ -15,8 +15,8 @@ export async function GET() {
     });
 
     return NextResponse.json(config);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch CMS content" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch CMS content" }, { status: 500 });
   }
 }
 
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     );
 
     return NextResponse.json(updated);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to update CMS content" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to update CMS content" }, { status: 500 });
   }
 }

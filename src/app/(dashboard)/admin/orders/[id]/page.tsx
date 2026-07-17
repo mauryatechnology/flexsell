@@ -152,8 +152,8 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
       addToast("Order details updated successfully!", "success");
       setIsEditModalOpen(false);
       initializeOrders();
-    } catch (err: any) {
-      addToast(err.message || "Failed to save edits", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to save edits", "error");
     } finally {
       setIsSubmittingEdit(false);
     }
@@ -171,8 +171,8 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
       }
       addToast("Order cancelled and deleted successfully!", "success");
       router.push("/admin/orders");
-    } catch (err: any) {
-      addToast(err.message || "Failed to cancel order", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to cancel order", "error");
     }
   };
 

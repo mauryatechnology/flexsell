@@ -10,8 +10,8 @@ export async function GET() {
     await dbConnect();
     const categories = await Category.find({}).sort({ order: 1 });
     return NextResponse.json(categories);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch categories" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch categories" }, { status: 500 });
   }
 }
 
@@ -34,10 +34,10 @@ export async function POST(request: Request) {
     
     const newCategory = await Category.create(validatedData);
     return NextResponse.json(newCategory, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
     }
-    return NextResponse.json({ message: error.message || "Failed to create category" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Failed to create category" }, { status: 500 });
   }
 }

@@ -17,9 +17,9 @@ export default function ClientNotificationsPage() {
       setIsLoading(true);
       const data = await notificationService.getNotifications();
       setNotifications(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      addToast(err.message || "Failed to load notifications", "error");
+      addToast((err as any).message || "Failed to load notifications", "error");
     } finally {
       setIsLoading(false);
     }
@@ -34,8 +34,8 @@ export default function ClientNotificationsPage() {
       await notificationService.markAsRead(id);
       fetchNotifications();
       addToast("Notification marked as read", "success");
-    } catch (err: any) {
-      addToast(err.message || "Failed to mark as read", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to mark as read", "error");
     }
   };
 
@@ -44,8 +44,8 @@ export default function ClientNotificationsPage() {
       await notificationService.deleteNotification(id);
       fetchNotifications();
       addToast("Notification deleted", "success");
-    } catch (err: any) {
-      addToast(err.message || "Failed to delete notification", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to delete notification", "error");
     }
   };
 

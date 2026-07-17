@@ -16,7 +16,7 @@ export async function GET(
     }
     
     return NextResponse.json(product);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch product by slug" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch product by slug" }, { status: 500 });
   }
 }

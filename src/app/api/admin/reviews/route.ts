@@ -33,8 +33,8 @@ export async function GET() {
     );
 
     return NextResponse.json(populated);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch reviews" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch reviews" }, { status: 500 });
   }
 }
 
@@ -86,8 +86,8 @@ export async function PUT(request: Request) {
     }
 
     return NextResponse.json(review);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to update review" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to update review" }, { status: 500 });
   }
 }
 
@@ -131,7 +131,7 @@ export async function DELETE(request: Request) {
     });
 
     return NextResponse.json({ message: "Review deleted successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to delete review" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to delete review" }, { status: 500 });
   }
 }

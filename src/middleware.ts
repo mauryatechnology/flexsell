@@ -16,7 +16,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/auth/register") ||
     pathname.startsWith("/api/auth/forgot-password") ||
     pathname.startsWith("/api/auth/reset-password") ||
-    pathname.startsWith("/api/auth/google-login");
+    pathname.startsWith("/api/auth/google-login") ||
+    pathname.startsWith("/api/auth/logout");
 
   if (isApiRoute && isStateChanging && !isExcludedAuth) {
     if (!validateCsrf(request)) {

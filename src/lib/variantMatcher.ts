@@ -1,4 +1,4 @@
-export function resolveVariantKeys(selectedVariants: any) {
+export function resolveVariantKeys(selectedVariants: Record<string, string> | undefined | null) {
   if (!selectedVariants) {
     return { color: "Default", size: "", weight: "" };
   }

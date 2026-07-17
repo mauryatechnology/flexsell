@@ -10,45 +10,18 @@ import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import Image from "next/image";
 
-const INDIAN_STATES = [
-  "Madhya Pradesh",
-  "Andhra Pradesh",
-  "Arunachal Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Goa",
-  "Gujarat",
-  "Haryana",
-  "Himachal Pradesh",
-  "Jharkhand",
-  "Karnataka",
-  "Kerala",
-  "Maharashtra",
-  "Manipur",
-  "Meghalaya",
-  "Mizoram",
-  "Nagaland",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Sikkim",
-  "Tamil Nadu",
-  "Telangana",
-  "Tripura",
-  "Uttar Pradesh",
-  "Uttarakhand",
-  "West Bengal",
-  "Delhi",
-  "Union Territory"
-];
+import { INDIAN_STATES } from "@/lib/constants";
 
 export function CartView() {
-  const { items, updateQuantity, removeItem, buyerState, setBuyerState, getCartSubtotal } = useCartStore();
+  const { items, updateQuantity, removeItem, buyerState, setBuyerState, getCartSubtotal, hydrateProducts, getTaxDetails } = useCartStore();
+
+  React.useEffect(() => {
+    hydrateProducts();
+  }, [hydrateProducts]);
 
   const taxDetails = React.useMemo(() => {
-    return useCartStore.getState().getTaxDetails();
-  }, [items, buyerState]);
+    return getTaxDetails();
+  }, [items, buyerState, getTaxDetails]);
 
   const { isIntrastate, baseSubtotal, totalCgst, totalSgst, totalIgst, grandTotal, hsnBreakdown } = taxDetails;
 
@@ -335,41 +308,49 @@ export function CartView() {
                     </div>
 
                     <div className="flex flex-wrap justify-between items-center gap-4 mt-4">
-                      {/* Quantity Input Box */}
+                      {/* Quantity Input Box or Out of Stock Badge */}
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground font-medium">Qty:</span>
-                        <div className="flex items-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 w-8 px-0 rounded-r-none text-foreground border-r-0"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            disabled={item.quantity <= moq}
-                          >
-                            -
-                          </Button>
-                          <input
-                            type="number"
-                            className="h-8 w-16 text-center text-sm font-semibold text-foreground bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                            value={item.quantity}
-                            onChange={(e) => handleQtyInputChange(item.id, e.target.value)}
-                            onBlur={(e) => handleQtyBlur(item.id, e.target.value, moq)}
-                            min={moq}
-                            max={maxStock}
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 w-8 px-0 rounded-l-none text-foreground border-l-0"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            disabled={item.quantity >= maxStock}
-                          >
-                            +
-                          </Button>
-                        </div>
-                        <span className="text-[10px] text-muted-foreground">
-                          (MOQ: {moq} | Stock: {maxStock})
-                        </span>
+                        {maxStock === 0 ? (
+                          <div className="bg-destructive/10 text-destructive text-xs font-bold px-3 py-1 rounded-full border border-destructive/20">
+                            Out of Stock
+                          </div>
+                        ) : (
+                          <>
+                            <span className="text-xs text-muted-foreground font-medium">Qty:</span>
+                            <div className="flex items-center">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 px-0 rounded-r-none text-foreground border-r-0"
+                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                disabled={item.quantity <= moq}
+                              >
+                                -
+                              </Button>
+                              <input
+                                type="number"
+                                className="h-8 w-16 text-center text-sm font-semibold text-foreground bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                                value={item.quantity}
+                                onChange={(e) => handleQtyInputChange(item.id, e.target.value)}
+                                onBlur={(e) => handleQtyBlur(item.id, e.target.value, moq)}
+                                min={moq}
+                                max={maxStock}
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 px-0 rounded-l-none text-foreground border-l-0"
+                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                disabled={item.quantity >= maxStock}
+                              >
+                                +
+                              </Button>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">
+                              (MOQ: {moq} | Stock: {maxStock})
+                            </span>
+                          </>
+                        )}
                       </div>
 
                       {/* Pricing Breakdown per Item */}
@@ -409,6 +390,7 @@ export function CartView() {
                   value={buyerState}
                   onChange={(e) => setBuyerState(e.target.value)}
                 >
+                  <option value="" disabled>Select a state...</option>
                   {INDIAN_STATES.map((st) => (
                     <option key={st} value={st}>{st}</option>
                   ))}
@@ -480,9 +462,14 @@ export function CartView() {
               </div>
 
               <div className="space-y-3 mt-6">
-                <Link href="/checkout" className="block">
-                  <Button size="lg" className="w-full text-base bg-primary text-primary-foreground hover:opacity-90 font-bold">
-                    Proceed to Checkout
+                <Link href={buyerState ? "/checkout" : "#"} className="block" onClick={(e) => {
+                  if (!buyerState) {
+                    e.preventDefault();
+                    document.querySelector('select')?.focus();
+                  }
+                }}>
+                  <Button size="lg" className="w-full text-base bg-primary text-primary-foreground hover:opacity-90 font-bold" disabled={!buyerState}>
+                    {!buyerState ? "Select State to Checkout" : "Proceed to Checkout"}
                   </Button>
                 </Link>
 

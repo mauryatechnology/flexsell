@@ -19,9 +19,9 @@ export default function ClientCouponsPage() {
       setIsLoading(true);
       const data = await couponService.getCoupons();
       setCoupons(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      addToast(err.message || "Failed to load coupons", "error");
+      addToast((err as any).message || "Failed to load coupons", "error");
     } finally {
       setIsLoading(false);
     }

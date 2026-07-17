@@ -8,8 +8,8 @@ export async function GET() {
     await dbConnect();
     const records = await HsnRecord.find({});
     return NextResponse.json(records);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch HSN records" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch HSN records" }, { status: 500 });
   }
 }
 
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     
     const newRecord = await HsnRecord.create(body);
     return NextResponse.json(newRecord, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to create HSN record" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to create HSN record" }, { status: 500 });
   }
 }

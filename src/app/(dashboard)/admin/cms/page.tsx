@@ -105,8 +105,8 @@ export default function AdminCmsPage() {
           timings: "9:30 AM to 6:30 PM (Sunday Closed)"
         });
       }
-    } catch (err: any) {
-      addToast(err.message || "Failed to load Website CMS contents", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to load Website CMS contents", "error");
     } finally {
       setIsLoading(false);
     }
@@ -122,8 +122,8 @@ export default function AdminCmsPage() {
       });
       if (!res.ok) throw new Error("Failed to save section config");
       addToast(`CMS Section '${key}' updated successfully!`, "success");
-    } catch (err: any) {
-      addToast(err.message || "Failed to update CMS section", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to update CMS section", "error");
     } finally {
       setIsSaving(false);
     }
@@ -152,8 +152,8 @@ export default function AdminCmsPage() {
         idx === slideIndex ? { ...s, imageUrl: data.url } : s
       ));
       addToast("Slide image updated successfully.", "success");
-    } catch (err: any) {
-      addToast(err.message || "Failed to upload image.", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to upload image.", "error");
     } finally {
       e.target.value = "";
     }

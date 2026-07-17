@@ -69,9 +69,9 @@ export default function ClientAddressesPage() {
       setIsLoading(true);
       const data = await customerService.getSavedAddresses();
       setAddresses(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      addToast(err.message || "Failed to load addresses", "error");
+      addToast((err as any).message || "Failed to load addresses", "error");
     } finally {
       setIsLoading(false);
     }
@@ -154,8 +154,8 @@ export default function ClientAddressesPage() {
       setIsModalOpen(false);
       resetForm();
       addToast(editingId ? "Address updated successfully!" : "Address added successfully!", "success");
-    } catch (err: any) {
-      addToast(err.message || "Failed to save address", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to save address", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -167,8 +167,8 @@ export default function ClientAddressesPage() {
       const updatedList = await customerService.deleteSavedAddress(id);
       setAddresses(updatedList);
       addToast("Address deleted successfully!", "success");
-    } catch (err: any) {
-      addToast(err.message || "Failed to delete address", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to delete address", "error");
     }
   };
 
@@ -177,8 +177,8 @@ export default function ClientAddressesPage() {
       const updatedList = await customerService.updateSavedAddress({ ...addr, isDefault: true });
       setAddresses(updatedList);
       addToast("Default address updated!", "success");
-    } catch (err: any) {
-      addToast(err.message || "Failed to set default address", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to set default address", "error");
     }
   };
 

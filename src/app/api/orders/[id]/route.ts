@@ -33,8 +33,8 @@ export async function GET(request: Request, { params }: RouteProps) {
     }
 
     return NextResponse.json(order);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch order" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch order" }, { status: 500 });
   }
 }
 
@@ -185,11 +185,11 @@ export async function PUT(request: Request, { params }: RouteProps) {
     await order.save();
 
     return NextResponse.json(order);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
     }
-    return NextResponse.json({ message: error.message || "Failed to update order" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Failed to update order" }, { status: 500 });
   }
 }
 
@@ -258,7 +258,7 @@ export async function DELETE(request: Request, { params }: RouteProps) {
     await Order.findByIdAndDelete(id);
 
     return NextResponse.json({ message: "Order cancelled and deleted successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to cancel order" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to cancel order" }, { status: 500 });
   }
 }

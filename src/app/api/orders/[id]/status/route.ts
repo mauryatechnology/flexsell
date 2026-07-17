@@ -4,13 +4,7 @@ import Order from "@/models/Order";
 import Customer from "@/models/Customer";
 import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhookDispatcher";
-
-const statusClasses = {
-  Processing: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500",
-  Shipped: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-500",
-  Delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500",
-  Cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500"
-};
+import { ORDER_STATUS_CLASSES } from "@/lib/constants";
 
 export async function PUT(
   request: Request,
@@ -31,7 +25,7 @@ export async function PUT(
     const { id } = await params;
     const { status } = await request.json();
     
-    if (!status || !statusClasses[status as keyof typeof statusClasses]) {
+    if (!status || !ORDER_STATUS_CLASSES[status as keyof typeof ORDER_STATUS_CLASSES]) {
       return NextResponse.json({ message: "Invalid order status" }, { status: 400 });
     }
 
@@ -62,7 +56,7 @@ export async function PUT(
     };
 
     order.status = status;
-    order.statusClass = statusClasses[status as keyof typeof statusClasses];
+    order.statusClass = ORDER_STATUS_CLASSES[status as keyof typeof ORDER_STATUS_CLASSES];
     order.history.unshift(newEvent); // Add to the beginning of the history logs
 
     await order.save();
@@ -76,7 +70,7 @@ export async function PUT(
     }).catch(console.error);
 
     return NextResponse.json(order);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to update order status" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to update order status" }, { status: 500 });
   }
 }

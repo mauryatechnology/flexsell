@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { Analytics } from "@vercel/analytics/react";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import "./globals.css";
@@ -42,7 +43,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
       </head>
-      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`}>
         <Script
           id="theme-initializer"
           strategy="beforeInteractive"
@@ -93,6 +94,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <Analytics />
           <ToastContainer />
           <ConfirmDialog />
         </ThemeProvider>

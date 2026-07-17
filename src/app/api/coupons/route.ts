@@ -32,8 +32,8 @@ export async function GET() {
 
     const coupons = await Coupon.find(query).sort({ createdAt: -1 }).lean();
     return NextResponse.json(coupons);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch coupons" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch coupons" }, { status: 500 });
   }
 }
 
@@ -66,10 +66,10 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(newCoupon, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
     }
-    return NextResponse.json({ message: error.message || "Failed to create coupon" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Failed to create coupon" }, { status: 500 });
   }
 }

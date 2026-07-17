@@ -31,9 +31,9 @@ export default function AdminCouponsPage() {
       setIsLoading(true);
       const data = await couponService.getCoupons();
       setCoupons(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      addToast(err.message || "Failed to load coupons", "error");
+      addToast((err as any).message || "Failed to load coupons", "error");
     } finally {
       setIsLoading(false);
     }
@@ -100,8 +100,8 @@ export default function AdminCouponsPage() {
       resetForm();
       addToast(editingId ? "Coupon updated successfully!" : "Coupon created successfully!", "success");
       fetchCoupons();
-    } catch (err: any) {
-      addToast(err.message || "Failed to save coupon", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to save coupon", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -113,8 +113,8 @@ export default function AdminCouponsPage() {
       await couponService.deleteCoupon(id);
       addToast("Coupon deleted successfully!", "success");
       fetchCoupons();
-    } catch (err: any) {
-      addToast(err.message || "Failed to delete coupon", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to delete coupon", "error");
     }
   };
 
@@ -123,8 +123,8 @@ export default function AdminCouponsPage() {
       await couponService.updateCoupon(coupon._id, { isActive: !coupon.isActive });
       addToast(`Coupon status updated!`, "success");
       fetchCoupons();
-    } catch (err: any) {
-      addToast(err.message || "Failed to update coupon status", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to update coupon status", "error");
     }
   };
 

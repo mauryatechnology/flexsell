@@ -40,9 +40,9 @@ export default function ForgotPasswordPage() {
 
       setIsSuccess(true);
       addToast("Password reset email sent!", "success");
-    } catch (err: any) {
-      setError(err.message);
-      addToast(err.message || "Something went wrong", "error");
+    } catch (err: unknown) {
+      setError((err as any).message);
+      addToast((err as any).message || "Something went wrong", "error");
     } finally {
       setIsSubmitting(false);
     }

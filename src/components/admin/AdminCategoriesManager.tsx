@@ -93,8 +93,8 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
           addToast(`Category "${name}" created successfully!`, "success");
         }
         handleCancelEdit();
-      } catch (error: any) {
-        addToast(error.message || "An error occurred while saving the category.", "error");
+      } catch (error: unknown) {
+        addToast((error as any).message || "An error occurred while saving the category.", "error");
       }
     };
 
@@ -123,8 +123,8 @@ export function AdminCategoriesManager({ initialCategories }: AdminCategoriesMan
         try {
           await deleteCategory(cat._id);
           addToast(`Category "${cat.name}" deleted successfully!`, "success");
-        } catch (error: any) {
-          addToast(error.message || "An error occurred while deleting the category.", "error");
+        } catch (error: unknown) {
+          addToast((error as any).message || "An error occurred while deleting the category.", "error");
         }
       }
     });

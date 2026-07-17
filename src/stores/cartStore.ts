@@ -34,13 +34,14 @@ interface CartState {
     grandTotal: number;
     hsnBreakdown: Record<string, TaxBreakdown>;
   };
+  hydrateProducts: () => void;
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
-      buyerState: "Madhya Pradesh",
+      buyerState: "",
 
       setBuyerState: (state) => set({ buyerState: state }),
 
@@ -276,6 +277,18 @@ export const useCartStore = create<CartState>()(
           grandTotal,
           hsnBreakdown,
         };
+      },
+
+      hydrateProducts: () => {
+        const storeProducts = useProductStore.getState().products;
+        if (storeProducts.length === 0) return;
+        set((state) => ({
+          items: state.items.map((item) => {
+            const productId = item.productId || item.product?._id;
+            const prod = storeProducts.find((p) => p._id === productId);
+            return { ...item, productId, product: prod || item.product };
+          })
+        }));
       }
     }),
     {
@@ -292,19 +305,9 @@ export const useCartStore = create<CartState>()(
         }))
       }) as any,
       // Hydrate product objects from the productStore upon rehydration
-      onRehydrateStorage: () => (state) => {
-        if (state && state.items) {
-          const storeProducts = useProductStore.getState().products;
-          state.items = state.items.map((item: any) => {
-            const productId = item.productId || item.product?._id;
-            const prod = storeProducts.find(p => p._id === productId);
-            return {
-              ...item,
-              productId,
-              product: prod || item.product
-            };
-          });
-        }
+      onRehydrateStorage: () => () => {
+        // Product hydration is handled lazily by CartView/CheckoutView
+        // after the product store is initialized
       }
     }
   )

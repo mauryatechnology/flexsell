@@ -45,8 +45,8 @@ export async function GET(request: Request) {
     // Filter out admin accounts
     const customers = await Customer.find(query).sort({ createdAt: -1 });
     return NextResponse.json(customers);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch customers" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch customers" }, { status: 500 });
   }
 }
 
@@ -108,8 +108,8 @@ export async function POST(request: Request) {
     delete customerObj.password;
 
     return NextResponse.json(customerObj, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to create customer" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to create customer" }, { status: 500 });
   }
 }
 
@@ -175,8 +175,8 @@ export async function PUT(request: Request) {
     delete customerObj.password;
 
     return NextResponse.json(customerObj);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to update customer" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to update customer" }, { status: 500 });
   }
 }
 
@@ -208,7 +208,7 @@ export async function DELETE(request: Request) {
     await Customer.findByIdAndDelete(id);
 
     return NextResponse.json({ message: "Customer deleted successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to delete customer" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to delete customer" }, { status: 500 });
   }
 }

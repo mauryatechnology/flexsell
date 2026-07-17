@@ -18,9 +18,9 @@ export async function GET() {
 
     const logs = await StockLog.find({}).sort({ createdAt: -1 });
     return NextResponse.json(logs);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { message: error.message || "Failed to fetch ledger logs" },
+      { message: (error as any).message || "Failed to fetch ledger logs" },
       { status: 500 }
     );
   }
@@ -49,9 +49,9 @@ export async function POST(request: Request) {
 
     const newLog = await StockLog.create(body);
     return NextResponse.json(newLog, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { message: error.message || "Failed to save stock log" },
+      { message: (error as any).message || "Failed to save stock log" },
       { status: 500 }
     );
   }
@@ -72,9 +72,9 @@ export async function DELETE() {
 
     await StockLog.deleteMany({});
     return NextResponse.json({ message: "Ledger history cleared successfully" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { message: error.message || "Failed to clear ledger history" },
+      { message: (error as any).message || "Failed to clear ledger history" },
       { status: 500 }
     );
   }

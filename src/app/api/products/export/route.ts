@@ -57,10 +57,10 @@ export async function GET(request: Request) {
         "Content-Disposition": `attachment; filename="${filename}"`
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Products Excel Export Error:", error);
     return NextResponse.json(
-      { message: error.message || "Failed to export products to Excel" },
+      { message: (error as any).message || "Failed to export products to Excel" },
       { status: 500 }
     );
   }

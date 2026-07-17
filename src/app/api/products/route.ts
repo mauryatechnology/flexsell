@@ -34,8 +34,8 @@ export async function GET(request: Request) {
     // Retrieve products sorted by newest first
     const products = await Product.find({}).sort({ createdAt: -1 });
     return NextResponse.json(products);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch products" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch products" }, { status: 500 });
   }
 }
 
@@ -56,10 +56,10 @@ export async function POST(request: Request) {
     
     const newProduct = await Product.create(validatedData);
     return NextResponse.json(newProduct, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
     }
-    return NextResponse.json({ message: error.message || "Failed to create product" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Failed to create product" }, { status: 500 });
   }
 }

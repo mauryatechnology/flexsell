@@ -79,8 +79,8 @@ export async function POST(req: Request) {
       message: "Logged in via Google successfully",
       customer: customerObj,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Google Login API error:", error);
-    return NextResponse.json({ message: error.message || "Google Authentication failed" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Google Authentication failed" }, { status: 500 });
   }
 }

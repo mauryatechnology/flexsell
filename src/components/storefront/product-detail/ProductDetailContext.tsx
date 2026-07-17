@@ -176,8 +176,8 @@ export function ProductDetailProvider({
       setReviewComment("");
       setReviewRating(5);
       fetchReviews();
-    } catch (err: any) {
-      addToast(err.message || "Failed to submit review", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to submit review", "error");
     } finally {
       setIsSubmittingReview(false);
     }

@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       discountType: coupon.discountType,
       discountValue: coupon.discountValue
     });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to validate coupon" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to validate coupon" }, { status: 500 });
   }
 }

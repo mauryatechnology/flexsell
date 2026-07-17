@@ -1,13 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-export const isMockMode = 
-  process.env.NEXT_PUBLIC_USE_MOCK_API === "true" || 
-  !process.env.NEXT_PUBLIC_API_URL;
-
-// Helper to simulate network latency in mock mode
-export const delay = (ms: number = 500): Promise<void> => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
 
 export interface ApiResponse<T> {
   data: T;
@@ -81,7 +73,7 @@ async function request<T>(
       throw error;
     }
     throw new ApiError(
-      error instanceof Error ? error.message : "Network request failed",
+      error instanceof Error ? (error as any).message : "Network request failed",
       500
     );
   }
@@ -112,10 +104,10 @@ export const apiClient = {
 export function handleApiError(error: unknown, fallbackMessage: string = "An unexpected error occurred"): string {
   console.error("API error encountered:", error);
   if (error instanceof ApiError) {
-    return error.message;
+    return (error as any).message;
   }
   if (error instanceof Error) {
-    return error.message;
+    return (error as any).message;
   }
   return fallbackMessage;
 }

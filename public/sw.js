@@ -35,16 +35,41 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
+  const url = new URL(event.request.url);
+
+  // Network First for HTML and API
+  if (event.request.mode === "navigate" || url.pathname.startsWith("/api/")) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, response.clone());
+            return response;
+          });
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) return cachedResponse;
+            if (event.request.mode === "navigate") return caches.match(OFFLINE_URL);
+          });
+        })
+    );
+    return;
+  }
+
+  // Stale-While-Revalidate for static assets
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).catch(() => {
-        if (event.request.mode === "navigate") {
-          return caches.match(OFFLINE_URL);
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+          });
         }
-      });
+        return networkResponse;
+      }).catch(() => {});
+
+      return cachedResponse || fetchPromise;
     })
   );
 });

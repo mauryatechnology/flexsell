@@ -54,4 +54,8 @@ const OrderSchema = new Schema<OrderType & Document>(
   { timestamps: true }
 );
 
+OrderSchema.index({ status: 1 });
+OrderSchema.index({ customerName: 1 });
+OrderSchema.index({ date: -1 });
+
 export default mongoose.models.Order || mongoose.model("Order", OrderSchema);

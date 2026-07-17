@@ -75,12 +75,12 @@ export async function dispatchWebhook(
           } else {
             console.warn(`[Webhook] Delivery failed to URL: ${sub.url} (Status: ${response.status})`);
           }
-        } catch (err: any) {
-          console.error(`[Webhook] Network error during delivery to ${sub.url}:`, err.message);
+        } catch (err: unknown) {
+          console.error(`[Webhook] Network error during delivery to ${sub.url}:`, (err as any).message);
         }
       })
     );
-  } catch (error: any) {
-    console.error(`[Webhook Dispatcher] Global dispatcher error:`, error.message);
+  } catch (error: unknown) {
+    console.error(`[Webhook Dispatcher] Global dispatcher error:`, (error as any).message);
   }
 }

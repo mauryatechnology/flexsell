@@ -68,8 +68,8 @@ function LoginForm() {
       } else {
         addToast("Google Sign-In failed", "error");
       }
-    } catch (err: any) {
-      addToast(err.message || "Google Sign-In failed", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Google Sign-In failed", "error");
     } finally {
       setIsSubmitting(false);
     }

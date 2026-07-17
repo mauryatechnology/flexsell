@@ -74,9 +74,9 @@ export default function AdminCustomersPage() {
       setIsLoading(true);
       const data = await customerService.getCustomers();
       setCustomers(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      addToast(err.message || "Failed to load customers", "error");
+      addToast((err as any).message || "Failed to load customers", "error");
     } finally {
       setIsLoading(false);
     }
@@ -179,8 +179,8 @@ export default function AdminCustomersPage() {
       setIsModalOpen(false);
       resetForm();
       fetchCustomers();
-    } catch (err: any) {
-      addToast(err.message || "Failed to save customer", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to save customer", "error");
     } finally {
       setIsFormSubmitting(false);
     }
@@ -198,8 +198,8 @@ export default function AdminCustomersPage() {
       }
       addToast("Customer account deleted successfully", "success");
       fetchCustomers();
-    } catch (err: any) {
-      addToast(err.message || "Failed to delete customer", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to delete customer", "error");
     }
   };
 

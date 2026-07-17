@@ -12,6 +12,8 @@ import CmsContent from "@/models/CmsContent";
 import { TrendingProducts } from "@/components/storefront/TrendingProducts";
 import { HeroCarousel } from "@/components/storefront/HeroCarousel";
 
+export const revalidate = 3600; // ISR revalidation every hour
+
 export default async function HomePage() {
   await dbConnect();
 

@@ -20,8 +20,8 @@ export async function GET() {
 
     const subs = await WebhookSubscription.find().sort({ createdAt: -1 }).lean();
     return NextResponse.json(subs);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch webhooks" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch webhooks" }, { status: 500 });
   }
 }
 
@@ -63,8 +63,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(newSub);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to create webhook" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to create webhook" }, { status: 500 });
   }
 }
 
@@ -101,8 +101,8 @@ export async function PUT(request: Request) {
     await sub.save();
 
     return NextResponse.json(sub);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to update webhook" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to update webhook" }, { status: 500 });
   }
 }
 
@@ -134,7 +134,7 @@ export async function DELETE(request: Request) {
     await WebhookSubscription.findByIdAndDelete(id);
 
     return NextResponse.json({ message: "Webhook subscription deleted successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to delete webhook" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to delete webhook" }, { status: 500 });
   }
 }

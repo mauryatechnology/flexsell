@@ -24,8 +24,8 @@ export async function GET() {
     }
 
     return NextResponse.json(customer.addresses || []);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch addresses" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch addresses" }, { status: 500 });
   }
 }
 
@@ -95,8 +95,8 @@ export async function POST(request: Request) {
     await customer.save();
 
     return NextResponse.json(customer.addresses);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to add address" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to add address" }, { status: 500 });
   }
 }
 
@@ -155,8 +155,8 @@ export async function PUT(request: Request) {
     await customer.save();
 
     return NextResponse.json(customer.addresses);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to update address" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to update address" }, { status: 500 });
   }
 }
 
@@ -201,7 +201,7 @@ export async function DELETE(request: Request) {
     await customer.save();
 
     return NextResponse.json(customer.addresses);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to delete address" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to delete address" }, { status: 500 });
   }
 }

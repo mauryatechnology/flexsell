@@ -4,13 +4,7 @@ import Order from "@/models/Order";
 import Customer from "@/models/Customer";
 import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhookDispatcher";
-
-const statusClasses = {
-  Processing: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500",
-  Shipped: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-500",
-  Delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500",
-  Cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500"
-};
+import { ORDER_STATUS_CLASSES } from "@/lib/constants";
 
 export async function PUT(
   request: Request,
@@ -55,7 +49,7 @@ export async function PUT(
     };
 
     order.status = "Shipped";
-    order.statusClass = statusClasses["Shipped"];
+    order.statusClass = ORDER_STATUS_CLASSES["Shipped"];
     order.shipmentDetails = shipmentDetails;
     order.history.unshift(newEvent);
 
@@ -70,7 +64,7 @@ export async function PUT(
     }).catch(console.error);
 
     return NextResponse.json(order);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to ship order" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to ship order" }, { status: 500 });
   }
 }

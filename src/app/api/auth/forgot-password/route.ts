@@ -10,13 +10,10 @@ import { ZodError } from "zod";
 export async function POST(req: Request) {
   try {
     const ip = req.headers.get("x-forwarded-for") || "unknown";
-    const limitCheck = rateLimit(ip, 3, 300000); // 3 attempts per 5 minutes
-
-    if (!limitCheck.allowed) {
-      return NextResponse.json(
-        { message: "Too many password reset requests. Please try again later." },
-        { status: 429 }
-      );
+    try {
+      await rateLimit(ip);
+    } catch (err) {
+      return NextResponse.json({ message: "Too many attempts. Try again later." }, { status: 429 });
     }
 
     await dbConnect();
@@ -105,12 +102,12 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(successResponse);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ZodError) {
       const firstError = error.issues[0]?.message || "Validation failed";
       return NextResponse.json({ message: firstError }, { status: 400 });
     }
     console.error("Forgot password error:", error);
-    return NextResponse.json({ message: error.message || "Failed to process forgot password" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Failed to process forgot password" }, { status: 500 });
   }
 }

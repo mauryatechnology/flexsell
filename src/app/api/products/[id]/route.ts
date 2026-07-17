@@ -19,8 +19,8 @@ export async function GET(
     }
     
     return NextResponse.json(product);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch product" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch product" }, { status: 500 });
   }
 }
 
@@ -49,11 +49,11 @@ export async function PUT(
     }
     
     return NextResponse.json(updatedProduct);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
     }
-    return NextResponse.json({ message: error.message || "Failed to update product" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Failed to update product" }, { status: 500 });
   }
 }
 
@@ -75,7 +75,7 @@ export async function DELETE(
     }
     
     return NextResponse.json({ message: "Product deleted successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to delete product" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to delete product" }, { status: 500 });
   }
 }

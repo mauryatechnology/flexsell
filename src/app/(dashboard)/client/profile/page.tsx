@@ -43,8 +43,8 @@ export default function ClientProfilePage() {
       });
       setActiveCustomer(updated);
       addToast("Personal profile updated successfully!", "success");
-    } catch (err: any) {
-      addToast(err.message || "Failed to update personal details", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to update personal details", "error");
     } finally {
       setIsSubmittingPersonal(false);
     }
@@ -60,8 +60,8 @@ export default function ClientProfilePage() {
       });
       setActiveCustomer(updated);
       addToast("Business information updated successfully!", "success");
-    } catch (err: any) {
-      addToast(err.message || "Failed to update business profile", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to update business profile", "error");
     } finally {
       setIsSubmittingBusiness(false);
     }

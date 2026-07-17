@@ -22,8 +22,8 @@ export async function GET() {
     }
 
     return NextResponse.json(customer);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to fetch active customer" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to fetch active customer" }, { status: 500 });
   }
 }
 
@@ -72,7 +72,7 @@ export async function PUT(request: Request) {
     delete customerObj.password;
 
     return NextResponse.json(customerObj);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to update profile" }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: (error as any).message || "Failed to update profile" }, { status: 500 });
   }
 }

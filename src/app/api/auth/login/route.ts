@@ -10,13 +10,10 @@ import { ZodError } from "zod";
 export async function POST(req: Request) {
   try {
     const ip = req.headers.get("x-forwarded-for") || "unknown";
-    const limitCheck = rateLimit(ip, 5, 60000);
-
-    if (!limitCheck.allowed) {
-      return NextResponse.json(
-        { message: "Too many login attempts. Please try again later." },
-        { status: 429 }
-      );
+    try {
+      await rateLimit(ip);
+    } catch (err) {
+      return NextResponse.json({ message: "Too many login attempts. Try again later." }, { status: 429 });
     }
 
     await dbConnect();
@@ -64,12 +61,12 @@ export async function POST(req: Request) {
       message: "Logged in successfully",
       customer: customerObj,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ZodError) {
       const firstError = error.issues[0]?.message || "Validation failed";
       return NextResponse.json({ message: firstError }, { status: 400 });
     }
     console.error("Login API error:", error);
-    return NextResponse.json({ message: error.message || "Login failed" }, { status: 500 });
+    return NextResponse.json({ message: (error as any).message || "Login failed" }, { status: 500 });
   }
 }

@@ -18,9 +18,9 @@ export default function ClientReviewsPage() {
       setIsLoading(true);
       const data = await reviewService.getCustomerReviews();
       setReviews(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      addToast(err.message || "Failed to load reviews", "error");
+      addToast((err as any).message || "Failed to load reviews", "error");
     } finally {
       setIsLoading(false);
     }
@@ -36,8 +36,8 @@ export default function ClientReviewsPage() {
       await reviewService.deleteReview(id);
       addToast("Review deleted successfully", "success");
       fetchReviews();
-    } catch (err: any) {
-      addToast(err.message || "Failed to delete review", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to delete review", "error");
     }
   };
 

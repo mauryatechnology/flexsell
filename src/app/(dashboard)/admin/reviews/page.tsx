@@ -25,8 +25,8 @@ export default function AdminReviewsPage() {
       setIsLoading(true);
       const data = await reviewService.getAllReviewsAdmin();
       setReviews(data);
-    } catch (err: any) {
-      addToast(err.message || "Failed to load reviews for moderation", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to load reviews for moderation", "error");
     } finally {
       setIsLoading(false);
     }
@@ -41,8 +41,8 @@ export default function AdminReviewsPage() {
       await reviewService.moderateReviewAdmin(id, newStatus);
       addToast(`Review status updated to ${newStatus}!`, "success");
       fetchReviews();
-    } catch (err: any) {
-      addToast(err.message || "Failed to update review status", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to update review status", "error");
     }
   };
 
@@ -62,8 +62,8 @@ export default function AdminReviewsPage() {
       setReplyReviewId(null);
       setReplyText("");
       fetchReviews();
-    } catch (err: any) {
-      addToast(err.message || "Failed to save response", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to save response", "error");
     } finally {
       setIsSubmittingReply(false);
     }
@@ -75,8 +75,8 @@ export default function AdminReviewsPage() {
       await reviewService.deleteReviewAdmin(id);
       addToast("Review deleted permanently", "success");
       fetchReviews();
-    } catch (err: any) {
-      addToast(err.message || "Failed to delete review", "error");
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to delete review", "error");
     }
   };
 
