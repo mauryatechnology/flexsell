@@ -117,3 +117,15 @@ npm run build
 ```bash
 npm run start
 ```
+
+### 5. Running Pre-Flight Environment Checks
+Before running the platform, verify that your environment variables are configured correctly:
+```bash
+node scripts/verify-env.js
+```
+
+### 6. Running Tests
+To run unit and integration tests under the Vitest testing suite:
+```bash
+npm run test
+```

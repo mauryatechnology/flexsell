@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Coupon from "@/models/Coupon";
 import { verifyToken, getTokenFromCookie } from "@/lib/auth";
+import { requireAuth } from "@/lib/authGuard";
+import { couponSchema } from "@/lib/validators";
+import { ZodError } from "zod";
 
 // GET: Retrieve all coupons (for admins) or active ones (for customers)
 export async function GET() {
@@ -37,26 +40,16 @@ export async function GET() {
 // POST: Create a new B2B coupon (restricted to admins)
 export async function POST(request: Request) {
   try {
+    const auth = await requireAuth("admin");
+    if (auth.error) return auth.error;
+
     await dbConnect();
-    const token = await getTokenFromCookie();
-    if (!token) {
-      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
-    }
-
-    const payload = verifyToken(token);
-    if (!payload || payload.role !== "admin") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-    }
-
     const body = await request.json();
-    const { code, discountType, discountValue, minOrderValue, maxDiscount, expiryDate, isActive } = body;
-
-    if (!code || !discountType || discountValue === undefined || !expiryDate) {
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
-    }
+    
+    const validatedData = couponSchema.parse(body);
 
     // Check if code already exists
-    const uppercaseCode = code.toUpperCase().trim();
+    const uppercaseCode = validatedData.code.toUpperCase().trim();
     const existing = await Coupon.findOne({ code: uppercaseCode });
     if (existing) {
       return NextResponse.json({ message: `Coupon with code "${uppercaseCode}" already exists` }, { status: 400 });
@@ -64,16 +57,19 @@ export async function POST(request: Request) {
 
     const newCoupon = await Coupon.create({
       code: uppercaseCode,
-      discountType,
-      discountValue: parseFloat(discountValue),
-      minOrderValue: parseFloat(minOrderValue) || 0,
-      maxDiscount: maxDiscount ? parseFloat(maxDiscount) : undefined,
-      expiryDate,
-      isActive: isActive !== undefined ? isActive : true
+      discountType: validatedData.discountType,
+      discountValue: validatedData.discountValue,
+      minOrderValue: validatedData.minOrderValue,
+      maxDiscount: validatedData.maxDiscount,
+      expiryDate: validatedData.expiryDate,
+      isActive: validatedData.isActive
     });
 
-    return NextResponse.json(newCoupon);
+    return NextResponse.json(newCoupon, { status: 201 });
   } catch (error: any) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
+    }
     return NextResponse.json({ message: error.message || "Failed to create coupon" }, { status: 500 });
   }
 }

@@ -100,6 +100,7 @@ export interface Banner extends BaseDocument {
 
 export interface CartItem {
   id: string; // Dynamic combination of productID + selected variants
+  productId?: string;
   product: Product;
   selectedVariants: Record<string, string>;
   quantity: number;
@@ -146,6 +147,9 @@ export interface Order extends BaseDocument {
   items: CartItem[];
   shipmentDetails?: ShipmentDetails;
   history: HistoryEvent[];
+  paymentMethod?: "Bank Transfer" | "Razorpay" | "UPI";
+  paymentStatus?: "Pending" | "Paid" | "Failed";
+  transactionId?: string;
 }
 
 export interface SavedAddress {
@@ -181,11 +185,12 @@ export interface Customer {
   initials: string;
   gstin?: string;
   addresses?: SavedAddress[];
+  wishlist?: string[];
 }
 
 export interface Review extends BaseDocument {
   productId: string;
-  customerId: string;
+  customerId?: string;
   customerName: string;
   rating: number;
   title: string;
@@ -218,5 +223,7 @@ export interface WebhookSubscription extends BaseDocument {
   secret: string;
   isActive: boolean;
 }
+
+
 
 

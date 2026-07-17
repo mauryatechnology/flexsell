@@ -1,27 +1,62 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Product } from "@/types";
+import { customerService } from "@/services/customerService";
+import { productService } from "@/services/productService";
 
 interface WishlistState {
   items: Product[];
-  toggleWishlist: (product: Product) => void;
+  toggleWishlist: (product: Product) => Promise<void>;
   isInWishlist: (productId: string) => boolean;
+  syncWithDb: () => Promise<void>;
 }
 
 export const useWishlistStore = create<WishlistState>()(
   persist(
     (set, get) => ({
       items: [],
-      toggleWishlist: (product) => set((state) => {
-        const exists = state.items.some(item => item._id === product._id);
+      
+      toggleWishlist: async (product) => {
+        const exists = get().items.some(item => item._id === product._id);
+        let nextItems: Product[] = [];
+        
         if (exists) {
-          return { items: state.items.filter(item => item._id !== product._id) };
+          nextItems = get().items.filter(item => item._id !== product._id);
         } else {
-          return { items: [...state.items, product] };
+          nextItems = [...get().items, product];
         }
-      }),
+        
+        set({ items: nextItems });
+
+        try {
+          const activeCustomer = await customerService.getActiveCustomer();
+          if (activeCustomer) {
+            const wishlistIds = nextItems.map(item => item._id);
+            await customerService.updateActiveCustomer({ wishlist: wishlistIds });
+          }
+        } catch (err) {
+          // Silent catch if guest or not authenticated
+          console.log("Wishlist DB sync skipped: User not authenticated.");
+        }
+      },
+
       isInWishlist: (productId) => {
         return get().items.some(item => item._id === productId);
+      },
+
+      syncWithDb: async () => {
+        try {
+          const activeCustomer = await customerService.getActiveCustomer();
+          if (activeCustomer && activeCustomer.wishlist) {
+            const allProducts = await productService.getProducts();
+            const matchedProducts = allProducts.filter(p => 
+              activeCustomer.wishlist?.includes(p._id)
+            );
+            set({ items: matchedProducts });
+          }
+        } catch (err) {
+          console.log("Wishlist DB initial load skipped: User not authenticated.");
+        }
       }
     }),
     {

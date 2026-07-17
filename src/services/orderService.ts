@@ -231,25 +231,95 @@ function saveMockOrders(orders: Order[]) {
 }
 
 export const orderService = {
-  async getOrders(): Promise<Order[]> {
+  async getOrders(params?: { page?: number; limit?: number; startDate?: string; endDate?: string }): Promise<any> {
     if (isMockMode) {
       await delay();
-      return getMockOrders();
+      let orders = getMockOrders();
+      
+      if (params?.startDate) {
+        const start = new Date(params.startDate);
+        orders = orders.filter(o => new Date(o.createdAt || o.date) >= start);
+      }
+      if (params?.endDate) {
+        const end = new Date(params.endDate);
+        end.setHours(23, 59, 59, 999);
+        orders = orders.filter(o => new Date(o.createdAt || o.date) <= end);
+      }
+
+      if (params?.page && params?.limit) {
+        const pageNum = params.page;
+        const limitNum = params.limit;
+        const total = orders.length;
+        const skip = (pageNum - 1) * limitNum;
+        return {
+          orders: orders.slice(skip, skip + limitNum),
+          total,
+          page: pageNum,
+          totalPages: Math.ceil(total / limitNum)
+        };
+      }
+      return orders;
     }
+
     if (typeof window === "undefined") {
       const dbConnect = (await import("@/lib/dbConnect")).default;
       await dbConnect();
       const OrderModel = (await import("@/models/Order")).default;
-      const orders = await OrderModel.find({}).sort({ createdAt: -1 }).lean();
+      
+      let query: any = {};
+      if (params?.startDate || params?.endDate) {
+        const dateQuery: any = {};
+        if (params.startDate) dateQuery.$gte = new Date(params.startDate);
+        if (params.endDate) {
+          const end = new Date(params.endDate);
+          end.setHours(23, 59, 59, 999);
+          dateQuery.$lte = end;
+        }
+        query.createdAt = dateQuery;
+      }
+
+      if (params?.page && params?.limit) {
+        const pageNum = params.page;
+        const limitNum = params.limit;
+        const skip = (pageNum - 1) * limitNum;
+        const [orders, total] = await Promise.all([
+          OrderModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+          OrderModel.countDocuments(query)
+        ]);
+        return {
+          orders: JSON.parse(JSON.stringify(orders)),
+          total,
+          page: pageNum,
+          totalPages: Math.ceil(total / limitNum)
+        };
+      }
+
+      const orders = await OrderModel.find(query).sort({ createdAt: -1 }).lean();
       return JSON.parse(JSON.stringify(orders));
     }
-    return apiClient.get<Order[]>("/orders");
+
+    let url = "/orders";
+    const queryParams: string[] = [];
+    if (params?.page) queryParams.push(`page=${params.page}`);
+    if (params?.limit) queryParams.push(`limit=${params.limit}`);
+    if (params?.startDate) queryParams.push(`startDate=${params.startDate}`);
+    if (params?.endDate) queryParams.push(`endDate=${params.endDate}`);
+    
+    if (queryParams.length > 0) {
+      url += `?${queryParams.join("&")}`;
+    }
+    return apiClient.get<any>(url);
   },
 
   async createOrder(
     items: CartItem[],
     amount: number,
-    shippingAddress: Order["shippingAddress"]
+    shippingAddress: Order["shippingAddress"],
+    paymentDetails?: {
+      paymentMethod: Order["paymentMethod"];
+      paymentStatus: Order["paymentStatus"];
+      transactionId?: string;
+    }
   ): Promise<Order> {
     if (isMockMode) {
       await delay();
@@ -324,6 +394,9 @@ export const orderService = {
         }`,
         shippingAddress,
         items,
+        paymentMethod: paymentDetails?.paymentMethod,
+        paymentStatus: paymentDetails?.paymentStatus,
+        transactionId: paymentDetails?.transactionId,
         history: [
           {
             status: "Placed",
@@ -334,7 +407,9 @@ export const orderService = {
               hour: "2-digit",
               minute: "2-digit"
             }),
-            description: "Wholesale order generated successfully."
+            description: paymentDetails?.paymentMethod === "Razorpay"
+              ? `Wholesale order generated successfully. Online Payment verified (Txn ID: ${paymentDetails.transactionId}).`
+              : "Wholesale order generated successfully. Payment pending verification."
           }
         ]
       };
@@ -348,12 +423,11 @@ export const orderService = {
       await dbConnect();
       const OrderModel = (await import("@/models/Order")).default;
       const ProductModel = (await import("@/models/Product")).default;
+      const { generateNextId } = await import("@/lib/idGenerator");
       
-      const count = await OrderModel.countDocuments();
-      const nextIdNum = 10026 + count;
-      const orderId = `FS-${nextIdNum}`;
+      const orderId = await generateNextId("order");
 
-      // Deduct stock in database
+      // Deduct stock in database atomically
       for (const item of items) {
         try {
           const dbProduct = await ProductModel.findById(item.product._id);
@@ -365,27 +439,47 @@ export const orderService = {
 
           const cv = dbProduct.colorVariants?.find(
             (c: any) => c.color.toLowerCase() === selectedColor.toLowerCase()
-          ) || dbProduct.colorVariants?.[0];
+          );
+          if (!cv) continue;
 
-          if (cv && cv.subVariants) {
-            const sv = cv.subVariants.find((s: any) => 
-              (!selectedSize || s.size.toLowerCase() === selectedSize.toLowerCase()) && 
-              (!selectedWeight || s.weight.toLowerCase() === selectedWeight.toLowerCase())
-            ) || cv.subVariants[0];
+          const sv = cv.subVariants?.find((s: any) => 
+            (!selectedSize || s.size.toLowerCase() === selectedSize.toLowerCase()) && 
+            (!selectedWeight || s.weight.toLowerCase() === selectedWeight.toLowerCase())
+          );
+          if (!sv) continue;
 
-            if (sv) {
-              sv.stock = Math.max(0, sv.stock - item.quantity);
-              
-              // Recalculate totalStock
-              dbProduct.totalStock = dbProduct.colorVariants.reduce((sum: number, c: any) => 
-                sum + (c.subVariants?.reduce((sSum: number, s: any) => sSum + s.stock, 0) || 0)
-              , 0);
-
-              await dbProduct.save();
+          // Atomic decrement using updateOne and arrayFilters
+          const updateResult = await ProductModel.updateOne(
+            {
+              _id: item.product._id,
+              "colorVariants.color": cv.color,
+              "colorVariants.subVariants": {
+                $elemMatch: {
+                  size: sv.size,
+                  weight: sv.weight,
+                  stock: { $gte: item.quantity }
+                }
+              }
+            },
+            {
+              $inc: {
+                "colorVariants.$[cv].subVariants.$[sv].stock": -item.quantity,
+                totalStock: -item.quantity
+              }
+            },
+            {
+              arrayFilters: [
+                { "cv.color": cv.color },
+                { "sv.size": sv.size, "sv.weight": sv.weight }
+              ]
             }
+          );
+          if (updateResult.modifiedCount === 0) {
+            throw new Error(`Insufficient stock for product ${dbProduct.title}`);
           }
         } catch (err) {
           console.error("Failed to deduct stock during server-side order creation:", item, err);
+          throw err;
         }
       }
 
@@ -417,11 +511,16 @@ export const orderService = {
         customerName,
         shippingAddress,
         items,
+        paymentMethod: paymentDetails?.paymentMethod,
+        paymentStatus: paymentDetails?.paymentStatus,
+        transactionId: paymentDetails?.transactionId,
         history: [
           {
             status: "Placed",
             timestamp: orderTime,
-            description: "Wholesale order generated successfully."
+            description: paymentDetails?.paymentMethod === "Razorpay"
+              ? `Wholesale order generated successfully. Online Payment verified (Txn ID: ${paymentDetails.transactionId}).`
+              : "Wholesale order generated successfully. Payment pending verification."
           }
         ]
       });
@@ -429,7 +528,7 @@ export const orderService = {
       return JSON.parse(JSON.stringify(order));
     }
 
-    return apiClient.post<Order>("/orders", { items, amount, shippingAddress });
+    return apiClient.post<Order>("/orders", { items, amount, shippingAddress, paymentDetails });
   },
 
   async updateOrderStatus(id: string, status: Order["status"]): Promise<Order> {
@@ -594,5 +693,23 @@ export const orderService = {
     }
 
     return apiClient.put<Order>(`/orders/${id}/ship`, shipmentDetails);
+  },
+
+  async getOrderById(id: string): Promise<Order> {
+    if (isMockMode) {
+      await delay();
+      const match = getMockOrders().find(o => o._id === id);
+      if (!match) throw new Error("Order not found");
+      return match;
+    }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const OrderModel = (await import("@/models/Order")).default;
+      const order = await OrderModel.findById(id).lean();
+      if (!order) throw new Error("Order not found");
+      return JSON.parse(JSON.stringify(order));
+    }
+    return apiClient.get<Order>(`/orders/${id}`);
   }
 };

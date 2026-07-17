@@ -15,9 +15,15 @@ export function AdminOrdersManager() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
 
+  const [startDate, setStartDate] = React.useState("");
+  const [endDate, setEndDate] = React.useState("");
+
   React.useEffect(() => {
-    initializeOrders();
-  }, [initializeOrders]);
+    initializeOrders({
+      startDate: startDate || undefined,
+      endDate: endDate || undefined
+    });
+  }, [initializeOrders, startDate, endDate]);
 
   // Shipment fulfillment states
   const [isFulfilling, setIsFulfilling] = React.useState(false);
@@ -135,6 +141,39 @@ export function AdminOrdersManager() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+              </div>
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground font-medium">From:</span>
+                  <Input
+                    type="date"
+                    className="w-36 text-foreground h-9 px-2.5 py-1 text-xs"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground font-medium">To:</span>
+                  <Input
+                    type="date"
+                    className="w-36 text-foreground h-9 px-2.5 py-1 text-xs"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+                {(startDate || endDate) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setStartDate("");
+                      setEndDate("");
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-0">

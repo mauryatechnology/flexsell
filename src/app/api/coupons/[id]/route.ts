@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Coupon from "@/models/Coupon";
-import { verifyToken, getTokenFromCookie } from "@/lib/auth";
+import { requireAuth } from "@/lib/authGuard";
+import { couponSchema } from "@/lib/validators";
+import { ZodError } from "zod";
 
 interface RouteProps {
   params: Promise<{ id: string }>;
@@ -10,30 +12,25 @@ interface RouteProps {
 // PUT: Update coupon parameters (restricted to admins)
 export async function PUT(request: Request, { params }: RouteProps) {
   try {
+    const auth = await requireAuth("admin");
+    if (auth.error) return auth.error;
+
     await dbConnect();
-    const token = await getTokenFromCookie();
-    if (!token) {
-      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
-    }
-
-    const payload = verifyToken(token);
-    if (!payload || payload.role !== "admin") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-    }
-
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
     const body = await request.json();
-    const { code, discountType, discountValue, minOrderValue, maxDiscount, expiryDate, isActive } = body;
+    
+    // Parse partial coupon schema
+    const validatedData = couponSchema.partial().parse(body);
 
     const coupon = await Coupon.findById(id);
     if (!coupon) {
       return NextResponse.json({ message: "Coupon not found" }, { status: 404 });
     }
 
-    if (code !== undefined) {
-      const uppercaseCode = code.toUpperCase().trim();
+    if (validatedData.code !== undefined) {
+      const uppercaseCode = validatedData.code.toUpperCase().trim();
       if (uppercaseCode !== coupon.code) {
         // Verify code is unique
         const existing = await Coupon.findOne({ code: uppercaseCode });
@@ -44,17 +41,20 @@ export async function PUT(request: Request, { params }: RouteProps) {
       }
     }
 
-    if (discountType !== undefined) coupon.discountType = discountType;
-    if (discountValue !== undefined) coupon.discountValue = parseFloat(discountValue);
-    if (minOrderValue !== undefined) coupon.minOrderValue = parseFloat(minOrderValue) || 0;
-    if (maxDiscount !== undefined) coupon.maxDiscount = maxDiscount ? parseFloat(maxDiscount) : undefined;
-    if (expiryDate !== undefined) coupon.expiryDate = expiryDate;
-    if (isActive !== undefined) coupon.isActive = isActive;
+    if (validatedData.discountType !== undefined) coupon.discountType = validatedData.discountType;
+    if (validatedData.discountValue !== undefined) coupon.discountValue = validatedData.discountValue;
+    if (validatedData.minOrderValue !== undefined) coupon.minOrderValue = validatedData.minOrderValue;
+    if (validatedData.maxDiscount !== undefined) coupon.maxDiscount = validatedData.maxDiscount;
+    if (validatedData.expiryDate !== undefined) coupon.expiryDate = validatedData.expiryDate;
+    if (validatedData.isActive !== undefined) coupon.isActive = validatedData.isActive;
 
     await coupon.save();
 
     return NextResponse.json(coupon);
   } catch (error: any) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
+    }
     return NextResponse.json({ message: error.message || "Failed to update coupon" }, { status: 500 });
   }
 }
@@ -62,17 +62,10 @@ export async function PUT(request: Request, { params }: RouteProps) {
 // DELETE: Delete a coupon permanently (restricted to admins)
 export async function DELETE(request: Request, { params }: RouteProps) {
   try {
+    const auth = await requireAuth("admin");
+    if (auth.error) return auth.error;
+
     await dbConnect();
-    const token = await getTokenFromCookie();
-    if (!token) {
-      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
-    }
-
-    const payload = verifyToken(token);
-    if (!payload || payload.role !== "admin") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-    }
-
     const resolvedParams = await params;
     const { id } = resolvedParams;
 

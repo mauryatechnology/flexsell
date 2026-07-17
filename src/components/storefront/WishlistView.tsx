@@ -6,7 +6,11 @@ import { useWishlistStore } from "@/stores/wishlistStore";
 import { ProductCard } from "./ProductCard";
 
 export function WishlistView() {
-  const { items } = useWishlistStore();
+  const { items, syncWithDb } = useWishlistStore();
+
+  React.useEffect(() => {
+    syncWithDb();
+  }, [syncWithDb]);
 
   return (
     <div className="mx-auto max-w-8xl px-4 md:px-6 py-8 w-full">

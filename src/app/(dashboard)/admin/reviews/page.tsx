@@ -36,7 +36,7 @@ export default function AdminReviewsPage() {
     fetchReviews();
   }, []);
 
-  const handleUpdateStatus = async (id: string, newStatus: string) => {
+  const handleUpdateStatus = async (id: string, newStatus: "pending" | "approved" | "rejected") => {
     try {
       await reviewService.moderateReviewAdmin(id, newStatus);
       addToast(`Review status updated to ${newStatus}!`, "success");

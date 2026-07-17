@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { HsnRecord } from "@/types";
 import { hsnService } from "@/services/hsnService";
+import { handleApiError } from "@/lib/apiClient";
 
 interface HsnStoreState {
   hsns: HsnRecord[];
@@ -28,7 +29,7 @@ export const useHsnStore = create<HsnStoreState>()((set, get) => ({
       set({ hsns: data, isLoading: false });
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Failed to load HSN codes",
+        error: handleApiError(err, "Failed to load HSN codes"),
         isLoading: false
       });
     }
@@ -41,7 +42,7 @@ export const useHsnStore = create<HsnStoreState>()((set, get) => ({
       set((state) => ({ hsns: [...state.hsns, newRecord], isLoading: false }));
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Failed to add HSN code",
+        error: handleApiError(err, "Failed to add HSN code"),
         isLoading: false
       });
       throw err;
@@ -58,7 +59,7 @@ export const useHsnStore = create<HsnStoreState>()((set, get) => ({
       }));
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Failed to update HSN code",
+        error: handleApiError(err, "Failed to update HSN code"),
         isLoading: false
       });
       throw err;
@@ -75,7 +76,7 @@ export const useHsnStore = create<HsnStoreState>()((set, get) => ({
       }));
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Failed to delete HSN code",
+        error: handleApiError(err, "Failed to delete HSN code"),
         isLoading: false
       });
       throw err;

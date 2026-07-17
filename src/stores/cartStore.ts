@@ -1,16 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Product } from "@/types";
+import { Product, CartItem } from "@/types";
 import { useProductStore } from "./productStore";
 import { useToastStore } from "./toastStore";
-
-export interface CartItem {
-  id: string; // Dynamic combination of productID + selected variants
-  product: Product;
-  selectedVariants: Record<string, string>;
-  quantity: number;
-  pricePerUnit: number;
-}
+import { resolveVariantKeys } from "@/lib/variantMatcher";
 
 interface TaxBreakdown {
   hsnCode: string;
@@ -63,9 +56,7 @@ export const useCartStore = create<CartState>()(
         const storeProducts = useProductStore.getState().products;
         const liveProduct = storeProducts.find(p => p._id === product._id) || product;
 
-        const selectedColor = selectedVariants["Color"] || selectedVariants["color"] || "Default";
-        const selectedSize = selectedVariants["Pack Sizing"] || selectedVariants["Size"] || selectedVariants["size"];
-        const selectedWeight = selectedVariants["Weight Unit"] || selectedVariants["Weight"] || selectedVariants["weight"];
+        const { color: selectedColor, size: selectedSize, weight: selectedWeight } = resolveVariantKeys(selectedVariants);
 
         const matchedColorVariant = liveProduct.colorVariants?.find(
           cv => cv.color.toLowerCase() === selectedColor.toLowerCase()
@@ -125,6 +116,7 @@ export const useCartStore = create<CartState>()(
                 ...state.items,
                 {
                   id: itemId,
+                  productId: liveProduct._id,
                   product: liveProduct,
                   selectedVariants,
                   quantity: targetQty,
@@ -149,10 +141,8 @@ export const useCartStore = create<CartState>()(
 
         // Find live stock and MOQ boundaries
         const storeProducts = useProductStore.getState().products;
-        const liveProduct = storeProducts.find(p => p._id === item.product._id) || item.product;
-        const selectedColor = item.selectedVariants["Color"] || item.selectedVariants["color"] || "Default";
-        const selectedSize = item.selectedVariants["Pack Sizing"] || item.selectedVariants["Size"] || item.selectedVariants["size"];
-        const selectedWeight = item.selectedVariants["Weight Unit"] || item.selectedVariants["Weight"] || item.selectedVariants["weight"];
+        const liveProduct = storeProducts.find(p => p._id === item.productId) || item.product;
+        const { color: selectedColor, size: selectedSize, weight: selectedWeight } = resolveVariantKeys(item.selectedVariants);
 
         const matchedColorVariant = liveProduct.colorVariants?.find(
           cv => cv.color.toLowerCase() === selectedColor.toLowerCase()
@@ -212,8 +202,10 @@ export const useCartStore = create<CartState>()(
         let totalIgst = 0;
         let grandTotal = 0;
 
+        const storeProducts = useProductStore.getState().products;
+
         get().items.forEach((item) => {
-          const p = item.product;
+          const p = storeProducts.find(prod => prod._id === item.productId) || item.product;
           const rate = p.gstRate ?? 18;
           const hsn = p.hsnCode ?? "3924";
           const isIncl = p.priceIncludesGst ?? true;
@@ -288,6 +280,32 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "flexsell-cart-storage",
+      // Exclude full product from serialization to keep localStorage size minimal
+      partialize: (state) => ({
+        ...state,
+        items: state.items.map((item) => ({
+          id: item.id,
+          productId: item.productId || item.product._id,
+          selectedVariants: item.selectedVariants,
+          quantity: item.quantity,
+          pricePerUnit: item.pricePerUnit,
+        }))
+      }) as any,
+      // Hydrate product objects from the productStore upon rehydration
+      onRehydrateStorage: () => (state) => {
+        if (state && state.items) {
+          const storeProducts = useProductStore.getState().products;
+          state.items = state.items.map((item: any) => {
+            const productId = item.productId || item.product?._id;
+            const prod = storeProducts.find(p => p._id === productId);
+            return {
+              ...item,
+              productId,
+              product: prod || item.product
+            };
+          });
+        }
+      }
     }
   )
 );

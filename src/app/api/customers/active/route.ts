@@ -41,7 +41,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { name, phone, company, gstin, address, city, state, pinCode, email } = body;
+    const { name, phone, company, gstin, address, city, state, pinCode, email, wishlist } = body;
 
     const customer = await Customer.findById(payload.userId);
     if (!customer) {
@@ -57,6 +57,7 @@ export async function PUT(request: Request) {
     if (state !== undefined) customer.state = state;
     if (pinCode !== undefined) customer.pinCode = pinCode;
     if (email !== undefined) customer.email = email.toLowerCase();
+    if (wishlist !== undefined) customer.wishlist = wishlist;
 
     // Recalculate initials if name changed
     if (name) {

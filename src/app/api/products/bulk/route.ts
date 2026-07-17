@@ -4,6 +4,7 @@ import Product from "@/models/Product";
 import Category from "@/models/Category";
 import { generateNextId } from "@/lib/idGenerator";
 import HsnRecord from "@/models/HsnRecord";
+import { requireAuth } from "@/lib/authGuard";
 
 // Helper to generate a slug from title
 function generateSlug(title: string): string {
@@ -269,6 +270,35 @@ export async function POST(request: Request) {
   } catch (error: any) {
     return NextResponse.json(
       { message: error.message || "Failed to process bulk upload" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const auth = await requireAuth("admin");
+    if (auth.error) return auth.error;
+
+    await dbConnect();
+    const { ids } = await request.json();
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { message: "Invalid payload. 'ids' must be a non-empty array." },
+        { status: 400 }
+      );
+    }
+
+    const deleteResult = await Product.deleteMany({ _id: { $in: ids } });
+    return NextResponse.json({
+      success: true,
+      message: `Successfully deleted ${deleteResult.deletedCount} products in bulk.`,
+      deletedCount: deleteResult.deletedCount
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || "Failed to bulk delete products" },
       { status: 500 }
     );
   }

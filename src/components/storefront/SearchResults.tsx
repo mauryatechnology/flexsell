@@ -85,12 +85,29 @@ export function SearchResults({ query, initialProducts, initialCategories }: Sea
   // Search Results base match list
   const results = React.useMemo(() => {
     if (!lowercaseQuery) return activeProducts;
-    return activeProducts.filter(p =>
-      p.title.toLowerCase().includes(lowercaseQuery) ||
-      p.description.toLowerCase().includes(lowercaseQuery) ||
-      p.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
-    );
-  }, [activeProducts, lowercaseQuery]);
+    return activeProducts.filter(p => {
+      // 1. Title, Description, and Tags match
+      const basicMatch = 
+        p.title.toLowerCase().includes(lowercaseQuery) ||
+        (p.description || "").toLowerCase().includes(lowercaseQuery) ||
+        p.tags?.some(tag => tag.toLowerCase().includes(lowercaseQuery));
+      if (basicMatch) return true;
+
+      // 2. Category Name match
+      const category = categories.find(c => c._id === p.categoryId);
+      if (category && category.name.toLowerCase().includes(lowercaseQuery)) {
+        return true;
+      }
+
+      // 3. Variant SKU match
+      const skuMatch = p.colorVariants?.some(cv =>
+        cv.subVariants?.some(sv => (sv.sku || "").toLowerCase().includes(lowercaseQuery))
+      );
+      if (skuMatch) return true;
+
+      return false;
+    });
+  }, [activeProducts, lowercaseQuery, categories]);
 
   const handleCategoryToggle = (catId: string) => {
     setSelectedCategories(prev =>

@@ -5,16 +5,26 @@ import bcrypt from "bcryptjs";
 import { signToken, setTokenCookie } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhookDispatcher";
 import { generateNextId } from "@/lib/idGenerator";
+import { rateLimit } from "@/lib/rateLimit";
+import { registerSchema } from "@/lib/validators";
+import { ZodError } from "zod";
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    const limitCheck = rateLimit(ip, 3, 60000); // 3 registrations per minute max
+
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { message: "Too many registration attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     await dbConnect();
     const body = await req.json();
-    const { name, email, password, company, address, city, state, pinCode, phone, gstin } = body;
-
-    if (!name || !email || !password || !address || !city || !state || !pinCode || !phone) {
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
-    }
+    const validatedData = registerSchema.parse(body);
+    const { name, email, password, company, address, city, state, pinCode, phone, gstin } = validatedData;
 
     // Check if email already exists
     const existingCustomer = await Customer.findOne({ email: email.toLowerCase() });
@@ -85,6 +95,10 @@ export async function POST(req: Request) {
       customer: customerObj,
     }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof ZodError) {
+      const firstError = error.issues[0]?.message || "Validation failed";
+      return NextResponse.json({ message: firstError }, { status: 400 });
+    }
     console.error("Register error:", error);
     return NextResponse.json({ message: error.message || "Registration failed" }, { status: 500 });
   }

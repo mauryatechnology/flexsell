@@ -47,7 +47,24 @@ export const productService = {
       const products = await ProductModel.find({}).sort({ createdAt: -1 }).lean();
       return JSON.parse(JSON.stringify(products));
     }
-    return apiClient.get<Product[]>("/products");
+    
+    return apiClient.get<Product[]>("/products")
+      .then(products => {
+        try {
+          localStorage.setItem("flexsell-products-cache", JSON.stringify(products));
+        } catch (e) {}
+        return products;
+      })
+      .catch(err => {
+        try {
+          const cached = localStorage.getItem("flexsell-products-cache");
+          if (cached) {
+            console.warn("Serving catalog from offline cache due to network failure");
+            return JSON.parse(cached);
+          }
+        } catch (e) {}
+        throw err;
+      });
   },
 
   async getProductById(id: string): Promise<Product> {
@@ -175,5 +192,26 @@ export const productService = {
       return;
     }
     return apiClient.delete<void>(`/products/${id}`);
+  },
+
+  async bulkDeleteProducts(ids: string[]): Promise<void> {
+    if (isMockMode) {
+      await delay();
+      const products = getMockProducts();
+      const newProducts = products.filter((p) => !ids.includes(p._id));
+      saveMockProducts(newProducts);
+      return;
+    }
+    if (typeof window === "undefined") {
+      const dbConnect = (await import("@/lib/dbConnect")).default;
+      await dbConnect();
+      const ProductModel = (await import("@/models/Product")).default;
+      await ProductModel.deleteMany({ _id: { $in: ids } });
+      return;
+    }
+    return apiClient.delete<void>("/products/bulk", {
+      body: JSON.stringify({ ids }),
+      headers: { "Content-Type": "application/json" }
+    });
   },
 };

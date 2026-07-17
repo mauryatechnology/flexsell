@@ -43,7 +43,7 @@ export default function AdminSettingsPage() {
   // Webhook states
   const [webhooks, setWebhooks] = React.useState<any[]>([]);
   const [webhookUrl, setWebhookUrl] = React.useState("");
-  const [webhookEvent, setWebhookEvent] = React.useState("order.created");
+  const [webhookEvent, setWebhookEvent] = React.useState<"order.created" | "order.status_updated" | "customer.created">("order.created");
   const [isSubmittingWebhook, setIsSubmittingWebhook] = React.useState(false);
 
   const fetchWebhooks = async () => {
@@ -373,7 +373,7 @@ export default function AdminSettingsPage() {
                     <label className="text-xs font-bold text-muted-foreground uppercase">Target Event *</label>
                     <select 
                       value={webhookEvent} 
-                      onChange={(e) => setWebhookEvent(e.target.value)} 
+                      onChange={(e) => setWebhookEvent(e.target.value as "order.created" | "order.status_updated" | "customer.created")} 
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     >
                       <option value="order.created">order.created (On Checkout)</option>

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Product from "@/models/Product";
+import { requireAuth } from "@/lib/authGuard";
+import { productSchema } from "@/lib/validators";
+import { ZodError } from "zod";
 
 export async function GET(
   request: Request,
@@ -26,13 +29,18 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth("admin");
+    if (auth.error) return auth.error;
+
     await dbConnect();
     const { id } = await params;
     const body = await request.json();
     
+    const validatedData = productSchema.partial().parse(body);
+    
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
-      { $set: body },
+      { $set: validatedData },
       { new: true, runValidators: true }
     );
     
@@ -42,6 +50,9 @@ export async function PUT(
     
     return NextResponse.json(updatedProduct);
   } catch (error: any) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
+    }
     return NextResponse.json({ message: error.message || "Failed to update product" }, { status: 500 });
   }
 }
@@ -51,6 +62,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth("admin");
+    if (auth.error) return auth.error;
+
     await dbConnect();
     const { id } = await params;
     

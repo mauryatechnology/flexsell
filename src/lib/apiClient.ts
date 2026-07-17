@@ -38,6 +38,18 @@ async function request<T>(
     headers.set("Content-Type", "application/json");
   }
 
+  // Inject CSRF token from cookie for state-changing methods in browser environment
+  if (typeof window !== "undefined" && typeof document !== "undefined") {
+    const method = options.method?.toUpperCase() || "GET";
+    if (["POST", "PUT", "DELETE"].includes(method)) {
+      const matches = document.cookie.match(/csrf_token=([^;]+)/);
+      const csrfToken = matches ? matches[1] : null;
+      if (csrfToken) {
+        headers.set("X-CSRF-Token", csrfToken);
+      }
+    }
+  }
+
   const config: RequestInit = {
     ...options,
     headers,
@@ -96,3 +108,14 @@ export const apiClient = {
   delete: <T>(path: string, options?: RequestInit) => 
     request<T>(path, { ...options, method: "DELETE" }),
 };
+
+export function handleApiError(error: unknown, fallbackMessage: string = "An unexpected error occurred"): string {
+  console.error("API error encountered:", error);
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallbackMessage;
+}

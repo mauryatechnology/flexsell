@@ -1,19 +1,27 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Category from "@/models/Category";
+import { requireAuth } from "@/lib/authGuard";
+import { categorySchema } from "@/lib/validators";
+import { ZodError } from "zod";
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth("admin");
+    if (auth.error) return auth.error;
+
     await dbConnect();
     const { id } = await params;
     const body = await request.json();
     
+    const validatedData = categorySchema.partial().parse(body);
+    
     const updatedCategory = await Category.findByIdAndUpdate(
       id,
-      { $set: body },
+      { $set: validatedData },
       { new: true, runValidators: true }
     );
     
@@ -23,6 +31,9 @@ export async function PUT(
     
     return NextResponse.json(updatedCategory);
   } catch (error: any) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
+    }
     return NextResponse.json({ message: error.message || "Failed to update category" }, { status: 500 });
   }
 }
@@ -32,6 +43,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth("admin");
+    if (auth.error) return auth.error;
+
     await dbConnect();
     const { id } = await params;
     

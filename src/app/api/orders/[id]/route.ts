@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
-import { verifyToken, getTokenFromCookie } from "@/lib/auth";
+import { requireAuth } from "@/lib/authGuard";
+import { orderSchema } from "@/lib/validators";
+import { ZodError } from "zod";
+import { resolveVariantKeys } from "@/lib/variantMatcher";
 
 interface RouteProps {
   params: Promise<{ id: string }>;
@@ -11,17 +14,11 @@ interface RouteProps {
 // GET: Retrieve a specific order by ID
 export async function GET(request: Request, { params }: RouteProps) {
   try {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const payload = auth.payload!;
+
     await dbConnect();
-    const token = await getTokenFromCookie();
-    if (!token) {
-      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
-    }
-
-    const payload = verifyToken(token);
-    if (!payload) {
-      return NextResponse.json({ message: "Invalid session" }, { status: 401 });
-    }
-
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
@@ -44,17 +41,10 @@ export async function GET(request: Request, { params }: RouteProps) {
 // PUT: Modify order details (quantities, items, shipping address) - Restricted to Admin
 export async function PUT(request: Request, { params }: RouteProps) {
   try {
+    const auth = await requireAuth("admin");
+    if (auth.error) return auth.error;
+
     await dbConnect();
-    const token = await getTokenFromCookie();
-    if (!token) {
-      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
-    }
-
-    const payload = verifyToken(token);
-    if (!payload || payload.role !== "admin") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-    }
-
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
@@ -64,63 +54,103 @@ export async function PUT(request: Request, { params }: RouteProps) {
     }
 
     const body = await request.json();
-    const { items, amount, shippingAddress, status } = body;
+    
+    // Validate request body
+    const validatedData = orderSchema.partial().parse(body);
+    const { items, amount, shippingAddress, status } = validatedData;
 
     // Save previous stock changes if items are modified
     if (items) {
-      // Restore previous stock first
+      // 1. Restore previous stock first
       for (const oldItem of order.items) {
         try {
           const dbProduct = await Product.findById(oldItem.product._id);
           if (!dbProduct) continue;
 
-          const color = oldItem.selectedVariants["Color"] || oldItem.selectedVariants["color"] || "Default";
-          const size = oldItem.selectedVariants["Pack Sizing"] || oldItem.selectedVariants["Size"] || oldItem.selectedVariants["size"];
-          const weight = oldItem.selectedVariants["Weight Unit"] || oldItem.selectedVariants["Weight"] || oldItem.selectedVariants["weight"];
+          const { color, size, weight } = resolveVariantKeys(oldItem.selectedVariants);
 
           const cv = dbProduct.colorVariants?.find((c: any) => c.color.toLowerCase() === color.toLowerCase());
-          if (cv && cv.subVariants) {
-            const sv = cv.subVariants.find((s: any) => 
-              (!size || s.size.toLowerCase() === size.toLowerCase()) && 
-              (!weight || s.weight.toLowerCase() === weight.toLowerCase())
-            );
-            if (sv) {
-              sv.stock += oldItem.quantity; // Restore
-              dbProduct.totalStock = dbProduct.colorVariants.reduce((sum: number, c: any) => 
-                sum + (c.subVariants?.reduce((sSum: number, s: any) => sSum + s.stock, 0) || 0)
-              , 0);
-              await dbProduct.save();
+          if (!cv) continue;
+
+          const sv = cv.subVariants?.find((s: any) => 
+            (!size || s.size.toLowerCase() === size.toLowerCase()) && 
+            (!weight || s.weight.toLowerCase() === weight.toLowerCase())
+          );
+          if (!sv) continue;
+
+          // Atomic restore
+          await Product.updateOne(
+            {
+              _id: oldItem.product._id,
+              "colorVariants.color": cv.color,
+              "colorVariants.subVariants": {
+                $elemMatch: {
+                  size: sv.size,
+                  weight: sv.weight
+                }
+              }
+            },
+            {
+              $inc: {
+                "colorVariants.$[cv].subVariants.$[sv].stock": oldItem.quantity,
+                totalStock: oldItem.quantity
+              }
+            },
+            {
+              arrayFilters: [
+                { "cv.color": cv.color },
+                { "sv.size": sv.size, "sv.weight": sv.weight }
+              ]
             }
-          }
+          );
         } catch (err) {
           console.error("Failed to restore stock during order edit:", oldItem, err);
         }
       }
 
-      // Deduct new stock
+      // 2. Deduct new stock
       for (const newItem of items) {
         try {
           const dbProduct = await Product.findById(newItem.product._id);
           if (!dbProduct) continue;
 
-          const color = newItem.selectedVariants["Color"] || newItem.selectedVariants["color"] || "Default";
-          const size = newItem.selectedVariants["Pack Sizing"] || newItem.selectedVariants["Size"] || newItem.selectedVariants["size"];
-          const weight = newItem.selectedVariants["Weight Unit"] || newItem.selectedVariants["Weight"] || newItem.selectedVariants["weight"];
+          const { color, size, weight } = resolveVariantKeys(newItem.selectedVariants);
 
           const cv = dbProduct.colorVariants?.find((c: any) => c.color.toLowerCase() === color.toLowerCase());
-          if (cv && cv.subVariants) {
-            const sv = cv.subVariants.find((s: any) => 
-              (!size || s.size.toLowerCase() === size.toLowerCase()) && 
-              (!weight || s.weight.toLowerCase() === weight.toLowerCase())
-            );
-            if (sv) {
-              sv.stock = Math.max(0, sv.stock - newItem.quantity); // Deduct
-              dbProduct.totalStock = dbProduct.colorVariants.reduce((sum: number, c: any) => 
-                sum + (c.subVariants?.reduce((sSum: number, s: any) => sSum + s.stock, 0) || 0)
-              , 0);
-              await dbProduct.save();
+          if (!cv) continue;
+
+          const sv = cv.subVariants?.find((s: any) => 
+            (!size || s.size.toLowerCase() === size.toLowerCase()) && 
+            (!weight || s.weight.toLowerCase() === weight.toLowerCase())
+          );
+          if (!sv) continue;
+
+          // Atomic deduct
+          await Product.updateOne(
+            {
+              _id: newItem.product._id,
+              "colorVariants.color": cv.color,
+              "colorVariants.subVariants": {
+                $elemMatch: {
+                  size: sv.size,
+                  weight: sv.weight,
+                  stock: { $gte: newItem.quantity }
+                }
+              }
+            },
+            {
+              $inc: {
+                "colorVariants.$[cv].subVariants.$[sv].stock": -newItem.quantity,
+                totalStock: -newItem.quantity
+              }
+            },
+            {
+              arrayFilters: [
+                { "cv.color": cv.color },
+                { "sv.size": sv.size, "sv.weight": sv.weight }
+              ]
             }
-          }
+          );
         } catch (err) {
           console.error("Failed to deduct stock during order edit:", newItem, err);
         }
@@ -156,6 +186,9 @@ export async function PUT(request: Request, { params }: RouteProps) {
 
     return NextResponse.json(order);
   } catch (error: any) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
+    }
     return NextResponse.json({ message: error.message || "Failed to update order" }, { status: 500 });
   }
 }
@@ -163,17 +196,10 @@ export async function PUT(request: Request, { params }: RouteProps) {
 // DELETE: Cancel or Delete order permanently
 export async function DELETE(request: Request, { params }: RouteProps) {
   try {
+    const auth = await requireAuth("admin");
+    if (auth.error) return auth.error;
+
     await dbConnect();
-    const token = await getTokenFromCookie();
-    if (!token) {
-      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
-    }
-
-    const payload = verifyToken(token);
-    if (!payload || payload.role !== "admin") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-    }
-
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
@@ -182,30 +208,48 @@ export async function DELETE(request: Request, { params }: RouteProps) {
       return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }
 
-    // Restore all items stock upon cancellation/deletion
+    // Restore all items stock upon cancellation/deletion atomically
     for (const oldItem of order.items) {
       try {
         const dbProduct = await Product.findById(oldItem.product._id);
         if (!dbProduct) continue;
 
-        const color = oldItem.selectedVariants["Color"] || oldItem.selectedVariants["color"] || "Default";
-        const size = oldItem.selectedVariants["Pack Sizing"] || oldItem.selectedVariants["Size"] || oldItem.selectedVariants["size"];
-        const weight = oldItem.selectedVariants["Weight Unit"] || oldItem.selectedVariants["Weight"] || oldItem.selectedVariants["weight"];
+        const { color, size, weight } = resolveVariantKeys(oldItem.selectedVariants);
 
         const cv = dbProduct.colorVariants?.find((c: any) => c.color.toLowerCase() === color.toLowerCase());
-        if (cv && cv.subVariants) {
-          const sv = cv.subVariants.find((s: any) => 
-            (!size || s.size.toLowerCase() === size.toLowerCase()) && 
-            (!weight || s.weight.toLowerCase() === weight.toLowerCase())
-          );
-          if (sv) {
-            sv.stock += oldItem.quantity; // Restore
-            dbProduct.totalStock = dbProduct.colorVariants.reduce((sum: number, c: any) => 
-              sum + (c.subVariants?.reduce((sSum: number, s: any) => sSum + s.stock, 0) || 0)
-            , 0);
-            await dbProduct.save();
+        if (!cv) continue;
+
+        const sv = cv.subVariants?.find((s: any) => 
+          (!size || s.size.toLowerCase() === size.toLowerCase()) && 
+          (!weight || s.weight.toLowerCase() === weight.toLowerCase())
+        );
+        if (!sv) continue;
+
+        // Atomic restore
+        await Product.updateOne(
+          {
+            _id: oldItem.product._id,
+            "colorVariants.color": cv.color,
+            "colorVariants.subVariants": {
+              $elemMatch: {
+                size: sv.size,
+                weight: sv.weight
+              }
+            }
+          },
+          {
+            $inc: {
+              "colorVariants.$[cv].subVariants.$[sv].stock": oldItem.quantity,
+              totalStock: oldItem.quantity
+            }
+          },
+          {
+            arrayFilters: [
+              { "cv.color": cv.color },
+              { "sv.size": sv.size, "sv.weight": sv.weight }
+            ]
           }
-        }
+        );
       } catch (err) {
         console.error("Failed to restore stock during order deletion:", oldItem, err);
       }

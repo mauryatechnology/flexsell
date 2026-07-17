@@ -54,11 +54,32 @@ function saveMockAddresses(addresses: SavedAddress[]) {
   localStorage.setItem(ADDRESS_STORAGE_KEY, JSON.stringify(addresses));
 }
 
+const CUSTOMER_STORAGE_KEY = "flexsell-active-customer-storage";
+
+function getMockActiveCustomer(): Customer {
+  if (typeof window === "undefined") return staticActiveCustomer;
+  const stored = localStorage.getItem(CUSTOMER_STORAGE_KEY);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error("Error parsing mock active customer", e);
+    }
+  }
+  saveMockActiveCustomer(staticActiveCustomer);
+  return staticActiveCustomer;
+}
+
+function saveMockActiveCustomer(customer: Customer) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(customer));
+}
+
 export const customerService = {
   async getCustomers(): Promise<Customer[]> {
     if (isMockMode) {
       await delay();
-      return staticCustomers;
+      return [getMockActiveCustomer()];
     }
     return apiClient.get<Customer[]>("/customers");
   },
@@ -66,7 +87,7 @@ export const customerService = {
   async getActiveCustomer(): Promise<Customer> {
     if (isMockMode) {
       await delay();
-      return staticActiveCustomer;
+      return getMockActiveCustomer();
     }
     return apiClient.get<Customer>("/customers/active");
   },
@@ -74,8 +95,10 @@ export const customerService = {
   async updateActiveCustomer(data: Partial<Customer>): Promise<Customer> {
     if (isMockMode) {
       await delay();
-      Object.assign(staticActiveCustomer, data);
-      return staticActiveCustomer;
+      const current = getMockActiveCustomer();
+      const updated = { ...current, ...data };
+      saveMockActiveCustomer(updated);
+      return updated;
     }
     return apiClient.put<Customer>("/customers/active", data);
   },

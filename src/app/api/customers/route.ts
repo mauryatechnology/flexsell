@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 import { generateNextId } from "@/lib/idGenerator";
 
 // GET: Fetch all customers (restricted to admins)
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await dbConnect();
     const token = await getTokenFromCookie();
@@ -19,8 +19,31 @@ export async function GET() {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
+    const query = { role: { $ne: "admin" } };
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get("page");
+    const limit = searchParams.get("limit");
+
+    if (page && limit) {
+      const pageNum = parseInt(page, 10) || 1;
+      const limitNum = parseInt(limit, 10) || 20;
+      const skip = (pageNum - 1) * limitNum;
+
+      const [customers, total] = await Promise.all([
+        Customer.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+        Customer.countDocuments(query)
+      ]);
+
+      return NextResponse.json({
+        customers,
+        total,
+        page: pageNum,
+        totalPages: Math.ceil(total / limitNum)
+      });
+    }
+
     // Filter out admin accounts
-    const customers = await Customer.find({ role: { $ne: "admin" } }).sort({ createdAt: -1 });
+    const customers = await Customer.find(query).sort({ createdAt: -1 });
     return NextResponse.json(customers);
   } catch (error: any) {
     return NextResponse.json({ message: error.message || "Failed to fetch customers" }, { status: 500 });

@@ -33,7 +33,8 @@ const CustomerSchema = new Schema<CustomerType & Document>(
     phone: { type: String, required: true },
     initials: { type: String, required: true },
     gstin: { type: String },
-    addresses: [SavedAddressSchema]
+    addresses: [SavedAddressSchema],
+    wishlist: [{ type: String }]
   },
   { timestamps: true }
 );

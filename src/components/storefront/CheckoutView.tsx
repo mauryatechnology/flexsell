@@ -72,6 +72,16 @@ export function CheckoutView() {
   const [phone, setPhone] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  // Payment states
+  const [paymentMethod, setPaymentMethod] = React.useState<"Razorpay" | "Bank Transfer">("Razorpay");
+  const [bankRefNumber, setBankRefNumber] = React.useState("");
+  const [showPaymentSimulation, setShowPaymentSimulation] = React.useState(false);
+  const [paymentCardName, setPaymentCardName] = React.useState("");
+  const [paymentCardNumber, setPaymentCardNumber] = React.useState("");
+  const [paymentCardExpiry, setPaymentCardExpiry] = React.useState("");
+  const [paymentCardCvv, setPaymentCardCvv] = React.useState("");
+  const [isPaying, setIsPaying] = React.useState(false);
+
   // Coupon states
   const [couponCode, setCouponCode] = React.useState("");
   const [appliedCoupon, setAppliedCoupon] = React.useState<any>(null);
@@ -136,6 +146,7 @@ export function CheckoutView() {
         }
       } catch (err) {
         console.error("Failed to load active customer:", err);
+        router.push("/login?callbackUrl=/checkout");
       }
     };
     loadCustomer();
@@ -224,6 +235,52 @@ export function CheckoutView() {
     setBuyerState(val);
   };
 
+  const handleConfirmRazorpayPayment = async (simulateStatus: "success" | "failure") => {
+    if (simulateStatus === "failure") {
+      alert("Payment failed. Please verify your card details or select an alternative payment method.");
+      setShowPaymentSimulation(false);
+      return;
+    }
+
+    setIsPaying(true);
+    try {
+      const shippingAddress = {
+        firstName,
+        lastName,
+        email,
+        company: company || undefined,
+        address,
+        apartment: apartment || undefined,
+        city,
+        state,
+        pinCode,
+        phone,
+        gstin: gstin || undefined
+      };
+
+      const txnId = "pay_" + Math.random().toString(36).substring(2, 10).toUpperCase();
+
+      const orderId = await createOrder(
+        items,
+        Math.max(0, grandTotal - couponDiscount),
+        shippingAddress,
+        {
+          paymentMethod: "Razorpay",
+          paymentStatus: "Paid",
+          transactionId: txnId
+        }
+      );
+
+      clearCart();
+      setShowPaymentSimulation(false);
+      router.push(`/order-confirmation/${orderId}`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to process payment. Please try again.");
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -257,20 +314,35 @@ export function CheckoutView() {
       gstin: gstin || undefined
     };
 
+    if (paymentMethod === "Razorpay") {
+      setShowPaymentSimulation(true);
+      return;
+    }
+
+    if (paymentMethod === "Bank Transfer" && !bankRefNumber) {
+      alert("Please enter the transaction reference number (UTR) for the bank wire transfer.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // Create B2B order using the dynamic grandTotal less coupon discount
-      const orderId = await createOrder(items, Math.max(0, grandTotal - couponDiscount), shippingAddress);
+      // Create B2B order using the bank wire mode
+      const orderId = await createOrder(
+        items, 
+        Math.max(0, grandTotal - couponDiscount), 
+        shippingAddress,
+        {
+          paymentMethod: "Bank Transfer",
+          paymentStatus: "Pending",
+          transactionId: bankRefNumber
+        }
+      );
 
       // Clear shopping cart
       clearCart();
 
-      // Redirect to client or admin orders depending on who is placing the order
-      if (currentUser?.role === "admin") {
-        router.push(`/admin/orders?success=${orderId}`);
-      } else {
-        router.push(`/client/orders?success=${orderId}`);
-      }
+      // Redirect to the professional order confirmation page
+      router.push(`/order-confirmation/${orderId}`);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to place order. Please try again.");
     } finally {
@@ -440,16 +512,82 @@ export function CheckoutView() {
               <CardTitle>Payment Method</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="border rounded-md p-4 bg-secondary/30 border-border">
-                <div className="flex items-center gap-3">
-                  <input type="radio" id="cod" name="payment" defaultChecked className="text-primary focus:ring-primary bg-background border-border" />
-                  <label htmlFor="cod" className="font-medium text-foreground">Cash on Delivery (COD)</label>
+              <div 
+                className={`border rounded-md p-4 cursor-pointer transition-colors ${
+                  paymentMethod === "Razorpay" 
+                    ? "bg-primary/5 border-primary" 
+                    : "bg-secondary/30 border-border hover:bg-secondary/50"
+                }`}
+                onClick={() => setPaymentMethod("Razorpay")}
+              >
+                <div className="flex items-start gap-3">
+                  <input 
+                    type="radio" 
+                    id="razorpay" 
+                    name="payment" 
+                    checked={paymentMethod === "Razorpay"}
+                    onChange={() => setPaymentMethod("Razorpay")}
+                    className="mt-1 text-primary focus:ring-primary bg-background border-border" 
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="razorpay" className="font-semibold text-foreground cursor-pointer block">
+                      Razorpay Online Checkout
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Pay instantly using corporate credit cards, net banking, or corporate wallets.
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="border rounded-md p-4 opacity-50 cursor-not-allowed border-border">
-                <div className="flex items-center gap-3">
-                  <input type="radio" id="online" name="payment" disabled />
-                  <label htmlFor="online" className="font-medium text-muted-foreground">Credit/Debit Card, UPI (Coming Soon)</label>
+
+              <div 
+                className={`border rounded-md p-4 cursor-pointer transition-colors ${
+                  paymentMethod === "Bank Transfer" 
+                    ? "bg-primary/5 border-primary" 
+                    : "bg-secondary/30 border-border hover:bg-secondary/50"
+                }`}
+                onClick={() => setPaymentMethod("Bank Transfer")}
+              >
+                <div className="flex items-start gap-3">
+                  <input 
+                    type="radio" 
+                    id="bank" 
+                    name="payment" 
+                    checked={paymentMethod === "Bank Transfer"}
+                    onChange={() => setPaymentMethod("Bank Transfer")}
+                    className="mt-1 text-primary focus:ring-primary bg-background border-border" 
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="bank" className="font-semibold text-foreground cursor-pointer block">
+                      Direct Bank Wire (RTGS / NEFT / IMPS)
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Send funds directly to our corporate bank account. Goods will be dispatched after receipt verification.
+                    </p>
+                    
+                    {paymentMethod === "Bank Transfer" && (
+                      <div className="mt-4 pt-4 border-t border-dashed border-border/80 space-y-3">
+                        <div className="bg-secondary/40 p-3 rounded text-xs space-y-1">
+                          <p><span className="font-bold text-muted-foreground">Bank:</span> HDFC Bank</p>
+                          <p><span className="font-bold text-muted-foreground">A/C Name:</span> FlexSell Wholesale Pvt Ltd</p>
+                          <p><span className="font-bold text-muted-foreground">A/C Number:</span> 50200084596321</p>
+                          <p><span className="font-bold text-muted-foreground">IFSC Code:</span> HDFC0000182</p>
+                          <p><span className="font-bold text-muted-foreground">Branch:</span> Ring Road, Surat</p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-foreground block">
+                            Bank Reference / UTR Number <span className="text-destructive">*</span>
+                          </label>
+                          <Input
+                            placeholder="Enter 12-digit UTR/Txn ID"
+                            value={bankRefNumber}
+                            onChange={(e) => setBankRefNumber(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -575,6 +713,114 @@ export function CheckoutView() {
           </Card>
         </div>
       </form>
+
+      {/* Razorpay Online Payment Gateway Simulation Dialog */}
+      {showPaymentSimulation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-background border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+            {/* Razorpay Header Bar */}
+            <div className="bg-[#1A253C] text-white p-5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="h-7 w-7 rounded bg-blue-500 flex items-center justify-center font-bold text-white text-sm">R</div>
+                <div>
+                  <h3 className="font-bold text-sm leading-none">Razorpay Secure</h3>
+                  <span className="text-[10px] text-gray-400">FlexSell Wholesale Gateway</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-gray-400 block font-medium">AMOUNT</span>
+                <span className="font-mono font-bold text-sm text-blue-400">
+                  {formatPrice(Math.max(0, grandTotal - couponDiscount))}
+                </span>
+              </div>
+            </div>
+
+            {/* Simulated Form Details */}
+            <div className="p-6 space-y-5">
+              <div className="bg-blue-500/5 border border-blue-500/10 p-3.5 rounded-lg text-xs leading-relaxed text-blue-600 dark:text-blue-400">
+                <strong>Simulated Sandbox:</strong> Verify card credentials and choose payment outcome. No real money will be charged.
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase">Card Holder Name</label>
+                  <Input 
+                    placeholder="e.g. John Doe Corp" 
+                    value={paymentCardName}
+                    onChange={(e) => setPaymentCardName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase">Card Number</label>
+                  <Input 
+                    placeholder="4111 2222 3333 4444" 
+                    value={paymentCardNumber}
+                    onChange={(e) => setPaymentCardNumber(e.target.value)}
+                    maxLength={19}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-muted-foreground uppercase">Expiry Date</label>
+                    <Input 
+                      placeholder="MM/YY" 
+                      value={paymentCardExpiry}
+                      onChange={(e) => setPaymentCardExpiry(e.target.value)}
+                      maxLength={5}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-muted-foreground uppercase">CVV / CVN</label>
+                    <Input 
+                      type="password" 
+                      placeholder="•••" 
+                      value={paymentCardCvv}
+                      onChange={(e) => setPaymentCardCvv(e.target.value)}
+                      maxLength={3}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-col gap-2.5">
+                <Button 
+                  type="button" 
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm h-11"
+                  onClick={() => handleConfirmRazorpayPayment("success")}
+                  disabled={isPaying}
+                >
+                  {isPaying ? "Processing Payment..." : "Simulate Payment Success"}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-semibold text-xs h-10"
+                  onClick={() => handleConfirmRazorpayPayment("failure")}
+                  disabled={isPaying}
+                >
+                  Simulate Payment Failure
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost"
+                  className="w-full text-xs text-muted-foreground hover:text-foreground h-9"
+                  onClick={() => setShowPaymentSimulation(false)}
+                  disabled={isPaying}
+                >
+                  Cancel and go back
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

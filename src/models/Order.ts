@@ -47,6 +47,9 @@ const OrderSchema = new Schema<OrderType & Document>(
     items: [{ type: Schema.Types.Mixed, required: true }],
     shipmentDetails: { type: ShipmentDetailsSchema },
     history: [HistoryEventSchema],
+    paymentMethod: { type: String, enum: ["Bank Transfer", "Razorpay", "UPI"] },
+    paymentStatus: { type: String, enum: ["Pending", "Paid", "Failed"], default: "Pending" },
+    transactionId: { type: String },
   },
   { timestamps: true }
 );

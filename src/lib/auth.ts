@@ -1,7 +1,10 @@
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret_key";
+const JWT_SECRET = process.env.JWT_SECRET as string;
+if (!JWT_SECRET) {
+  throw new Error("FATAL: JWT_SECRET environment variable is not defined!");
+}
 const TOKEN_EXPIRY = "7d"; // 7 days
 
 export interface JWTPayload {
@@ -31,12 +34,29 @@ export async function setTokenCookie(token: string) {
     maxAge: 7 * 24 * 60 * 60, // 7 days
     path: "/",
   });
+
+  // Generate and set csrf_token cookie (httpOnly: false so it's readable by client-side apiClient)
+  const { generateCsrfToken } = await import("@/lib/csrf");
+  cookieStore.set("csrf_token", generateCsrfToken(), {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60,
+    path: "/",
+  });
 }
 
 export async function removeTokenCookie() {
   const cookieStore = await cookies();
   cookieStore.set("token", "", {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 0,
+    path: "/",
+  });
+  cookieStore.set("csrf_token", "", {
+    httpOnly: false,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: 0,

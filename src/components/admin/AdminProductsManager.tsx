@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -26,7 +27,7 @@ interface AdminProductsManagerProps {
 }
 
 export function AdminProductsManager({ initialProducts, initialCategories }: AdminProductsManagerProps) {
-  const { products, initializeProducts, updateProduct, deleteProduct } = useProductStore();
+  const { products, initializeProducts, updateProduct, deleteProduct, bulkDeleteProducts } = useProductStore();
   const { categories, initializeCategories } = useCategoryStore();
   const { hsns, initializeHsns } = useHsnStore();
   const { addToast } = useToastStore();
@@ -146,19 +147,29 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
     return processedProducts.slice(start, start + ITEMS_PER_PAGE);
   }, [processedProducts, currentPage]);
 
-  const toggleProductActive = async (id: string, currentStatus: boolean) => {
-    try {
-      await updateProduct(id, { isActive: !currentStatus });
-      addToast(
-        `Product status toggled to ${!currentStatus ? "Active" : "Inactive"}.`,
-        "success"
-      );
-    } catch (err) {
-      addToast(
-        err instanceof Error ? err.message : "Failed to toggle product status",
-        "error"
-      );
-    }
+  const toggleProductActive = (id: string, currentStatus: boolean) => {
+    const product = activeProducts.find(p => p._id === id);
+    confirmAction({
+      title: currentStatus ? "Deactivate Product" : "Activate Product",
+      message: `Are you sure you want to ${currentStatus ? "deactivate (hide)" : "activate (show)"} the product "${product?.title || 'this item'}" on the storefront?`,
+      confirmText: currentStatus ? "Deactivate" : "Activate",
+      cancelText: "Cancel",
+      type: currentStatus ? "danger" : "info",
+      onConfirm: async () => {
+        try {
+          await updateProduct(id, { isActive: !currentStatus });
+          addToast(
+            `Product status toggled to ${!currentStatus ? "Active" : "Inactive"}.`,
+            "success"
+          );
+        } catch (err) {
+          addToast(
+            err instanceof Error ? err.message : "Failed to toggle product status",
+            "error"
+          );
+        }
+      }
+    });
   };
 
   const handleDeleteProduct = (id: string) => {
@@ -218,7 +229,7 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
       type: "danger",
       onConfirm: async () => {
         try {
-          await Promise.all(selectedProductIds.map(id => deleteProduct(id)));
+          await bulkDeleteProducts(selectedProductIds);
           addToast(`Successfully deleted ${selectedProductIds.length} products in bulk!`, "success");
           setSelectedProductIds([]);
         } catch (err) {
@@ -564,7 +575,7 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-md bg-secondary overflow-hidden flex-shrink-0 border">
-                              {imgUrl && <img src={imgUrl} alt={product.title} className="w-full h-full object-cover" />}
+                              {imgUrl && <Image src={imgUrl} alt={product.title} width={40} height={40} className="w-full h-full object-cover" />}
                             </div>
                             <div>
                               <p className="font-bold line-clamp-1">{product.title}</p>

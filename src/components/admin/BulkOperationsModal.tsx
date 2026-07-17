@@ -17,11 +17,7 @@ import {
   QrCode
 } from "lucide-react";
 import { Product, Category, HsnRecord } from "@/types";
-import {
-  downloadExcel,
-  parseAndValidateExcel,
-  ExcelValidationError
-} from "@/lib/excelHelper";
+import { type ExcelValidationError } from "@/lib/excelHelper";
 import { useToastStore } from "@/stores/toastStore";
 
 interface BulkOperationsModalProps {
@@ -86,6 +82,23 @@ export function BulkOperationsModal({
     }
   };
 
+  const downloadFromServer = async (url: string, defaultFilename: string) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      const errJson = await response.json();
+      throw new Error(errJson.message || "Failed to download file from server");
+    }
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = defaultFilename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  };
+
   const processFile = async (file: File) => {
     if (!file) return;
     
@@ -102,17 +115,22 @@ export function BulkOperationsModal({
     setParsedData(null);
 
     try {
-      const buffer = await file.arrayBuffer();
-      const { products: parsedProducts, errors, stats } = await parseAndValidateExcel(
-        buffer,
-        categories,
-        hsns,
-        products
-      );
+      const formData = new FormData();
+      formData.append("file", file);
 
-      setValidationErrors(errors);
-      setParsedData(parsedProducts);
-      setImportStats(stats || null);
+      const response = await fetch("/api/products/import", {
+        method: "POST",
+        body: formData,
+      });
+
+      const resJson = await response.json();
+      if (!response.ok) {
+        throw new Error(resJson.message || "Failed to parse Excel file.");
+      }
+
+      setValidationErrors(resJson.errors || []);
+      setParsedData(resJson.products || []);
+      setImportStats(resJson.stats || null);
     } catch (err: any) {
       addToast(err.message || "Failed to parse Excel file.", "error");
     } finally {
@@ -138,10 +156,12 @@ export function BulkOperationsModal({
 
   const handleExportTemplate = async () => {
     try {
-      await downloadExcel([], categories, hsns, true);
+      const now = new Date();
+      const timestamp = now.toISOString().replace(/[-:T]/g, "").slice(0, 14);
+      await downloadFromServer(`/api/products/export?template=true`, `flexsell_add_products_${timestamp}.xlsx`);
       addToast("Excel template downloaded successfully.", "success");
-    } catch (err) {
-      addToast("Failed to download template.", "error");
+    } catch (err: any) {
+      addToast(err.message || "Failed to download template.", "error");
     }
   };
 
@@ -151,11 +171,15 @@ export function BulkOperationsModal({
       return;
     }
     try {
-      const selectedProds = products.filter((p) => selectedProductIds.includes(p._id));
-      await downloadExcel(selectedProds, categories, hsns, false);
-      addToast(`Exported ${selectedProds.length} products successfully.`, "success");
-    } catch (err) {
-      addToast("Failed to export products.", "error");
+      const now = new Date();
+      const timestamp = now.toISOString().replace(/[-:T]/g, "").slice(0, 14);
+      await downloadFromServer(
+        `/api/products/export?ids=${selectedProductIds.join(",")}`,
+        `flexsell_update_products_${timestamp}.xlsx`
+      );
+      addToast(`Exported selected products successfully.`, "success");
+    } catch (err: any) {
+      addToast(err.message || "Failed to export products.", "error");
     }
   };
 

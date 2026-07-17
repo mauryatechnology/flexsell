@@ -4,7 +4,9 @@ import Review from "@/models/Review";
 import Order from "@/models/Order";
 import Customer from "@/models/Customer";
 import Product from "@/models/Product";
-import { verifyToken, getTokenFromCookie } from "@/lib/auth";
+import { requireAuth } from "@/lib/authGuard";
+import { reviewSchema } from "@/lib/validators";
+import { ZodError } from "zod";
 
 // GET: Fetch approved reviews for a product OR all reviews by the logged-in customer
 export async function GET(request: Request) {
@@ -22,15 +24,9 @@ export async function GET(request: Request) {
     }
 
     // Otherwise, fetch reviews written by the authenticated active customer
-    const token = await getTokenFromCookie();
-    if (!token) {
-      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
-    }
-
-    const payload = verifyToken(token);
-    if (!payload) {
-      return NextResponse.json({ message: "Invalid session" }, { status: 401 });
-    }
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const payload = auth.payload!;
 
     const customerReviews = await Review.find({ customerId: payload.userId })
       .sort({ createdAt: -1 })
@@ -57,23 +53,14 @@ export async function GET(request: Request) {
 // POST: Submit a new review
 export async function POST(request: Request) {
   try {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const payload = auth.payload!;
+
     await dbConnect();
-    const token = await getTokenFromCookie();
-    if (!token) {
-      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
-    }
-
-    const payload = verifyToken(token);
-    if (!payload) {
-      return NextResponse.json({ message: "Invalid session" }, { status: 401 });
-    }
-
     const body = await request.json();
-    const { productId, rating, title, comment } = body;
-
-    if (!productId || !rating || !title || !comment) {
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
-    }
+    
+    const validatedData = reviewSchema.parse(body);
 
     // 1. Get customer details
     const customer = await Customer.findById(payload.userId).lean();
@@ -82,7 +69,7 @@ export async function POST(request: Request) {
     }
 
     // 2. Check if already reviewed
-    const existingReview = await Review.findOne({ productId, customerId: customer._id });
+    const existingReview = await Review.findOne({ productId: validatedData.productId, customerId: customer._id });
     if (existingReview) {
       return NextResponse.json({ message: "You have already reviewed this product." }, { status: 400 });
     }
@@ -90,7 +77,7 @@ export async function POST(request: Request) {
     // 3. Verify B2B purchase history (Industry level)
     const verifiedOrder = await Order.findOne({
       "shippingAddress.email": customer.email,
-      "items.product._id": productId,
+      "items.product._id": validatedData.productId,
       status: { $in: ["Shipped", "Delivered"] }
     });
 
@@ -100,39 +87,31 @@ export async function POST(request: Request) {
 
     // 4. Create Review
     const newReview = await Review.create({
-      productId,
+      productId: validatedData.productId,
       customerId: customer._id,
       customerName: customer.name,
-      rating,
-      title,
-      comment,
+      rating: validatedData.rating,
+      title: validatedData.title,
+      comment: validatedData.comment,
       status: "pending" // Admin moderation required by default
     });
 
-    // 5. Update Product overall reviews aggregate count/rating
-    const allApprovedReviews = await Review.find({ productId, status: "approved" });
-    const totalCount = allApprovedReviews.length + 0; // We keep it simple or update on approval.
-    // We will update the aggregate count and rating on the Product document whenever an admin approves the review.
-
-    return NextResponse.json(newReview);
+    return NextResponse.json(newReview, { status: 201 });
   } catch (error: any) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ message: error.issues[0]?.message || "Validation failed" }, { status: 400 });
+    }
     return NextResponse.json({ message: error.message || "Failed to submit review" }, { status: 500 });
   }
 }
 
 export async function DELETE(request: Request) {
   try {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const payload = auth.payload!;
+
     await dbConnect();
-    const token = await getTokenFromCookie();
-    if (!token) {
-      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
-    }
-
-    const payload = verifyToken(token);
-    if (!payload) {
-      return NextResponse.json({ message: "Invalid session" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) {

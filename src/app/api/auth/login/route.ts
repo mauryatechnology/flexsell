@@ -3,16 +3,26 @@ import dbConnect from "@/lib/dbConnect";
 import Customer from "@/models/Customer";
 import bcrypt from "bcryptjs";
 import { signToken, setTokenCookie } from "@/lib/auth";
+import { rateLimit } from "@/lib/rateLimit";
+import { loginSchema } from "@/lib/validators";
+import { ZodError } from "zod";
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    const limitCheck = rateLimit(ip, 5, 60000);
+
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { message: "Too many login attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     await dbConnect();
     const body = await req.json();
-    const { identifier, password } = body;
-
-    if (!identifier || !password) {
-      return NextResponse.json({ message: "Identifier and password are required" }, { status: 400 });
-    }
+    const validatedData = loginSchema.parse(body);
+    const { identifier, password } = validatedData;
 
     const trimmedIdentifier = identifier.trim();
 
@@ -55,6 +65,10 @@ export async function POST(req: Request) {
       customer: customerObj,
     });
   } catch (error: any) {
+    if (error instanceof ZodError) {
+      const firstError = error.issues[0]?.message || "Validation failed";
+      return NextResponse.json({ message: firstError }, { status: 400 });
+    }
     console.error("Login API error:", error);
     return NextResponse.json({ message: error.message || "Login failed" }, { status: 500 });
   }
