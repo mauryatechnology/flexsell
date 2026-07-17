@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/Button";
 import { useToastStore } from "@/stores/toastStore";
 import { MessageSquare, Trash2, ExternalLink, Star, CheckCircle, AlertTriangle, XCircle } from "lucide-react";
+import { reviewService } from "@/services/reviewService";
 
 export default function ClientReviewsPage() {
   const { addToast } = useToastStore();
@@ -15,9 +16,7 @@ export default function ClientReviewsPage() {
   const fetchReviews = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/reviews");
-      if (!res.ok) throw new Error("Failed to load reviews");
-      const data = await res.json();
+      const data = await reviewService.getCustomerReviews();
       setReviews(data);
     } catch (err: any) {
       console.error(err);
@@ -34,13 +33,7 @@ export default function ClientReviewsPage() {
   const handleDeleteReview = async (id: string) => {
     if (!confirm("Are you sure you want to delete this review?")) return;
     try {
-      const res = await fetch(`/api/reviews?id=${id}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to delete review");
-      }
+      await reviewService.deleteReview(id);
       addToast("Review deleted successfully", "success");
       fetchReviews();
     } catch (err: any) {

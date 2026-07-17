@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Product from "@/models/Product";
 import { verifyToken, getTokenFromCookie } from "@/lib/auth";
+import { generateNextId } from "@/lib/idGenerator";
 
 export async function GET() {
   try {
@@ -29,11 +30,9 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     
-    // Generate a random 24-character hex ID if not provided
+    // Generate a random 24-character hex ID or custom format if not provided
     if (!body._id) {
-      body._id = Array.from({ length: 24 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("");
+      body._id = await generateNextId("product");
     }
     
     const newProduct = await Product.create(body);

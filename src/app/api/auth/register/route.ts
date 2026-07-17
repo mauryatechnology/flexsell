@@ -4,6 +4,7 @@ import Customer from "@/models/Customer";
 import bcrypt from "bcryptjs";
 import { signToken, setTokenCookie } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhookDispatcher";
+import { generateNextId } from "@/lib/idGenerator";
 
 export async function POST(req: Request) {
   try {
@@ -21,17 +22,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Email is already registered" }, { status: 400 });
     }
 
-    // Find next customer ID (FSW-000x)
-    const customersList = await Customer.find({}, { _id: 1 });
-    let maxNum = 0;
-    for (const c of customersList) {
-      const match = c._id.match(/^FSW-(\d+)$/);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxNum) maxNum = num;
-      }
-    }
-    const customerId = `FSW-${String(maxNum + 1).padStart(4, "0")}`;
+    // Find next customer ID (FSW-000x or custom format)
+    const customerId = await generateNextId("customer");
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);

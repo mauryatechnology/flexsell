@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { useToastStore } from "@/stores/toastStore";
 import { Ticket, Copy, Check, Calendar, AlertCircle } from "lucide-react";
 import { Coupon } from "@/types";
+import { couponService } from "@/services/couponService";
 
 export default function ClientCouponsPage() {
   const { addToast } = useToastStore();
@@ -16,9 +17,7 @@ export default function ClientCouponsPage() {
   const fetchCoupons = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/coupons");
-      if (!res.ok) throw new Error("Failed to load coupons");
-      const data = await res.json();
+      const data = await couponService.getCoupons();
       setCoupons(data);
     } catch (err: any) {
       console.error(err);

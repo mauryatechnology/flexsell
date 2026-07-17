@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Customer from "@/models/Customer";
 import { signToken, setTokenCookie } from "@/lib/auth";
+import { generateNextId } from "@/lib/idGenerator";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
@@ -37,17 +38,8 @@ export async function POST(req: Request) {
     let customer = await Customer.findOne({ email });
 
     if (!customer) {
-      // Find next customer ID (FSW-000x)
-      const customersList = await Customer.find({}, { _id: 1 });
-      let maxNum = 0;
-      for (const c of customersList) {
-        const match = c._id.match(/^FSW-(\d+)$/);
-        if (match) {
-          const num = parseInt(match[1], 10);
-          if (num > maxNum) maxNum = num;
-        }
-      }
-      const customerId = `FSW-${String(maxNum + 1).padStart(4, "0")}`;
+      // Find next customer ID (FSW-000x or custom format)
+      const customerId = await generateNextId("customer");
 
       // Initials
       const initials = (payload.given_name?.[0] || "") + (payload.family_name?.[0] || "");

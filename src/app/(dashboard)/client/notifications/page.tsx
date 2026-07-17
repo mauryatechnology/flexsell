@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useToastStore } from "@/stores/toastStore";
 import { Bell, CheckCheck, Trash2, Calendar, ShoppingBag, Info, AlertTriangle, ShieldCheck } from "lucide-react";
+import { notificationService } from "@/services/notificationService";
 
 export default function ClientNotificationsPage() {
   const { addToast } = useToastStore();
@@ -14,9 +15,7 @@ export default function ClientNotificationsPage() {
   const fetchNotifications = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/notifications");
-      if (!res.ok) throw new Error("Failed to load notifications");
-      const data = await res.json();
+      const data = await notificationService.getNotifications();
       setNotifications(data);
     } catch (err: any) {
       console.error(err);
@@ -32,12 +31,7 @@ export default function ClientNotificationsPage() {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      const res = await fetch("/api/notifications", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ _id: id })
-      });
-      if (!res.ok) throw new Error("Failed to update notification");
+      await notificationService.markAsRead(id);
       fetchNotifications();
       addToast("Notification marked as read", "success");
     } catch (err: any) {
@@ -47,10 +41,7 @@ export default function ClientNotificationsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/notifications?id=${id}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) throw new Error("Failed to delete notification");
+      await notificationService.deleteNotification(id);
       fetchNotifications();
       addToast("Notification deleted", "success");
     } catch (err: any) {

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { useToastStore } from "@/stores/toastStore";
 import { Plus, Trash2, Edit2, CheckCircle2, Home, MapPin, Building, Phone } from "lucide-react";
 import { SavedAddress } from "@/types";
+import { customerService } from "@/services/customerService";
 
 const INDIAN_STATES = [
   "Madhya Pradesh",
@@ -66,9 +67,7 @@ export default function ClientAddressesPage() {
   const fetchAddresses = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/customers/addresses");
-      if (!res.ok) throw new Error("Failed to load addresses");
-      const data = await res.json();
+      const data = await customerService.getSavedAddresses();
       setAddresses(data);
     } catch (err: any) {
       console.error(err);
@@ -144,28 +143,14 @@ export default function ClientAddressesPage() {
         isDefault
       };
 
-      let res;
+      let updatedList;
       if (editingId) {
-        res = await fetch("/api/customers/addresses", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ _id: editingId, ...payload })
-        });
+        updatedList = await customerService.updateSavedAddress({ _id: editingId, ...payload });
       } else {
-        res = await fetch("/api/customers/addresses", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        updatedList = await customerService.addSavedAddress(payload);
       }
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to save address");
-      }
-
-      const updated = await res.json();
-      setAddresses(updated);
+      setAddresses(updatedList);
       setIsModalOpen(false);
       resetForm();
       addToast(editingId ? "Address updated successfully!" : "Address added successfully!", "success");
@@ -179,15 +164,8 @@ export default function ClientAddressesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this address?")) return;
     try {
-      const res = await fetch(`/api/customers/addresses?id=${id}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to delete address");
-      }
-      const updated = await res.json();
-      setAddresses(updated);
+      const updatedList = await customerService.deleteSavedAddress(id);
+      setAddresses(updatedList);
       addToast("Address deleted successfully!", "success");
     } catch (err: any) {
       addToast(err.message || "Failed to delete address", "error");
@@ -196,17 +174,8 @@ export default function ClientAddressesPage() {
 
   const handleSetDefault = async (addr: SavedAddress) => {
     try {
-      const res = await fetch("/api/customers/addresses", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ _id: addr._id, isDefault: true })
-      });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to set default address");
-      }
-      const updated = await res.json();
-      setAddresses(updated);
+      const updatedList = await customerService.updateSavedAddress({ ...addr, isDefault: true });
+      setAddresses(updatedList);
       addToast("Default address updated!", "success");
     } catch (err: any) {
       addToast(err.message || "Failed to set default address", "error");

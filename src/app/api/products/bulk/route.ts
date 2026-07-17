@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Product from "@/models/Product";
 import Category from "@/models/Category";
+import { generateNextId } from "@/lib/idGenerator";
 import HsnRecord from "@/models/HsnRecord";
 
 // Helper to generate a slug from title
@@ -186,9 +187,7 @@ export async function POST(request: Request) {
           results.updated++;
         } else {
           // CREATE NEW PRODUCT
-          const productId = Array.from({ length: 24 }, () =>
-            Math.floor(Math.random() * 16).toString(16)
-          ).join("");
+          const productId = await generateNextId("product");
 
           // Resolve slug uniqueness
           let baseSlug = generateSlug(imported.title);

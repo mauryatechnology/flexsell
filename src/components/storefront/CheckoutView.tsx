@@ -11,6 +11,7 @@ import { useOrderStore } from "@/stores/orderStore";
 import { useToastStore } from "@/stores/toastStore";
 import { formatPrice } from "@/lib/utils";
 import { customerService } from "@/services/customerService";
+import { couponService } from "@/services/couponService";
 
 const INDIAN_STATES = [
   "Madhya Pradesh",
@@ -100,25 +101,22 @@ export function CheckoutView() {
           
           // Fetch saved addresses
           try {
-            const addrRes = await fetch("/api/customers/addresses");
-            if (addrRes.ok) {
-              const addrs = await addrRes.json();
-              setSavedAddresses(addrs);
-              const defaultAddr = addrs.find((a: any) => a.isDefault);
-              if (defaultAddr) {
-                setFirstName(defaultAddr.firstName);
-                setLastName(defaultAddr.lastName);
-                setCompany(defaultAddr.company || "");
-                setGstin(defaultAddr.gstin || "");
-                setAddress(defaultAddr.address);
-                setApartment(defaultAddr.apartment || "");
-                setCity(defaultAddr.city);
-                setState(defaultAddr.state || INDIAN_STATES[0]);
-                setPinCode(defaultAddr.pinCode);
-                setPhone(defaultAddr.phone);
-                setBuyerState(defaultAddr.state || INDIAN_STATES[0]);
-                return;
-              }
+            const addrs = await customerService.getSavedAddresses();
+            setSavedAddresses(addrs);
+            const defaultAddr = addrs.find((a: any) => a.isDefault);
+            if (defaultAddr) {
+              setFirstName(defaultAddr.firstName);
+              setLastName(defaultAddr.lastName);
+              setCompany(defaultAddr.company || "");
+              setGstin(defaultAddr.gstin || "");
+              setAddress(defaultAddr.address);
+              setApartment(defaultAddr.apartment || "");
+              setCity(defaultAddr.city);
+              setState(defaultAddr.state || INDIAN_STATES[0]);
+              setPinCode(defaultAddr.pinCode);
+              setPhone(defaultAddr.phone);
+              setBuyerState(defaultAddr.state || INDIAN_STATES[0]);
+              return;
             }
           } catch (addrErr) {
             console.error("Failed to load saved addresses", addrErr);
@@ -164,18 +162,16 @@ export function CheckoutView() {
     if (!couponCode) return;
     setIsValidatingCoupon(true);
     try {
-      const res = await fetch("/api/coupons/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: couponCode, orderValue: grandTotal })
-      });
-      const data = await res.json();
-      if (!res.ok) {
+      const data = await couponService.validateCoupon(couponCode, grandTotal);
+      if (!data.valid) {
         throw new Error(data.message || "Invalid coupon");
       }
-      setAppliedCoupon(data);
+      setAppliedCoupon({
+        couponCode: data.coupon?.code || couponCode.toUpperCase(),
+        discountAmount: data.discountAmount
+      });
       setCouponDiscount(data.discountAmount);
-      addToast(`Coupon "${data.couponCode}" applied successfully!`, "success");
+      addToast(`Coupon "${data.coupon?.code || couponCode.toUpperCase()}" applied successfully!`, "success");
     } catch (err: any) {
       addToast(err.message || "Failed to validate coupon", "error");
       setCouponDiscount(0);

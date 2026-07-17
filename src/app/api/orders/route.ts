@@ -5,6 +5,7 @@ import Product from "@/models/Product";
 import Customer from "@/models/Customer";
 import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhookDispatcher";
+import { generateNextId } from "@/lib/idGenerator";
 
 const statusClasses = {
   Processing: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500",
@@ -53,10 +54,8 @@ export async function POST(request: Request) {
 
     const { items, amount, shippingAddress } = await request.json();
     
-    // Determine the next sequential Order ID
-    const count = await Order.countDocuments();
-    const nextIdNum = 10026 + count;
-    const orderId = `FS-${nextIdNum}`;
+    // Determine the next sequential Order ID (FS-xxxxx or custom format)
+    const orderId = await generateNextId("order");
 
     // Deduct stock for each ordered item in MongoDB
     for (const item of items) {

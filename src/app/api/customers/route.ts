@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Customer from "@/models/Customer";
 import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { generateNextId } from "@/lib/idGenerator";
 
 // GET: Fetch all customers (restricted to admins)
 export async function GET() {
@@ -53,17 +54,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Email is already registered" }, { status: 400 });
     }
 
-    // Determine sequential customer ID
-    const customersList = await Customer.find({}, { _id: 1 });
-    let maxNum = 0;
-    for (const c of customersList) {
-      const match = c._id.match(/^FSW-(\d+)$/);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxNum) maxNum = num;
-      }
-    }
-    const customerId = `FSW-${String(maxNum + 1).padStart(4, "0")}`;
+    // Determine sequential customer ID (FSW-000x or custom format)
+    const customerId = await generateNextId("customer");
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const initials = name

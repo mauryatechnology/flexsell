@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { useToastStore } from "@/stores/toastStore";
 import { Plus, Trash2, Edit2, Ticket, Percent, Check, X, Calendar } from "lucide-react";
 import { Coupon } from "@/types";
+import { couponService } from "@/services/couponService";
 
 export default function AdminCouponsPage() {
   const { addToast } = useToastStore();
@@ -28,9 +29,7 @@ export default function AdminCouponsPage() {
   const fetchCoupons = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/coupons");
-      if (!res.ok) throw new Error("Failed to load coupons");
-      const data = await res.json();
+      const data = await couponService.getCoupons();
       setCoupons(data);
     } catch (err: any) {
       console.error(err);
@@ -86,29 +85,15 @@ export default function AdminCouponsPage() {
         discountType,
         discountValue: parseFloat(discountValue),
         minOrderValue: parseFloat(minOrderValue) || 0,
-        maxDiscount: maxDiscount ? parseFloat(maxDiscount) : null,
+        maxDiscount: maxDiscount ? parseFloat(maxDiscount) : undefined,
         expiryDate,
         isActive
       };
 
-      let res;
       if (editingId) {
-        res = await fetch(`/api/coupons/${editingId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        await couponService.updateCoupon(editingId, payload);
       } else {
-        res = await fetch("/api/coupons", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-      }
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to save coupon");
+        await couponService.createCoupon(payload);
       }
 
       setIsModalOpen(false);
@@ -125,10 +110,7 @@ export default function AdminCouponsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this coupon permanently?")) return;
     try {
-      const res = await fetch(`/api/coupons/${id}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) throw new Error("Failed to delete coupon");
+      await couponService.deleteCoupon(id);
       addToast("Coupon deleted successfully!", "success");
       fetchCoupons();
     } catch (err: any) {
@@ -138,12 +120,7 @@ export default function AdminCouponsPage() {
 
   const handleToggleActive = async (coupon: Coupon) => {
     try {
-      const res = await fetch(`/api/coupons/${coupon._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !coupon.isActive })
-      });
-      if (!res.ok) throw new Error("Failed to toggle coupon status");
+      await couponService.updateCoupon(coupon._id, { isActive: !coupon.isActive });
       addToast(`Coupon status updated!`, "success");
       fetchCoupons();
     } catch (err: any) {

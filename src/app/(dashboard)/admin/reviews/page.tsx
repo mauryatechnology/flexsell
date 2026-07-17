@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToastStore } from "@/stores/toastStore";
 import { MessageSquare, Star, Check, X, Trash2, ExternalLink, MessageCircle } from "lucide-react";
+import { reviewService } from "@/services/reviewService";
 
 export default function AdminReviewsPage() {
   const { addToast } = useToastStore();
@@ -22,9 +23,7 @@ export default function AdminReviewsPage() {
   const fetchReviews = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/admin/reviews");
-      if (!res.ok) throw new Error("Failed to fetch reviews");
-      const data = await res.json();
+      const data = await reviewService.getAllReviewsAdmin();
       setReviews(data);
     } catch (err: any) {
       addToast(err.message || "Failed to load reviews for moderation", "error");
@@ -39,12 +38,7 @@ export default function AdminReviewsPage() {
 
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     try {
-      const res = await fetch("/api/admin/reviews", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ _id: id, status: newStatus })
-      });
-      if (!res.ok) throw new Error("Failed to update status");
+      await reviewService.moderateReviewAdmin(id, newStatus);
       addToast(`Review status updated to ${newStatus}!`, "success");
       fetchReviews();
     } catch (err: any) {
@@ -63,12 +57,7 @@ export default function AdminReviewsPage() {
 
     setIsSubmittingReply(true);
     try {
-      const res = await fetch("/api/admin/reviews", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ _id: replyReviewId, adminResponse: replyText })
-      });
-      if (!res.ok) throw new Error("Failed to submit response");
+      await reviewService.moderateReviewAdmin(replyReviewId, undefined as any, replyText);
       addToast("Admin response saved successfully!", "success");
       setReplyReviewId(null);
       setReplyText("");
@@ -83,10 +72,7 @@ export default function AdminReviewsPage() {
   const handleDeleteReview = async (id: string) => {
     if (!confirm("Are you sure you want to delete this review permanently?")) return;
     try {
-      const res = await fetch(`/api/admin/reviews?id=${id}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) throw new Error("Failed to delete review");
+      await reviewService.deleteReviewAdmin(id);
       addToast("Review deleted permanently", "success");
       fetchReviews();
     } catch (err: any) {

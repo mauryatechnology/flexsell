@@ -11,6 +11,8 @@ import { useProductStore } from "@/stores/productStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { useCartStore } from "@/stores/cartStore";
 import { useToastStore } from "@/stores/toastStore";
+import { reviewService } from "@/services/reviewService";
+import { customerService } from "@/services/customerService";
 import {
   ShieldCheck,
   Truck,
@@ -103,9 +105,8 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
   const fetchReviews = async () => {
     try {
       setIsReviewsLoading(true);
-      const res = await fetch(`/api/reviews?productId=${product?._id}`);
-      if (res.ok) {
-        const data = await res.json();
+      if (product?._id) {
+        const data = await reviewService.getProductReviews(product._id);
         setReviewsList(data);
       }
     } catch (err) {
@@ -120,38 +121,25 @@ export function ProductDetailView({ slug, initialProducts }: ProductDetailViewPr
     fetchReviews();
     
     // Check if customer is authenticated
-    fetch("/api/customers/active")
-      .then(res => {
-        if (res.ok) return res.json();
-        return null;
-      })
+    customerService.getActiveCustomer()
       .then(data => setActiveUser(data))
-      .catch(console.error);
+      .catch(() => setActiveUser(null));
   }, [product]);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reviewTitle || !reviewComment) {
+    if (!reviewTitle || !reviewComment || !product?._id) {
       addToast("Please fill out all review fields.", "warning");
       return;
     }
     setIsSubmittingReview(true);
     try {
-      const res = await fetch("/api/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product?._id,
-          rating: reviewRating,
-          title: reviewTitle,
-          comment: reviewComment
-        })
+      await reviewService.submitReview({
+        productId: product._id,
+        rating: reviewRating,
+        title: reviewTitle,
+        comment: reviewComment
       });
-      
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to submit review");
-      }
       
       addToast("Review submitted successfully! It is pending administrator approval.", "success");
       setReviewTitle("");
