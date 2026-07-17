@@ -257,6 +257,10 @@ export function CartView() {
         {/* Left Side: Items List */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => {
+            if (!item.product) {
+              return null; // Product data hasn't hydrated yet or product was deleted
+            }
+
             const formattedVariants = Object.entries(item.selectedVariants)
               .map(([key, val]) => `${key}: ${val}`)
               .join(", ");

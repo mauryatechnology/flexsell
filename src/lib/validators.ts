@@ -31,8 +31,11 @@ export const resetPasswordSchema = z.object({
 export const categorySchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   slug: z.string().min(2, "Slug must be at least 2 characters"),
+  image: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
   order: z.number().int().optional(),
-  parentId: z.string().optional(),
+  parentId: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
 });
 
 // Coupon validation schema
