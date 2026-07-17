@@ -5,6 +5,7 @@ import Product from "@/models/Product";
 import Customer from "@/models/Customer";
 import InvoiceModel from "@/models/Invoice";
 import CmsContent from "@/models/CmsContent";
+import Coupon from "@/models/Coupon";
 import { requireAuth } from "@/lib/authGuard";
 import { dispatchWebhook } from "@/lib/webhookDispatcher";
 import { generateNextId } from "@/lib/idGenerator";
@@ -168,7 +169,64 @@ export async function POST(request: Request) {
     
     // Validate order request with Zod
     const validatedData = orderSchema.parse(body);
-    const { items, amount, shippingAddress, paymentDetails } = validatedData;
+    const { items, amount, shippingAddress, paymentDetails, couponCode, couponDiscount } = validatedData;
+
+    // Re-verify coupon validity and discount on backend for security
+    let dbCoupon = null;
+    if (couponCode) {
+      const cleanCode = couponCode.toUpperCase().trim();
+      dbCoupon = await Coupon.findOne({ code: cleanCode });
+      if (!dbCoupon) {
+        return NextResponse.json({ message: `Coupon "${cleanCode}" is invalid.` }, { status: 400 });
+      }
+      if (!dbCoupon.isActive) {
+        return NextResponse.json({ message: "This coupon is no longer active" }, { status: 400 });
+      }
+      const todayStr = new Date().toISOString().split("T")[0];
+      if (dbCoupon.expiryDate < todayStr) {
+        return NextResponse.json({ message: "This coupon has expired" }, { status: 400 });
+      }
+      // Check overall limit
+      if (dbCoupon.usageLimit !== null && dbCoupon.usageLimit !== undefined) {
+        if ((dbCoupon.usedCount || 0) >= dbCoupon.usageLimit) {
+          return NextResponse.json({ message: "This coupon has reached its overall usage limit" }, { status: 400 });
+        }
+      }
+      // Check personalization
+      const userEmail = payload.email?.toLowerCase() || "";
+      if (dbCoupon.isPersonalized) {
+        const isAllowed = dbCoupon.allowedCustomers?.some((email: string) => email.toLowerCase() === userEmail);
+        if (!isAllowed) {
+          return NextResponse.json({ message: "This coupon is not valid for your account" }, { status: 400 });
+        }
+      }
+      // Check per-customer limit
+      const customerUses = dbCoupon.usedBy?.filter((email: string) => email.toLowerCase() === userEmail).length || 0;
+      const customerLimit = dbCoupon.usageLimitPerCustomer || 1;
+      if (customerUses >= customerLimit) {
+        return NextResponse.json({ message: "You have already reached the maximum usage limit for this coupon" }, { status: 400 });
+      }
+
+      // Recompute discount
+      let calculatedDiscount = 0;
+      const orderSubtotal = items.reduce((sum: number, item: any) => sum + (item.pricePerUnit * item.quantity), 0);
+      if (dbCoupon.discountType === "flat") {
+        calculatedDiscount = dbCoupon.discountValue;
+      } else {
+        calculatedDiscount = orderSubtotal * (dbCoupon.discountValue / 100);
+        if (dbCoupon.maxDiscount && calculatedDiscount > dbCoupon.maxDiscount) {
+          calculatedDiscount = dbCoupon.maxDiscount;
+        }
+      }
+      if (calculatedDiscount > orderSubtotal) {
+        calculatedDiscount = orderSubtotal;
+      }
+
+      const roundedDiscount = parseFloat(calculatedDiscount.toFixed(2));
+      if (couponDiscount !== undefined && Math.abs(roundedDiscount - couponDiscount) > 0.05) {
+        return NextResponse.json({ message: `Coupon discount calculation mismatch. Expected: ${roundedDiscount}, Got: ${couponDiscount}` }, { status: 400 });
+      }
+    }
 
     // Determine the next sequential Order ID (FS-xxxxx or custom format)
     const orderId = await generateNextId("order");
@@ -264,6 +322,8 @@ export async function POST(request: Request) {
       paymentMethod: paymentDetails?.paymentMethod,
       paymentStatus: paymentDetails?.paymentStatus,
       transactionId: paymentDetails?.transactionId,
+      couponCode,
+      couponDiscount,
       history: [
         {
           status: "Placed",
@@ -274,6 +334,16 @@ export async function POST(request: Request) {
         }
       ]
     } as any);
+
+    if (dbCoupon) {
+      await Coupon.updateOne(
+        { _id: dbCoupon._id },
+        { 
+          $inc: { usedCount: 1 },
+          $push: { usedBy: payload.email.toLowerCase() }
+        }
+      );
+    }
 
     // ═══ AUTO-GENERATE INVOICE / RECEIPT ═══
     const pStatus = paymentDetails?.paymentStatus || "Pending";

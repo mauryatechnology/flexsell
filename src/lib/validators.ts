@@ -47,6 +47,10 @@ export const couponSchema = z.object({
   maxDiscount: z.number().positive().optional(),
   expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expiry date must be YYYY-MM-DD"),
   isActive: z.boolean().default(true),
+  isPersonalized: z.boolean().default(false).optional(),
+  allowedCustomers: z.array(z.string()).default([]).optional(),
+  usageLimit: z.number().positive().optional().nullable(),
+  usageLimitPerCustomer: z.number().positive().default(1).optional(),
 });
 
 // Review validation schema
@@ -92,6 +96,8 @@ export const orderSchema = z.object({
     paymentStatus: z.enum(["Pending", "Paid", "Failed"]),
     transactionId: z.string().optional(),
   }).optional(),
+  couponCode: z.string().optional(),
+  couponDiscount: z.number().optional(),
 });
 
 // Product validation schema

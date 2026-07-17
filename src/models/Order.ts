@@ -51,6 +51,8 @@ const OrderSchema = new Schema<OrderType & Document>(
     paymentStatus: { type: String, enum: ["Pending", "Paid", "Failed"], default: "Pending" },
     transactionId: { type: String },
     invoiceId: { type: String, ref: "Invoice" },
+    couponCode: { type: String },
+    couponDiscount: { type: Number },
   },
   { timestamps: true }
 );

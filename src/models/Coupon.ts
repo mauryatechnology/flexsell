@@ -9,7 +9,13 @@ const CouponSchema = new Schema<CouponType & Document>(
     minOrderValue: { type: Number, default: 0 },
     maxDiscount: { type: Number },
     expiryDate: { type: String, required: true },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+    isPersonalized: { type: Boolean, default: false },
+    allowedCustomers: { type: [String], default: [] },
+    usageLimit: { type: Number, default: null },
+    usageLimitPerCustomer: { type: Number, default: 1 },
+    usedCount: { type: Number, default: 0 },
+    usedBy: { type: [String], default: [] }
   },
   { timestamps: true }
 );

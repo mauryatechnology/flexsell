@@ -151,6 +151,8 @@ export interface Order extends BaseDocument {
   paymentStatus?: "Pending" | "Paid" | "Failed";
   transactionId?: string;
   invoiceId?: string;
+  couponCode?: string;
+  couponDiscount?: number;
 }
 
 export interface HsnSlab {
@@ -258,6 +260,12 @@ export interface Coupon extends BaseDocument {
   maxDiscount?: number;
   expiryDate: string;
   isActive: boolean;
+  isPersonalized?: boolean;
+  allowedCustomers?: string[];
+  usageLimit?: number | null;
+  usageLimitPerCustomer?: number;
+  usedCount?: number;
+  usedBy?: string[];
 }
 
 export interface Notification extends BaseDocument {

@@ -291,7 +291,9 @@ export function CheckoutView() {
                   paymentMethod: "Razorpay",
                   paymentStatus: "Paid",
                   transactionId: response.razorpay_payment_id
-                }
+                },
+                appliedCoupon?.couponCode || undefined,
+                couponDiscount || undefined
               );
               clearCart();
               router.push(`/order-confirmation/${orderId}`);
@@ -333,7 +335,9 @@ export function CheckoutView() {
           {
             paymentMethod: "COD",
             paymentStatus: "Pending"
-          }
+          },
+          appliedCoupon?.couponCode || undefined,
+          couponDiscount || undefined
         );
         clearCart();
         router.push(`/order-confirmation/${orderId}`);
