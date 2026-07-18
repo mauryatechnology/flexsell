@@ -31,7 +31,7 @@ export function VariantEditor() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center border-b pb-2">
-        <h3 className="font-extrabold text-xl text-foreground">Dynamic Color Variants</h3>
+        <h3 className="font-extrabold text-xl text-foreground">Color Variants</h3>
         <Button type="button" size="sm" onClick={addVariant} className="flex items-center gap-1.5 cursor-pointer">
           <Plus className="h-4 w-4" /> Add Color Variant
         </Button>

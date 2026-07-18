@@ -75,7 +75,7 @@ export function VariantCard({
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase text-muted-foreground">Cargo Dimensions</label>
+            <label className="text-xs font-semibold uppercase text-muted-foreground"> Dimensions</label>
             <Input
               placeholder="e.g. 15x12x8 cm"
               value={item.dimensions}
@@ -179,7 +179,7 @@ export function VariantCard({
 
         <div className="space-y-3 pt-4 border-t">
           <label className="text-xs font-semibold uppercase text-muted-foreground block">Variant Images (1:1 Ratio Only)</label>
-          
+
           {item.images && item.images.length > 0 && item.images[0] !== "" ? (
             <div className="border rounded-lg overflow-hidden bg-background">
               <table className="w-full text-left border-collapse text-xs">
