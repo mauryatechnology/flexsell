@@ -27,8 +27,13 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const customer = useAuthStore((state: any) => state.customer);
 
   const [qty, setQty] = React.useState(1);
+  const [isMounted, setIsMounted] = React.useState(false);
 
-  const favorited = isInWishlist(product._id);
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const favorited = isMounted ? isInWishlist(product._id) : false;
   const defaultVariant = product.colorVariants?.[0];
   const defaultSub = defaultVariant?.subVariants?.[0];
 

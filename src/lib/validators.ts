@@ -168,3 +168,33 @@ export const productSchema = z.object({
     showImages: z.boolean().default(true),
   }).optional(),
 });
+
+export const collectionConditionSchema = z.object({
+  field: z.enum(["tag", "category", "price", "title", "stock", "vendor"]),
+  operator: z.enum(["equals", "not_equals", "contains", "starts_with", "greater_than", "less_than"]),
+  value: z.string().min(1, "Condition value is required"),
+});
+
+export const collectionRulesSchema = z.object({
+  matchType: z.enum(["all", "any"]),
+  conditions: z.array(collectionConditionSchema).default([]),
+});
+
+export const collectionSchema = z.object({
+  title: z.string().min(2, "Title must be at least 2 characters"),
+  slug: z.string().min(2, "Slug must be at least 2 characters"),
+  description: z.string().optional().nullable(),
+  type: z.enum(["manual", "smart"]),
+  image: z.string().optional().nullable(),
+  bannerImage: z.string().optional().nullable(),
+  productIds: z.array(z.string()).optional(),
+  rules: collectionRulesSchema.optional().nullable(),
+  linkedCategoryIds: z.array(z.string()).optional(),
+  isActive: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
+  order: z.number().int().optional(),
+  seoTitle: z.string().optional().nullable(),
+  seoDescription: z.string().optional().nullable(),
+  seoKeywords: z.string().optional().nullable(),
+});
+

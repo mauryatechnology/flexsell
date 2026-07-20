@@ -1,5 +1,7 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+export const isMockMode = typeof window !== "undefined" && 
+  (localStorage.getItem("flexsell-mock-mode") === "true" || process.env.NEXT_PUBLIC_MOCK_MODE === "true");
 
 export interface ApiResponse<T> {
   data: T;

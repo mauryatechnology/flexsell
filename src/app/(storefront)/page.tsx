@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { categoryService } from "@/services/categoryService";
 import { productService } from "@/services/productService";
+import { collectionService } from "@/services/collectionService";
 import { Card } from "@/components/ui/Card";
 import dbConnect from "@/lib/dbConnect";
 import CmsContent from "@/models/CmsContent";
@@ -14,6 +15,7 @@ import { WholesaleBusinessSection } from "@/components/storefront/WholesaleBusin
 import { DropshippingBusinessSection } from "@/components/storefront/DropshippingBusinessSection";
 import { TestimonialsSection } from "@/components/storefront/TestimonialsSection";
 import { BrandPartnersBar } from "@/components/storefront/BrandPartnersBar";
+import { FeaturedCollections } from "@/components/storefront/FeaturedCollections";
 
 export const revalidate = 3600; // ISR revalidation every hour
 
@@ -32,6 +34,21 @@ export default async function HomePage() {
 
   const categories = await categoryService.getCategories();
   const products = await productService.getProducts();
+  const collections = await collectionService.getCollections();
+
+  // Resolve product counts for each featured collection
+  const productCounts: Record<string, number> = {};
+  for (const col of collections) {
+    if (col.isActive && col.isFeatured) {
+      try {
+        const colProducts = await collectionService.getCollectionProducts(col._id);
+        productCounts[col._id] = colProducts.length;
+      } catch (err) {
+        console.error(`Failed to load product count for collection ${col._id}`, err);
+        productCounts[col._id] = 0;
+      }
+    }
+  }
 
   const heroBanners = cmsHeroBanners?.value || [
     {
@@ -84,6 +101,9 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Featured Collections Section */}
+      <FeaturedCollections collections={collections} productCounts={productCounts} />
 
       {/* Independent B2B Wholesale Business Section */}
       <WholesaleBusinessSection data={cmsWholesaleBiz?.value} />

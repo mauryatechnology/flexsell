@@ -3,6 +3,7 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { AnnouncementBar } from "./AnnouncementBar";
 import { categoryService } from "@/services/categoryService";
+import { collectionService } from "@/services/collectionService";
 import dbConnect from "@/lib/dbConnect";
 import CmsContent from "@/models/CmsContent";
 
@@ -14,6 +15,7 @@ export async function StorefrontLayout({ children }: StorefrontLayoutProps) {
   await dbConnect();
 
   const allCategories = await categoryService.getCategories();
+  const collections = await collectionService.getCollections();
   const cmsAnnouncements = await CmsContent.findOne({ key: "announcements" });
   const cmsFooter = await CmsContent.findOne({ key: "footer" });
 
@@ -27,7 +29,7 @@ export async function StorefrontLayout({ children }: StorefrontLayoutProps) {
       {/* Top Announcement Bar Carousel */}
       <AnnouncementBar messages={messages} />
 
-      <Header categories={allCategories} />
+      <Header categories={allCategories} collections={collections} />
 
       <main className="flex-1">
         {children}

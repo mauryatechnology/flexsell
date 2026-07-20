@@ -296,6 +296,31 @@ export interface ShippingConfig {
   updatedAt?: string;
 }
 
+export interface CollectionCondition {
+  field: "tag" | "category" | "price" | "title" | "stock" | "vendor";
+  operator: "equals" | "not_equals" | "contains" | "starts_with" | "greater_than" | "less_than";
+  value: string;
+}
 
+export interface CollectionRules {
+  matchType: "all" | "any";
+  conditions: CollectionCondition[];
+}
 
-
+export interface Collection extends BaseDocument {
+  title: string;
+  slug: string;
+  description?: string;
+  type: "manual" | "smart";
+  image?: string;
+  bannerImage?: string;
+  productIds?: string[];
+  rules?: CollectionRules | null;
+  linkedCategoryIds?: string[];
+  isActive: boolean;
+  isFeatured: boolean;
+  order: number;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+}

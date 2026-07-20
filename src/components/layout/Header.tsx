@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Drawer } from "@/components/ui/Drawer";
 import { MegaMenu } from "./MegaMenu";
-import { Category } from "@/types";
+import { Category, Collection } from "@/types";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -17,9 +17,10 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface HeaderProps {
   categories: Category[];
+  collections?: Collection[];
 }
 
-export function Header({ categories }: HeaderProps) {
+export function Header({ categories, collections = [] }: HeaderProps) {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -130,7 +131,7 @@ export function Header({ categories }: HeaderProps) {
       </div>
 
       {/* Category Nav - Desktop Only */}
-      <MegaMenu categories={categories} />
+      <MegaMenu categories={categories} collections={collections} />
 
       {/* Mobile Nav Drawer */}
       <Drawer isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} side="left">
@@ -161,9 +162,23 @@ export function Header({ categories }: HeaderProps) {
           </div>
 
           <nav className="flex flex-col space-y-3 overflow-y-auto">
-            <div className="font-bold text-xs text-muted-foreground uppercase tracking-wider mb-1">Categories</div>
+            <div className="font-bold text-xs text-muted-foreground uppercase tracking-wider mb-1">Collections</div>
+            {collections.filter(c => c.isActive).map(col => {
+              const formattedTitle = col.title
+                .toLowerCase()
+                .split(" ")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(" ");
+              return (
+                <Link key={col._id} href={`/collections/${col.slug}`} className="text-sm font-semibold hover:text-primary pl-2 text-foreground" onClick={() => setIsMobileMenuOpen(false)}>
+                  {formattedTitle}
+                </Link>
+              );
+            })}
+
+            <div className="font-bold text-xs text-muted-foreground uppercase tracking-wider mt-3 mb-1">Categories</div>
             {topLevel.map(cat => (
-              <Link key={cat._id} href={`/categories/${cat.slug}`} className="text-sm font-medium hover:text-primary pl-2 text-foreground" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link key={cat._id} href={`/categories/${cat.slug}`} className="text-xs font-medium hover:text-primary pl-2 text-foreground" onClick={() => setIsMobileMenuOpen(false)}>
                 {cat.name}
               </Link>
             ))}
