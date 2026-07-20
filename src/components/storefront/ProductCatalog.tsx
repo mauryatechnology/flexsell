@@ -28,6 +28,7 @@ import Image from "next/image";
 import { Pagination } from "@/components/ui/Pagination";
 import { formatPrice } from "@/lib/utils";
 import { ProductCard } from "./ProductCard";
+import { ExportCatalogButton } from "./ExportCatalogButton";
 
 interface ProductCatalogProps {
   initialProducts: Product[];
@@ -319,9 +320,17 @@ export function ProductCatalog({ initialProducts, initialCategories }: ProductCa
 
         {/* Right Column: Catalog Grid/List & Pagination */}
         <div className="flex-1 w-full space-y-6">
-          <div className="flex justify-between items-center text-xs text-muted-foreground">
-            <p>Showing {sortedProducts.length} cargo matches in inventory</p>
-            {selectedCategories.length > 0 && <p className="text-primary font-medium">Filters active</p>}
+          <div className="flex flex-wrap justify-between items-center gap-3 text-xs text-muted-foreground bg-card p-3 rounded-xl border border-border">
+            <div className="flex items-center gap-2">
+              <p className="font-medium">Showing <span className="text-foreground font-bold">{sortedProducts.length}</span> wholesale products</p>
+              {selectedCategories.length > 0 && <span className="text-primary font-semibold text-[11px] bg-primary/10 px-2 py-0.5 rounded border border-primary/20">Filters active</span>}
+            </div>
+            <ExportCatalogButton 
+              products={sortedProducts} 
+              categories={initialCategories} 
+              catalogTitle="Wholesale Product Catalog" 
+              filterSummary={selectedCategories.length > 0 ? "Category Filtered" : "All Products"}
+            />
           </div>
 
           {sortedProducts.length === 0 ? (

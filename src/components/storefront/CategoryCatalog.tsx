@@ -27,6 +27,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { notFound } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { ProductCard } from "./ProductCard";
+import { ExportCatalogButton } from "./ExportCatalogButton";
 
 interface CategoryCatalogProps {
   slug: string;
@@ -340,8 +341,14 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
 
         {/* Right Column: Products Grid/List */}
         <div className="flex-1 w-full space-y-6">
-          <div className="flex justify-between items-center text-xs text-muted-foreground">
-            <p>Showing {sortedProducts.length} cargo matches in category</p>
+          <div className="flex flex-wrap justify-between items-center gap-3 text-xs text-muted-foreground bg-card p-3 rounded-xl border border-border">
+            <p className="font-medium">Showing <span className="text-foreground font-bold">{sortedProducts.length}</span> wholesale products in category</p>
+            <ExportCatalogButton 
+              products={sortedProducts} 
+              categories={initialCategories} 
+              catalogTitle={`${category ? category.name : "Category"} Wholesale Catalog`} 
+              filterSummary={category ? `Category: ${category.name}` : undefined}
+            />
           </div>
 
           {sortedProducts.length === 0 ? (
