@@ -159,7 +159,11 @@ export const customers = [
     "pinCode": "395002",
     "phone": "+91 98765 43210",
     "initials": "JD",
-    "gstin": "24AAACD4521D1Z1"
+    "gstin": "24AAACD4521D1Z1",
+    "customerTypes": [
+      "B2C",
+      "B2B"
+    ]
   },
   {
     "_id": "FSW-0002",
@@ -174,7 +178,11 @@ export const customers = [
     "pinCode": "382010",
     "phone": "+91 88877 66655",
     "initials": "JS",
-    "gstin": "24AAACS9823S2Z5"
+    "gstin": "24AAACS9823S2Z5",
+    "customerTypes": [
+      "B2C",
+      "B2B"
+    ]
   },
   {
     "_id": "FSW-0003",
@@ -189,7 +197,11 @@ export const customers = [
     "pinCode": "380001",
     "phone": "+91 99988 77766",
     "initials": "AP",
-    "gstin": "24AAACP4512P1ZA"
+    "gstin": "24AAACP4512P1ZA",
+    "customerTypes": [
+      "B2C",
+      "B2B"
+    ]
   }
 ];
 
@@ -202,13 +214,16 @@ export const products = [
     "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.5,
     "reviewCount": 120,
-    "tags": ["bestseller", "wholesale", "kitchen-tools"],
+    "tags": [
+      "bestseller",
+      "wholesale",
+      "kitchen-tools"
+    ],
     "isActive": true,
     "totalStock": 500,
     "hsnCode": "3924",
     "gstRate": 18,
     "priceIncludesGst": true,
-    "moq": 10,
     "seoTitle": "Wholesale 12-in-1 Vegetable Chopper & Slicer | FlexSell",
     "seoDescription": "Buy bulk multi-functional vegetable choppers and slicers. High quality, food-grade plastic and stainless steel blades. Direct wholesale factory pricing.",
     "seoKeywords": "vegetable chopper, food slicer, kitchen cutter, wholesale kitchen tools",
@@ -225,23 +240,29 @@ export const products = [
             "id": "60c72b2f9b1d8e001c8e1001-green-std-250",
             "size": "Standard 1.2L",
             "weight": "250g",
-            "price": 249,
             "mrp": 499,
-            "discount": 50,
             "stock": 100,
             "sku": "CHOP12-GRN-STD-250",
-            "barcode": "FX10011"
+            "barcode": "FX10011",
+            "b2cPrice": 249,
+            "b2bPrice": 249,
+            "dropshippingPrice": 249,
+            "b2bMoq": 10,
+            "discount": 50
           },
           {
             "id": "60c72b2f9b1d8e001c8e1001-green-pro-500",
             "size": "Pro 2.0L",
             "weight": "500g",
-            "price": 349,
             "mrp": 699,
-            "discount": 50,
             "stock": 150,
             "sku": "CHOP12-GRN-PRO-500",
-            "barcode": "FX10012"
+            "barcode": "FX10012",
+            "b2cPrice": 349,
+            "b2bPrice": 349,
+            "dropshippingPrice": 349,
+            "b2bMoq": 10,
+            "discount": 50
           }
         ]
       },
@@ -256,23 +277,29 @@ export const products = [
             "id": "60c72b2f9b1d8e001c8e1001-gray-std-250",
             "size": "Standard 1.2L",
             "weight": "250g",
-            "price": 249,
             "mrp": 499,
-            "discount": 50,
             "stock": 120,
             "sku": "CHOP12-GRY-STD-250",
-            "barcode": "FX10013"
+            "barcode": "FX10013",
+            "b2cPrice": 249,
+            "b2bPrice": 249,
+            "dropshippingPrice": 249,
+            "b2bMoq": 10,
+            "discount": 50
           },
           {
             "id": "60c72b2f9b1d8e001c8e1001-gray-pro-500",
             "size": "Pro 2.0L",
             "weight": "500g",
-            "price": 349,
             "mrp": 699,
-            "discount": 50,
             "stock": 130,
             "sku": "CHOP12-GRY-PRO-500",
-            "barcode": "FX10014"
+            "barcode": "FX10014",
+            "b2cPrice": 349,
+            "b2bPrice": 349,
+            "dropshippingPrice": 349,
+            "b2bMoq": 10,
+            "discount": 50
           }
         ]
       }
@@ -302,7 +329,8 @@ export const products = [
       "showWeights": true,
       "showDimensions": true,
       "showImages": true
-    }
+    },
+    "defaultPriceTier": "B2C"
   },
   {
     "_id": "60c72b2f9b1d8e001c8e1002",
@@ -312,13 +340,16 @@ export const products = [
     "categoryId": "60c72b2f9b1d8e001c8e1a19",
     "rating": 4.3,
     "reviewCount": 85,
-    "tags": ["smart-gadget", "electronics", "new-arrival"],
+    "tags": [
+      "smart-gadget",
+      "electronics",
+      "new-arrival"
+    ],
     "isActive": true,
     "totalStock": 300,
     "hsnCode": "8509",
     "gstRate": 18,
     "priceIncludesGst": true,
-    "moq": 5,
     "seoTitle": "Bulk Electric Garlic Masher & Chopper | B2B Marketplace",
     "seoDescription": "Premium USB rechargeable electric food chopper. Compact design, sharp dual-blades, easy wireless usage. Ideal for wholesale import.",
     "seoKeywords": "garlic chopper, electric food masher, mini chopper, wireless grinder",
@@ -334,23 +365,29 @@ export const products = [
             "id": "60c72b2f9b1d8e001c8e1002-white-250",
             "size": "250ml",
             "weight": "150g",
-            "price": 189,
             "mrp": 399,
-            "discount": 52,
             "stock": 80,
             "sku": "GR-MASH-WHT-250",
-            "barcode": "FX20021"
+            "barcode": "FX20021",
+            "b2cPrice": 189,
+            "b2bPrice": 189,
+            "dropshippingPrice": 189,
+            "b2bMoq": 10,
+            "discount": 53
           },
           {
             "id": "60c72b2f9b1d8e001c8e1002-white-350",
             "size": "350ml",
             "weight": "200g",
-            "price": 229,
             "mrp": 499,
-            "discount": 54,
             "stock": 70,
             "sku": "GR-MASH-WHT-350",
-            "barcode": "FX20022"
+            "barcode": "FX20022",
+            "b2cPrice": 229,
+            "b2bPrice": 229,
+            "dropshippingPrice": 229,
+            "b2bMoq": 10,
+            "discount": 54
           }
         ]
       },
@@ -365,23 +402,29 @@ export const products = [
             "id": "60c72b2f9b1d8e001c8e1002-pink-250",
             "size": "250ml",
             "weight": "150g",
-            "price": 189,
             "mrp": 399,
-            "discount": 52,
             "stock": 90,
             "sku": "GR-MASH-PNK-250",
-            "barcode": "FX20023"
+            "barcode": "FX20023",
+            "b2cPrice": 189,
+            "b2bPrice": 189,
+            "dropshippingPrice": 189,
+            "b2bMoq": 10,
+            "discount": 53
           },
           {
             "id": "60c72b2f9b1d8e001c8e1002-pink-350",
             "size": "350ml",
             "weight": "200g",
-            "price": 229,
             "mrp": 499,
-            "discount": 54,
             "stock": 60,
             "sku": "GR-MASH-PNK-350",
-            "barcode": "FX20024"
+            "barcode": "FX20024",
+            "b2cPrice": 229,
+            "b2bPrice": 229,
+            "dropshippingPrice": 229,
+            "b2bMoq": 10,
+            "discount": 54
           }
         ]
       }
@@ -392,7 +435,8 @@ export const products = [
       "showWeights": true,
       "showDimensions": true,
       "showImages": true
-    }
+    },
+    "defaultPriceTier": "B2C"
   },
   {
     "_id": "60c72b2f9b1d8e001c8e1003",
@@ -402,13 +446,16 @@ export const products = [
     "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.7,
     "reviewCount": 94,
-    "tags": ["premium", "bestseller", "hotelware"],
+    "tags": [
+      "premium",
+      "bestseller",
+      "hotelware"
+    ],
     "isActive": true,
     "totalStock": 200,
     "hsnCode": "8215",
     "gstRate": 18,
     "priceIncludesGst": true,
-    "moq": 12,
     "seoTitle": "High-End Stainless Steel Cutlery Set Wholesale | FlexSell",
     "seoDescription": "Source luxurious 18/10 stainless steel spoons, forks, and knives. Premium packaging, direct wholesale supplier prices.",
     "seoKeywords": "cutlery set, stainless steel spoons, flatware wholesale, hotel cutlery",
@@ -424,23 +471,29 @@ export const products = [
             "id": "60c72b2f9b1d8e001c8e1003-rose-12",
             "size": "12-Piece Set",
             "weight": "800g",
-            "price": 599,
             "mrp": 1299,
-            "discount": 53,
             "stock": 35,
             "sku": "CUT-RGD-12PC",
-            "barcode": "FX30031"
+            "barcode": "FX30031",
+            "b2cPrice": 599,
+            "b2bPrice": 599,
+            "dropshippingPrice": 599,
+            "b2bMoq": 10,
+            "discount": 54
           },
           {
             "id": "60c72b2f9b1d8e001c8e1003-rose-24",
             "size": "24-Piece Set",
             "weight": "1.6kg",
-            "price": 1099,
             "mrp": 2499,
-            "discount": 56,
             "stock": 30,
             "sku": "CUT-RGD-24PC",
-            "barcode": "FX30032"
+            "barcode": "FX30032",
+            "b2cPrice": 1099,
+            "b2bPrice": 1099,
+            "dropshippingPrice": 1099,
+            "b2bMoq": 10,
+            "discount": 56
           }
         ]
       },
@@ -455,23 +508,29 @@ export const products = [
             "id": "60c72b2f9b1d8e001c8e1003-blk-12",
             "size": "12-Piece Set",
             "weight": "800g",
-            "price": 549,
             "mrp": 1199,
-            "discount": 54,
             "stock": 45,
             "sku": "CUT-BLK-12PC",
-            "barcode": "FX30033"
+            "barcode": "FX30033",
+            "b2cPrice": 549,
+            "b2bPrice": 549,
+            "dropshippingPrice": 549,
+            "b2bMoq": 10,
+            "discount": 54
           },
           {
             "id": "60c72b2f9b1d8e001c8e1003-blk-24",
             "size": "24-Piece Set",
             "weight": "1.6kg",
-            "price": 999,
             "mrp": 2299,
-            "discount": 56,
             "stock": 40,
             "sku": "CUT-BLK-24PC",
-            "barcode": "FX30034"
+            "barcode": "FX30034",
+            "b2cPrice": 999,
+            "b2bPrice": 999,
+            "dropshippingPrice": 999,
+            "b2bMoq": 10,
+            "discount": 57
           }
         ]
       },
@@ -486,23 +545,29 @@ export const products = [
             "id": "60c72b2f9b1d8e001c8e1003-gld-12",
             "size": "12-Piece Set",
             "weight": "800g",
-            "price": 649,
             "mrp": 1399,
-            "discount": 53,
             "stock": 25,
             "sku": "CUT-GLD-12PC",
-            "barcode": "FX30035"
+            "barcode": "FX30035",
+            "b2cPrice": 649,
+            "b2bPrice": 649,
+            "dropshippingPrice": 649,
+            "b2bMoq": 10,
+            "discount": 54
           },
           {
             "id": "60c72b2f9b1d8e001c8e1003-gld-24",
             "size": "24-Piece Set",
             "weight": "1.6kg",
-            "price": 1199,
             "mrp": 2699,
-            "discount": 55,
             "stock": 25,
             "sku": "CUT-GLD-24PC",
-            "barcode": "FX30036"
+            "barcode": "FX30036",
+            "b2cPrice": 1199,
+            "b2bPrice": 1199,
+            "dropshippingPrice": 1199,
+            "b2bMoq": 10,
+            "discount": 56
           }
         ]
       }
@@ -513,7 +578,8 @@ export const products = [
       "showWeights": true,
       "showDimensions": true,
       "showImages": true
-    }
+    },
+    "defaultPriceTier": "B2C"
   },
   {
     "_id": "60c72b2f9b1d8e001c8e1004",
@@ -523,13 +589,16 @@ export const products = [
     "categoryId": "60c72b2f9b1d8e001c8e1a17",
     "rating": 4.2,
     "reviewCount": 78,
-    "tags": ["home-decor", "textile", "soft-cotton"],
+    "tags": [
+      "home-decor",
+      "textile",
+      "soft-cotton"
+    ],
     "isActive": true,
     "totalStock": 150,
     "hsnCode": "6304",
     "gstRate": 5,
     "priceIncludesGst": true,
-    "moq": 8,
     "seoTitle": "Wholesale Pure Cotton Double Bedsheet Sets | FlexSell",
     "seoDescription": "High quality 100% cotton double bedsheets with pillow covers. Direct distribution prices, 300 TC fabric.",
     "seoKeywords": "double bedsheet, cotton bedsheets, bedsheets wholesale, home linen",
@@ -545,23 +614,29 @@ export const products = [
             "id": "60c72b2f9b1d8e001c8e1004-blue-queen",
             "size": "Queen Size",
             "weight": "1.1kg",
-            "price": 449,
             "mrp": 899,
-            "discount": 50,
             "stock": 40,
             "sku": "BDS-BLU-QUN",
-            "barcode": "FX40041"
+            "barcode": "FX40041",
+            "b2cPrice": 449,
+            "b2bPrice": 449,
+            "dropshippingPrice": 449,
+            "b2bMoq": 10,
+            "discount": 50
           },
           {
             "id": "60c72b2f9b1d8e001c8e1004-blue-king",
             "size": "King Size",
             "weight": "1.3kg",
-            "price": 549,
             "mrp": 1099,
-            "discount": 50,
             "stock": 35,
             "sku": "BDS-BLU-KNG",
-            "barcode": "FX40042"
+            "barcode": "FX40042",
+            "b2cPrice": 549,
+            "b2bPrice": 549,
+            "dropshippingPrice": 549,
+            "b2bMoq": 10,
+            "discount": 50
           }
         ]
       },
@@ -576,23 +651,29 @@ export const products = [
             "id": "60c72b2f9b1d8e001c8e1004-gray-queen",
             "size": "Queen Size",
             "weight": "1.1kg",
-            "price": 449,
             "mrp": 899,
-            "discount": 50,
             "stock": 45,
             "sku": "BDS-GRY-QUN",
-            "barcode": "FX40043"
+            "barcode": "FX40043",
+            "b2cPrice": 449,
+            "b2bPrice": 449,
+            "dropshippingPrice": 449,
+            "b2bMoq": 10,
+            "discount": 50
           },
           {
             "id": "60c72b2f9b1d8e001c8e1004-gray-king",
             "size": "King Size",
             "weight": "1.3kg",
-            "price": 549,
             "mrp": 1099,
-            "discount": 50,
             "stock": 30,
             "sku": "BDS-GRY-KNG",
-            "barcode": "FX40044"
+            "barcode": "FX40044",
+            "b2cPrice": 549,
+            "b2bPrice": 549,
+            "dropshippingPrice": 549,
+            "b2bMoq": 10,
+            "discount": 50
           }
         ]
       }
@@ -603,7 +684,8 @@ export const products = [
       "showWeights": true,
       "showDimensions": true,
       "showImages": true
-    }
+    },
+    "defaultPriceTier": "B2C"
   },
   {
     "_id": "60c72b2f9b1d8e001c8e1005",
@@ -613,13 +695,16 @@ export const products = [
     "categoryId": "60c72b2f9b1d8e001c8e1a16",
     "rating": 4.6,
     "reviewCount": 110,
-    "tags": ["bestseller", "kitchen-utensils", "manual-juicer"],
+    "tags": [
+      "bestseller",
+      "kitchen-utensils",
+      "manual-juicer"
+    ],
     "isActive": true,
     "totalStock": 250,
     "hsnCode": "7323",
     "gstRate": 12,
     "priceIncludesGst": true,
-    "moq": 15,
     "seoTitle": "Manual Fruit Juicer Wholesale | B2B Kitchenware",
     "seoDescription": "Buy bulk handheld manual fruit juicers and citrus squeezers. Rust-proof alloy material, durable grip.",
     "seoKeywords": "hand juicer, fruit squeezer, manual press juicer, kitchen gadgets",
@@ -635,23 +720,29 @@ export const products = [
             "id": "60c72b2f9b1d8e001c8e1005-yel-std",
             "size": "Standard",
             "weight": "450g",
-            "price": 299,
             "mrp": 599,
-            "discount": 50,
             "stock": 70,
             "sku": "JUC-YEL-STD",
-            "barcode": "FX50051"
+            "barcode": "FX50051",
+            "b2cPrice": 299,
+            "b2bPrice": 299,
+            "dropshippingPrice": 299,
+            "b2bMoq": 10,
+            "discount": 50
           },
           {
             "id": "60c72b2f9b1d8e001c8e1005-yel-heavy",
             "size": "Heavy Duty",
             "weight": "600g",
-            "price": 399,
             "mrp": 799,
-            "discount": 50,
             "stock": 60,
             "sku": "JUC-YEL-HDY",
-            "barcode": "FX50052"
+            "barcode": "FX50052",
+            "b2cPrice": 399,
+            "b2bPrice": 399,
+            "dropshippingPrice": 399,
+            "b2bMoq": 10,
+            "discount": 50
           }
         ]
       },
@@ -666,23 +757,29 @@ export const products = [
             "id": "60c72b2f9b1d8e001c8e1005-slv-std",
             "size": "Standard",
             "weight": "450g",
-            "price": 299,
             "mrp": 599,
-            "discount": 50,
             "stock": 65,
             "sku": "JUC-SLV-STD",
-            "barcode": "FX50053"
+            "barcode": "FX50053",
+            "b2cPrice": 299,
+            "b2bPrice": 299,
+            "dropshippingPrice": 299,
+            "b2bMoq": 10,
+            "discount": 50
           },
           {
             "id": "60c72b2f9b1d8e001c8e1005-slv-heavy",
             "size": "Heavy Duty",
             "weight": "600g",
-            "price": 399,
             "mrp": 799,
-            "discount": 50,
             "stock": 55,
             "sku": "JUC-SLV-HDY",
-            "barcode": "FX50054"
+            "barcode": "FX50054",
+            "b2cPrice": 399,
+            "b2bPrice": 399,
+            "dropshippingPrice": 399,
+            "b2bMoq": 10,
+            "discount": 50
           }
         ]
       }
@@ -693,6 +790,7 @@ export const products = [
       "showWeights": true,
       "showDimensions": true,
       "showImages": true
-    }
+    },
+    "defaultPriceTier": "B2C"
   }
 ];

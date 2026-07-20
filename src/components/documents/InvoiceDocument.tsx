@@ -6,7 +6,7 @@ import { formatPrice } from "@/lib/utils";
 import { Order, CartItem, TaxBreakdown, SellerInfo, HsnSlab } from "@/types";
 
 export interface InvoiceDocumentProps {
-  type: "invoice" | "receipt";
+  type: "invoice" | "receipt" | "quote";
   documentNumber: string;
   order: Order;
   sellerInfo: SellerInfo;
@@ -89,7 +89,13 @@ export function InvoiceDocument({
   const tax = providedTaxBreakdown || computeTaxBreakdown(order, sellerState);
   const grandTotal = order.amount;
   const isInvoice = type === "invoice";
-  const documentTitle = isInvoice ? "Tax Invoice" : "Payment Receipt";
+  const isQuote = type === "quote";
+  const documentTitle = isQuote ? "Price Quote" : isInvoice ? "Tax Invoice" : "Payment Receipt";
+
+  const itemTotalWithGst = order.items.reduce((sum, item) => sum + (item.pricePerUnit * item.quantity), 0);
+  const couponDiscount = order.couponDiscount || 0;
+  const rawShipping = order.amount - itemTotalWithGst + couponDiscount;
+  const shippingCharge = rawShipping > 0.01 ? parseFloat(rawShipping.toFixed(2)) : 0;
 
   const handlePrint = () => window.print();
 
@@ -219,10 +225,34 @@ export function InvoiceDocument({
                   <tr key={`${item.product?._id || index}-${index}`} className="border-b border-gray-100">
                     <td className="py-3 text-gray-500">{index + 1}</td>
                     <td className="py-3">
-                      <p className="font-semibold text-gray-900">{item.product?.title || "Product"}</p>
-                      {formattedVariants && (
-                        <p className="text-[10px] text-gray-500 mt-0.5">{formattedVariants}</p>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {/* Dynamic Variant Image Preview */}
+                        <div className="w-12 h-12 relative flex-shrink-0 bg-gray-50 border border-gray-200 rounded overflow-hidden">
+                          {(() => {
+                            const matchingColor = item.selectedVariants?.["Color"] || item.selectedVariants?.["color"];
+                            const activeVariant = item.product?.colorVariants?.find((cv: any) => cv.color === matchingColor)
+                              || item.product?.colorVariants?.[0];
+                            const firstImg = activeVariant?.images?.[0];
+                            const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
+                            return (
+                              <Image
+                                src={imgUrl || "https://placehold.co/400x400/10b981/ffffff?text=Product"}
+                                alt={item.product?.title || "Product"}
+                                fill
+                                sizes="48px"
+                                className="object-cover"
+                                unoptimized
+                              />
+                            );
+                          })()}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{item.product?.title || "Product"}</p>
+                          {formattedVariants && (
+                            <p className="text-[10px] text-gray-500 mt-0.5">{formattedVariants}</p>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="py-3 text-center font-mono text-gray-600">{hsn}</td>
                     <td className="py-3 text-center font-bold">{item.quantity}</td>
@@ -302,9 +332,17 @@ export function InvoiceDocument({
                 <span>₹{tax.igst.toFixed(2)}</span>
               </div>
             )}
+            {couponDiscount > 0 && (
+              <div className="flex justify-between text-primary font-bold">
+                <span>Coupon Discount ({order.couponCode || "Discount"}):</span>
+                <span>-₹{couponDiscount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-gray-600">
-              <span>Shipping:</span>
-              <span className="text-emerald-600 font-semibold">Free</span>
+              <span>Shipping & Cargo Handling:</span>
+              <span className="font-semibold">
+                {shippingCharge > 0 ? `₹${shippingCharge.toFixed(2)}` : "Free"}
+              </span>
             </div>
             <div className="flex justify-between border-t-2 border-gray-800 pt-3 mt-3 font-bold text-base text-gray-900">
               <span>Grand Total (Incl. GST):</span>

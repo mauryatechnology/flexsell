@@ -38,9 +38,28 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const rawSecondImgUrl = secondImg ? (typeof secondImg === "string" ? secondImg : secondImg.url || "") : "";
   const secondImgUrl = rawSecondImgUrl ? sanitizeImgUrl(rawSecondImgUrl) : "";
 
-  const price = defaultSub?.price ?? 0;
+  const { useAuthStore } = require("@/stores/authStore");
+  const customer = useAuthStore((state: any) => state.customer);
+  const { resolvePrice, canPurchase } = require("@/lib/priceTierHelper");
+
+  let activeTier: "B2C" | "B2B" | "Dropshipping" = product.defaultPriceTier || "B2C";
+  let activeCartTier: "B2C" | "B2B" = "B2C";
+  if (customer && customer.customerTypes && customer.customerTypes.length > 0) {
+    if (customer.customerTypes.includes("B2C")) {
+      activeTier = "B2C";
+      activeCartTier = "B2C";
+    } else if (customer.customerTypes.includes("B2B")) {
+      activeTier = "B2B";
+      activeCartTier = "B2B";
+    } else {
+      activeTier = "Dropshipping";
+    }
+  }
+
+  const purchaseAllowed = !customer || canPurchase(customer.customerTypes);
+  const price = defaultSub ? resolvePrice(defaultSub, activeTier) : 0;
   const mrp = defaultSub?.mrp ?? 0;
-  const discount = defaultSub?.discount ?? 0;
+  const discount = mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0;
   const sku = defaultSub?.sku || "NO SKU";
 
   const isBestseller = product.cardTags?.some(tag => tag.toLowerCase() === "bestseller" || tag.toLowerCase() === "best seller");
@@ -55,10 +74,18 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!defaultVariant || !defaultSub) return;
-    if (product.totalStock <= 0) {
-      addToast("This product is currently out of stock.", "error");
+    if (!purchaseAllowed) {
+      addToast("Dropshipping accounts cannot place orders directly from storefront.", "warning");
       return;
+    }
+
+    const { resolveMoq } = require("@/lib/priceTierHelper");
+    const itemMoq = defaultSub ? resolveMoq(defaultSub, activeCartTier) : 1;
+    let orderQty = qty;
+    if (orderQty < itemMoq) {
+      addToast(`MOQ required. Standard limit is at least ${itemMoq} units.`, "warning");
+      orderQty = itemMoq;
+      setQty(itemMoq);
     }
 
     addItem(
@@ -68,7 +95,8 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
         Size: defaultSub.size || "Standard",
         Weight: defaultSub.weight || "250g"
       },
-      qty
+      orderQty,
+      activeCartTier
     );
     addToast(`${product.title} added to cart successfully.`, "success");
   };
@@ -144,8 +172,8 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
               Out of Stock
             </span>
           )}
-          {(product.moq || 1) > 1 && (
-            <span className="text-xs text-muted-foreground">MOQ: {product.moq} units</span>
+          {(customer?.customerTypes?.includes("B2B") && defaultSub?.b2bMoq) && (
+            <span className="text-xs text-muted-foreground">B2B MOQ: {defaultSub.b2bMoq} units</span>
           )}
         </div>
         </div>
@@ -192,10 +220,10 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
             className="w-full flex items-center justify-center gap-2 font-bold" 
             size="sm"
             onClick={handleAddToCart}
-            disabled={product.totalStock <= 0}
+            disabled={product.totalStock <= 0 || !purchaseAllowed}
           >
             <ShoppingCart className="h-4 w-4" />
-            Add to Cart
+            {!purchaseAllowed ? "Dropship Only" : "Add to Cart"}
           </Button>
         </div>
       </div>
@@ -259,9 +287,9 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
             )}
           </div>
         </Link>
-        {(product.moq || 1) > 1 && (
+        {(customer?.customerTypes?.includes("B2B") && defaultSub?.b2bMoq) && (
           <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-mono px-1 rounded z-10">
-            MOQ: {product.moq} pcs
+            MOQ: {defaultSub.b2bMoq} pcs
           </div>
         )}
       </div>
@@ -332,9 +360,9 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
             className="w-full font-bold flex items-center justify-center gap-1.5" 
             size="sm"
             onClick={handleAddToCart}
-            disabled={product.totalStock <= 0}
+            disabled={product.totalStock <= 0 || !purchaseAllowed}
           >
-            <ShoppingCart className="h-4 w-4" /> Add to Cart
+            <ShoppingCart className="h-4 w-4" /> {!purchaseAllowed ? "Dropship Only" : "Add to Cart"}
           </Button>
         </div>
       </CardContent>

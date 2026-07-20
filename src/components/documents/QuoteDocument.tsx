@@ -11,6 +11,7 @@ export interface QuoteDocumentProps {
   buyerState: string;
   sellerInfo: SellerInfo;
   showActions?: boolean;
+  shippingConfig?: any;
 }
 
 export function QuoteDocument({
@@ -20,6 +21,7 @@ export function QuoteDocument({
   buyerState,
   sellerInfo,
   showActions = true,
+  shippingConfig,
 }: QuoteDocumentProps) {
   const handlePrint = () => window.print();
 
@@ -29,7 +31,12 @@ export function QuoteDocument({
     year: "numeric",
   });
 
-  const grandTotal = taxDetails.baseSubtotal + taxDetails.cgst + taxDetails.sgst + taxDetails.igst;
+  const shippingCharge = React.useMemo(() => {
+    if (!shippingConfig || items.length === 0) return 0;
+    return shippingConfig?.b2bFixedCharge ?? 150;
+  }, [items, shippingConfig]);
+
+  const grandTotal = taxDetails.baseSubtotal + taxDetails.cgst + taxDetails.sgst + taxDetails.igst + shippingCharge;
 
   return (
     <div className="quote-document bg-white text-gray-900 max-w-4xl mx-auto">
@@ -135,20 +142,41 @@ export function QuoteDocument({
               </tr>
             </thead>
             <tbody>
-              {items.map((item, index) => {
+               {items.map((item, index) => {
                 const formattedVariants = Object.entries(item.selectedVariants || {})
                   .map(([key, val]) => `${key}: ${val}`)
                   .join(" • ");
                 const gstRate = item.product?.gstRate ?? 18;
                 const lineTotal = item.pricePerUnit * item.quantity;
+                
+                const matchingColor = item.selectedVariants["Color"] || item.selectedVariants["color"];
+                const activeVariant = item.product?.colorVariants?.find((cv: any) => cv.color === matchingColor)
+                  || item.product?.colorVariants?.[0];
+                const firstImg = activeVariant?.images?.[0];
+                const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
+
                 return (
                   <tr key={`${item.product?._id || index}-${index}`} className="border-b border-gray-100 text-xs">
                     <td className="py-3 text-gray-500">{index + 1}</td>
                     <td className="py-3">
-                      <span className="font-semibold text-gray-800">{item.product?.title || "Product"}</span>
-                      {formattedVariants && (
-                        <div className="text-[10px] text-gray-500 font-normal mt-0.5">{formattedVariants}</div>
-                      )}
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 relative flex-shrink-0 bg-gray-50 border border-gray-200 rounded overflow-hidden">
+                          <Image
+                            src={imgUrl || "https://placehold.co/400x400/10b981/ffffff?text=Product"}
+                            alt={item.product?.title || "Product"}
+                            fill
+                            sizes="48px"
+                            className="object-cover"
+                            unoptimized
+                          />
+                        </div>
+                        <div>
+                          <span className="font-semibold text-gray-800 block">{item.product?.title || "Product"}</span>
+                          {formattedVariants && (
+                            <div className="text-[10px] text-gray-500 font-normal mt-0.5">{formattedVariants}</div>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="py-3 text-center font-bold">{item.quantity} units</td>
                     <td className="py-3 text-right">₹{item.pricePerUnit.toFixed(2)}</td>
@@ -172,7 +200,13 @@ export function QuoteDocument({
               <li>Prices represent verified factory-direct wholesale pricing.</li>
               <li>Quote valid for 15 calendar days from generation date.</li>
               <li>Prices inclusive of GST as per Indian tax norms.</li>
-              <li>Free delivery for wholesale volume orders.</li>
+              <li>
+                {shippingCharge > 0 ? (
+                  "Shipping charges calculated dynamically based on cargo weight/B2B flat rate."
+                ) : (
+                  "Free delivery for wholesale volume orders."
+                )}
+              </li>
               <li>Subject to stock availability at time of order placement.</li>
             </ol>
           </div>
@@ -200,6 +234,13 @@ export function QuoteDocument({
                 <span>₹{taxDetails.igst.toFixed(2)}</span>
               </div>
             )}
+
+            <div className="flex justify-between text-gray-600">
+              <span>Shipping (B2B Cargo Flat Rate):</span>
+              <span className="font-semibold">
+                {shippingCharge > 0 ? `₹${shippingCharge.toFixed(2)}` : "Free Delivery"}
+              </span>
+            </div>
 
             {/* HSN Slabs */}
             {taxDetails.hsnSlabs.length > 0 && (

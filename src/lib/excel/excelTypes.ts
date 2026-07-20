@@ -32,10 +32,12 @@ export const HEADERS = [
   "Image URL 9",            // V (21)
   "Size",                   // W (22)
   "Weight",                 // X (23)
-  "Selling Price",          // Y (24)
+  "B2C Price",              // Y (24)
   "MRP",                    // Z (25)
   "Stock",                  // AA (26)
   "SKU",                    // AB (27)
+  "B2B Price",              // AC (28)
+  "Dropshipping Price",     // AD (29)
 ];
 
 export const GUIDELINES = [
@@ -44,7 +46,7 @@ export const GUIDELINES = [
   "Required. Select from dropdown.",
   "Required. Select from dropdown.",
   "Optional. Default: TRUE.",
-  "Optional. Default: 1. Integer ≥ 1.",
+  "Optional B2B Minimum Order Quantity. Defaults to 1 if left blank. Integer >= 1.",
   "Optional. Comma-separated. e.g. premium, kitchen.",
   "Optional. Comma-separated. e.g. Hot, New, Bestseller.",
   "Optional. Max 60 chars. Auto-generated if blank.",
@@ -57,10 +59,12 @@ export const GUIDELINES = [
   "Optional.", "Optional.", "Optional.", "Optional.",
   "Required. e.g. Standard, L, XL, 500g.",
   "Optional. e.g. 250g, 1kg.",
-  "Required. Number > 0. Wholesale price.",
-  "Required. Number ≥ Selling Price.",
-  "Required. Integer ≥ 0. Inventory count.",
+  "Required. B2C Selling Price. Number > 0.",
+  "Required. Maximum Retail Price. Must be >= B2C Price.",
+  "Required. Integer >= 0. Inventory count.",
   "Required. Max 40 chars. Must be unique across all variants.",
+  "Optional. B2B Trade Price. Number > 0.",
+  "Optional. Dropshipping Price. Number > 0.",
 ];
 
 export const COL_WIDTHS = [
@@ -81,8 +85,10 @@ export const COL_WIDTHS = [
   32, 32, 32, 32, 32, 32, 32, 32, // Image URLs 2–9
   14, // Size
   12, // Weight
-  14, // Selling Price
+  14, // B2C Price
   12, // MRP
   10, // Stock
   18, // SKU
+  14, // B2B Price
+  16, // Dropshipping Price
 ];

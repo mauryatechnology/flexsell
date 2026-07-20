@@ -33,11 +33,18 @@ const CustomerSchema = new Schema<CustomerType & Document>(
     phone: { type: String, required: true },
     initials: { type: String, required: true },
     gstin: { type: String },
-    businessType: { type: String, enum: ["distributor", "wholesaler", "retailer"], default: "wholesaler" },
+    customerTypes: {
+      type: [{ type: String, enum: ["B2C", "B2B", "Dropshipping"] }],
+      default: ["B2C"]
+    },
     addresses: [SavedAddressSchema],
     wishlist: [{ type: String }]
   },
   { timestamps: true }
 );
+
+if (mongoose.models.Customer) {
+  delete mongoose.models.Customer;
+}
 
 export default mongoose.models.Customer || mongoose.model("Customer", CustomerSchema);

@@ -33,7 +33,6 @@ export function VariantSelector() {
   if (!product) return null;
 
   const colorVariants = product.colorVariants || [];
-  const moq = product.moq ?? 1;
   const visibility = product.fieldVisibility || {
     showDescription: true,
     showSizes: true,
@@ -41,6 +40,18 @@ export function VariantSelector() {
     showDimensions: true,
     showImages: true,
   };
+  const { activeUser } = useProductDetail();
+  const customerTypes = activeUser?.customerTypes || ["B2C"];
+  const isB2B = customerTypes.includes("B2B");
+  const isB2C = customerTypes.includes("B2C");
+  const isDropshipperOnly = customerTypes.length === 1 && customerTypes[0] === "Dropshipping";
+
+  const { resolvePrice, resolveMoq, canPurchase } = require("@/lib/priceTierHelper");
+  const purchaseAllowed = canPurchase(customerTypes);
+
+  // Determine standard MOQ and active price tier for single selector
+  const activeCartTier = isB2C ? "B2C" : isB2B ? "B2B" : "B2C";
+  const itemMoq = activeSubVariant ? resolveMoq(activeSubVariant, activeCartTier) : 1;
 
   const handleAddToCart = () => {
     const { useCartStore } = require("@/stores/cartStore");
@@ -49,10 +60,14 @@ export function VariantSelector() {
     const addToast = useToastStore.getState().addToast;
 
     if (!activeVariant) return;
+    if (!purchaseAllowed) {
+      addToast("Dropshipping accounts cannot place orders directly from storefront.", "warning");
+      return;
+    }
 
-    if (qty < moq) {
-      addToast(`Cannot add to cart. Minimum Order Quantity (MOQ) of ${moq} units is required.`, "warning");
-      setQty(moq);
+    if (qty < itemMoq) {
+      addToast(`Cannot add to cart. Minimum Order Quantity (MOQ) of ${itemMoq} units is required.`, "warning");
+      setQty(itemMoq);
       qtyInputRef.current?.focus();
       return;
     }
@@ -71,7 +86,8 @@ export function VariantSelector() {
         Size: selectedSize,
         Weight: selectedWeight
       },
-      qty
+      qty,
+      activeCartTier
     );
 
     qtyInputRef.current?.focus();
@@ -79,33 +95,61 @@ export function VariantSelector() {
     addToast("Successfully added to cart!", "success");
   };
 
+  // Tab visibility guards
+  const showStandardTab = purchaseAllowed && isB2C;
+  const showBulkTab = purchaseAllowed;
+
+  // Sync active mode if the tab is hidden
+  React.useEffect(() => {
+    if (!showStandardTab && orderMode === "single") {
+      setOrderMode("bulk");
+    } else if (!showBulkTab && orderMode === "bulk") {
+      setOrderMode("single");
+    }
+  }, [showStandardTab, showBulkTab, orderMode, setOrderMode]);
+
+  if (isDropshipperOnly) {
+    return (
+      <div className="p-6 bg-secondary/15 rounded-xl border text-center space-y-2">
+        <p className="text-sm font-semibold text-muted-foreground">
+          Your account is configured for dropshipping.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Dropshipping orders and invoices are managed by the admin on your behalf. Direct storefront purchasing is disabled.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* B2B Ordering Mode Selection Tabs */}
-      <div className="flex border-b border-border mb-4">
-        <button
-          type="button"
-          onClick={() => setOrderMode("single")}
-          className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
-            orderMode === "single"
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Standard Selector
-        </button>
-        <button
-          type="button"
-          onClick={() => setOrderMode("bulk")}
-          className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
-            orderMode === "bulk"
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          B2B Bulk Purchase Matrix
-        </button>
-      </div>
+      {showStandardTab && showBulkTab && (
+        <div className="flex border-b border-border mb-4">
+          <button
+            type="button"
+            onClick={() => setOrderMode("single")}
+            className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+              orderMode === "single"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Standard Selector
+          </button>
+          <button
+            type="button"
+            onClick={() => setOrderMode("bulk")}
+            className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+              orderMode === "bulk"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Bulk Purchase Matrix
+          </button>
+        </div>
+      )}
 
       {orderMode === "single" ? (
         <>
@@ -217,9 +261,9 @@ export function VariantSelector() {
                 <Button
                   variant="ghost"
                   type="button"
-                  onClick={() => setQty(Math.max(moq, qty - 1))}
+                  onClick={() => setQty(Math.max(itemMoq, qty - 1))}
                   className="p-1 h-8 w-8 text-foreground cursor-pointer"
-                  disabled={qty <= moq}
+                  disabled={qty <= itemMoq}
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
@@ -230,14 +274,14 @@ export function VariantSelector() {
                   type="number"
                   className="w-12 text-center text-sm font-extrabold bg-transparent text-foreground focus:outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   value={qty}
-                  min={moq}
+                  min={itemMoq}
                   max={activeSubVariant?.stock || 0}
                   onChange={(e) => {
                     const val = parseInt(e.target.value, 10);
                     if (!isNaN(val)) setQty(val);
                   }}
                   onBlur={() => {
-                    if (qty < moq) setQty(moq);
+                    if (qty < itemMoq) setQty(itemMoq);
                     if (qty > (activeSubVariant?.stock || 0)) setQty(activeSubVariant?.stock || 0);
                   }}
                 />
@@ -287,8 +331,12 @@ export function VariantSelector() {
                   (cv.subVariants || []).filter(sv => sv.isActive !== false).map(sv => {
                     const rate = product.gstRate ?? 18;
                     const isIncl = product.priceIncludesGst ?? true;
-                    const totalPrice = isIncl ? sv.price : sv.price * (1 + rate / 100);
+                    
+                    const bulkTier = isB2B ? "B2B" : "B2C";
+                    const resolvedBasePrice = resolvePrice(sv, bulkTier);
+                    const totalPrice = isIncl ? resolvedBasePrice : resolvedBasePrice * (1 + rate / 100);
                     const qtyVal = bulkQuantities[sv.id] || "";
+                    const svMoq = resolveMoq(sv, bulkTier);
 
                     return (
                       <tr key={sv.id} className="hover:bg-secondary/10">
@@ -302,7 +350,7 @@ export function VariantSelector() {
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-center">
-                          {sv.stock > moq * 2 ? (
+                          {sv.stock > svMoq * 2 ? (
                             <Badge variant="success">{sv.stock}</Badge>
                           ) : sv.stock > 0 ? (
                             <Badge variant="warning">{sv.stock}</Badge>
@@ -313,7 +361,7 @@ export function VariantSelector() {
                         <td className="px-3 py-2.5 text-right">
                           <input
                             type="number"
-                            placeholder={`Min ${moq}`}
+                            placeholder={svMoq > 1 ? `Min ${svMoq}` : "Qty"}
                             className="w-20 text-center text-xs font-bold border border-border rounded p-1 bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             disabled={sv.stock <= 0}
                             value={qtyVal}

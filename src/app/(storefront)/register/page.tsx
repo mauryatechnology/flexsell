@@ -25,6 +25,7 @@ export default function RegisterPage() {
   const [gstin, setGstin] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [customerTypes, setCustomerTypes] = React.useState<("B2C" | "B2B" | "Dropshipping")[]>(["B2C"]);
 
   const { registerCustomer, error, clearError } = useAuthStore();
   const { addToast } = useToastStore();
@@ -54,6 +55,7 @@ export default function RegisterPage() {
       pinCode,
       phone,
       gstin,
+      customerTypes,
     });
     setIsSubmitting(false);
 
@@ -114,6 +116,35 @@ export default function RegisterPage() {
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
+                  </div>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium">Customer Type *</label>
+                  <div className="flex gap-4 items-center pt-1 flex-wrap">
+                    {(["B2C", "B2B", "Dropshipping"] as const).map((type) => (
+                      <label key={type} className="flex items-center gap-1.5 text-sm font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded text-primary focus:ring-primary bg-background border-border"
+                          checked={customerTypes.includes(type)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setCustomerTypes(prev => [...prev, type]);
+                            } else {
+                              if (customerTypes.length > 1) {
+                                setCustomerTypes(prev => prev.filter(t => t !== type));
+                              } else {
+                                addToast("At least one customer type is required.", "warning");
+                              }
+                            }
+                          }}
+                          disabled={isSubmitting}
+                        />
+                        <span>
+                          {type === "B2C" ? "Retailer (B2C)" : type === "B2B" ? "Wholesaler (B2B)" : "Dropshipper"}
+                        </span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               </div>

@@ -39,7 +39,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     const products = await productService.getProducts();
 
     // Prepare JSON-LD Product Schema data
-    const prices = product.colorVariants?.flatMap(cv => cv.subVariants?.map(sv => sv.price) || []) || [0];
+    const prices = product.colorVariants?.flatMap(cv => cv.subVariants?.map(sv => sv.b2cPrice) || []) || [0];
     const lowPrice = prices.length > 0 ? Math.min(...prices) : 0;
     const highPrice = prices.length > 0 ? Math.max(...prices) : 0;
     const offerCount = product.colorVariants?.flatMap(cv => cv.subVariants || []).length || 1;

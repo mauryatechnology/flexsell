@@ -12,6 +12,7 @@ import { MegaMenu } from "./MegaMenu";
 import { Category } from "@/types";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
+import { useAuthStore } from "@/stores/authStore";
 
 interface HeaderProps {
   categories: Category[];
@@ -24,6 +25,8 @@ export function Header({ categories }: HeaderProps) {
 
   const cartItemsCount = useCartStore((state) => state.getCartItemsCount());
   const wishlistItemsCount = useWishlistStore((state) => state.items.length);
+  const customer = useAuthStore((state) => state.customer);
+  const isDropshipperOnly = customer && customer.customerTypes && customer.customerTypes.length === 1 && customer.customerTypes[0] === "Dropshipping";
 
   const topLevel = categories.filter(c => !c.parentId);
 
@@ -36,49 +39,37 @@ export function Header({ categories }: HeaderProps) {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      if (searchQuery.trim()) {
-        router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      }
+      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="mx-auto max-w-8xl px-4 md:px-6 h-16 flex items-center justify-between gap-4 w-full">
-        {/* Mobile Menu & Logo */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMobileMenuOpen(true)}>
-            <Menu className="h-6 w-6 text-foreground" />
-          </Button>
-          <Link href="/" className="flex items-center">
-            <Image src="/Flexsell%20Logo.png" alt="Flexsell Logo" width={150} height={40} className="h-8 md:h-10 w-auto object-contain" priority />
-          </Link>
-        </div>
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-14 max-w-8xl items-center justify-between px-4 md:px-6">
+        {/* Mobile Menu Icon */}
+        <Button variant="ghost" size="icon" className="md:hidden text-foreground" onClick={() => setIsMobileMenuOpen(true)}>
+          <Menu className="h-5 w-5" />
+        </Button>
 
-        {/* Search Bar - Hidden on small screens */}
-        <div className="hidden md:flex flex-1 max-w-xl mx-8 relative">
-          <Input
-            type="search"
-            placeholder="Search for products, categories..."
-            className="w-full pr-10 rounded-full text-foreground"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1 h-8 w-8 rounded-full"
-            onClick={handleSearchSubmit}
-          >
-            <Search className="h-4 w-4 text-foreground" />
-          </Button>
+        {/* Brand Logo */}
+        <Link href="/" className="flex items-center gap-2">
+          <Image src="/Flexsell%20Logo.png" alt="Flexsell Logo" width={110} height={28} className="h-7 w-auto object-contain" priority />
+        </Link>
+
+        {/* Global Search Bar - Desktop Only */}
+        <div className="hidden md:flex flex-1 max-w-md mx-6">
+          <form onSubmit={handleSearchSubmit} className="relative w-full">
+            <Input
+              type="search"
+              placeholder="Search trending products, categories..."
+              className="w-full h-9 pl-4 pr-10 rounded-full border border-input bg-muted/40 focus:bg-background focus:ring-1 focus:ring-primary text-xs text-foreground"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-0 h-9 w-9 rounded-full text-muted-foreground hover:text-foreground">
+              <Search className="h-4 w-4 text-foreground" />
+            </Button>
+          </form>
         </div>
 
         {/* Utility Icons */}
@@ -98,16 +89,18 @@ export function Header({ categories }: HeaderProps) {
               )}
             </Button>
           </Link>
-          <Link href="/cart">
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-5 w-5 text-foreground" />
-              {isMounted && cartItemsCount > 0 && (
-                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground font-bold">
-                  {cartItemsCount}
-                </span>
-              )}
-            </Button>
-          </Link>
+          {!isDropshipperOnly && (
+            <Link href="/cart">
+              <Button variant="ghost" size="icon" className="relative">
+                <ShoppingCart className="h-5 w-5 text-foreground" />
+                {isMounted && cartItemsCount > 0 && (
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground font-bold">
+                    {cartItemsCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 

@@ -189,7 +189,12 @@ export function ProductDetailProvider({
 
   const handleBulkQtyChange = (subVariantId: string, valStr: string, svStock: number) => {
     const val = parseInt(valStr, 10);
-    const moqLimit = product?.moq ?? 1;
+    
+    const { resolveMoq } = require("@/lib/priceTierHelper");
+    const isB2B = activeUser?.customerTypes?.includes("B2B") ?? false;
+    const tier = isB2B ? "B2B" : "B2C";
+    const subVariant = activeVariant?.subVariants?.find(sv => sv.id === subVariantId);
+    const moqLimit = subVariant ? resolveMoq(subVariant, tier) : 1;
 
     if (isNaN(val) || val <= 0) {
       setBulkQuantities(prev => {
@@ -214,6 +219,9 @@ export function ProductDetailProvider({
     if (!product) return;
     let addedCount = 0;
 
+    const isB2B = activeUser?.customerTypes?.includes("B2B") ?? false;
+    const tier = isB2B ? "B2B" : "B2C";
+
     product.colorVariants?.forEach(cv => {
       cv.subVariants?.forEach(sv => {
         const targetQty = bulkQuantities[sv.id] || 0;
@@ -225,7 +233,8 @@ export function ProductDetailProvider({
               Size: sv.size,
               Weight: sv.weight
             },
-            targetQty
+            targetQty,
+            tier
           );
           addedCount++;
         }
@@ -233,10 +242,10 @@ export function ProductDetailProvider({
     });
 
     if (addedCount > 0) {
-      addToast(`Successfully added ${addedCount} variant combinations to wholesale cart!`, "success");
+      addToast(`Successfully added ${addedCount} variant combinations to cart!`, "success");
       setBulkQuantities({});
     } else {
-      addToast("Please input valid order quantities above MOQ constraints.", "warning");
+      addToast("Please input valid order quantities.", "warning");
     }
   };
 
@@ -275,7 +284,7 @@ export function ProductDetailProvider({
     if (uniqueSizes.length > 0) setSelectedSize(uniqueSizes[0]);
     if (uniqueWeights.length > 0) setSelectedWeight(uniqueWeights[0]);
     setActiveImageIdx(0);
-    setQty(product?.moq || 1);
+    setQty(1);
   }, [selectedColorIdx, activeVariant, product]);
 
   // Synchronize size and weight selection to ensure it corresponds to a valid sub-variant

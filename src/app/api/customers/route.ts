@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, email, password, company, address, city, state, pinCode, phone, gstin, businessType } = body;
+    const { name, email, password, company, address, city, state, pinCode, phone, gstin, customerTypes } = body;
 
     if (!name || !email || !password || !address || !city || !state || !pinCode || !phone) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       phone,
       initials,
       gstin: gstin || "",
-      businessType: businessType || "wholesaler"
+      customerTypes: customerTypes || ["B2C"]
     });
 
     const customerObj = newCustomer.toObject();
@@ -129,7 +129,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { _id, name, email, password, company, address, city, state, pinCode, phone, gstin, businessType } = body;
+    const { _id, name, email, password, company, address, city, state, pinCode, phone, gstin, customerTypes } = body;
 
     if (!_id) {
       return NextResponse.json({ message: "Customer ID is required" }, { status: 400 });
@@ -169,7 +169,7 @@ export async function PUT(request: Request) {
     if (pinCode !== undefined) customer.pinCode = pinCode;
     if (phone !== undefined) customer.phone = phone;
     if (gstin !== undefined) customer.gstin = gstin;
-    if (businessType !== undefined) customer.businessType = businessType;
+    if (customerTypes !== undefined) customer.customerTypes = customerTypes;
 
     await customer.save();
 

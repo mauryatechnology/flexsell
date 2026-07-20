@@ -19,7 +19,7 @@ interface CartState {
   items: CartItem[];
   buyerState: string; // Destination state (defaults to Madhya Pradesh)
   setBuyerState: (state: string) => void;
-  addItem: (product: Product, selectedVariants: Record<string, string>, quantity?: number) => void;
+  addItem: (product: Product, selectedVariants: Record<string, string>, quantity?: number, priceTier?: "B2C" | "B2B") => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, qty: number) => void;
   clearCart: () => void;
@@ -45,13 +45,22 @@ export const useCartStore = create<CartState>()(
 
       setBuyerState: (state) => set({ buyerState: state }),
 
-      addItem: (product, selectedVariants, quantity = 1) => {
+      addItem: (product, selectedVariants, quantity = 1, priceTier = "B2C") => {
         const variantKey = Object.entries(selectedVariants)
           .sort((a, b) => a[0].localeCompare(b[0]))
           .map(([k, v]) => `${k}:${v}`)
           .join("|");
 
-        const itemId = `${product._id}-${variantKey}`;
+        const itemId = `${product._id}-${variantKey}-${priceTier}`;
+
+        // Fetch active customer from authStore
+        const { useAuthStore } = require("./authStore");
+        const customer = useAuthStore.getState().customer;
+        
+        if (customer && customer.customerTypes && customer.customerTypes.length === 1 && customer.customerTypes[0] === "Dropshipping") {
+          useToastStore.getState().addToast("Dropshipping accounts cannot place orders directly from storefront.", "warning");
+          return;
+        }
 
         // Find the matched color variant from the product store for accurate stock & pricing
         const storeProducts = useProductStore.getState().products;
@@ -76,9 +85,10 @@ export const useCartStore = create<CartState>()(
           return;
         }
 
-        const calculatedPrice = matchedVariant.price;
+        const { resolvePrice, resolveMoq } = require("@/lib/priceTierHelper");
+        const calculatedPrice = resolvePrice(matchedVariant, priceTier);
         const availableStock = matchedVariant.stock;
-        const moq = liveProduct.moq ?? 1;
+        const moq = resolveMoq(matchedVariant, priceTier);
 
         // Check if item exists in cart
         const existingItem = get().items.find(item => item.id === itemId);
@@ -87,7 +97,7 @@ export const useCartStore = create<CartState>()(
 
         // Verify MOQ constraint
         if (targetQty < moq) {
-          useToastStore.getState().addToast(`MOQ required. Standard B2B limit for this product is at least ${moq} units.`, "warning");
+          useToastStore.getState().addToast(`MOQ required. Standard limit for this product is at least ${moq} units.`, "warning");
           targetQty = moq;
         }
 
@@ -111,7 +121,7 @@ export const useCartStore = create<CartState>()(
             useToastStore.getState().addToast(`Updated quantity in cart to ${targetQty}.`, "success");
             return { items: updatedItems };
           } else {
-            useToastStore.getState().addToast(`Successfully added ${targetQty} items to B2B cart!`, "success");
+            useToastStore.getState().addToast(`Successfully added ${targetQty} items to cart!`, "success");
             return {
               items: [
                 ...state.items,
@@ -122,6 +132,7 @@ export const useCartStore = create<CartState>()(
                   selectedVariants,
                   quantity: targetQty,
                   pricePerUnit: calculatedPrice,
+                  priceTier,
                 }
               ]
             };
@@ -159,14 +170,16 @@ export const useCartStore = create<CartState>()(
 
         if (!matchedVariant) return;
 
+        const { resolveMoq } = require("@/lib/priceTierHelper");
         const availableStock = matchedVariant.stock;
-        const moq = liveProduct.moq ?? 1;
+        const itemTier = item.priceTier || "B2C";
+        const moq = resolveMoq(matchedVariant, itemTier);
 
         let targetQty = qty;
 
         // Enforce MOQ
         if (targetQty < moq) {
-          useToastStore.getState().addToast(`Wholesale MOQ required: minimum ${moq} units.`, "warning");
+          useToastStore.getState().addToast(`MOQ required: minimum ${moq} units.`, "warning");
           targetQty = moq;
         }
 
@@ -302,6 +315,7 @@ export const useCartStore = create<CartState>()(
           selectedVariants: item.selectedVariants,
           quantity: item.quantity,
           pricePerUnit: item.pricePerUnit,
+          priceTier: item.priceTier || "B2C",
         }))
       }) as any,
       // Hydrate product objects from the productStore upon rehydration

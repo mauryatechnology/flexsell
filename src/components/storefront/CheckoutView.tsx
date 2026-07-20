@@ -23,6 +23,7 @@ export function CheckoutView() {
   const { addToast } = useToastStore();
   const { items, buyerState, setBuyerState, clearCart, getTaxDetails, hydrateProducts } = useCartStore();
   const { createOrder } = useOrderStore();
+  const [shippingConfig, setShippingConfig] = React.useState<any>(null);
 
   React.useEffect(() => {
     const initCartProducts = async () => {
@@ -72,6 +73,26 @@ export function CheckoutView() {
   const [customersList, setCustomersList] = React.useState<any[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = React.useState("");
   const [savedAddresses, setSavedAddresses] = React.useState<any[]>([]);
+
+  // Dropshipping redirect guard
+  const { useAuthStore } = require("@/stores/authStore");
+  const customer = useAuthStore((state: any) => state.customer);
+  const isDropshipperOnly = customer && customer.customerTypes && customer.customerTypes.length === 1 && customer.customerTypes[0] === "Dropshipping";
+
+  React.useEffect(() => {
+    if (isDropshipperOnly) {
+      window.location.href = "/client";
+    }
+  }, [isDropshipperOnly]);
+
+  React.useEffect(() => {
+    const { shippingService } = require("@/services/shippingService");
+    shippingService.getConfig()
+      .then((config: any) => {
+        setShippingConfig(config);
+      })
+      .catch(console.error);
+  }, []);
 
   // Load customer on mount
   React.useEffect(() => {
@@ -258,8 +279,46 @@ export function CheckoutView() {
       address, apartment: apartment || undefined, city, state, pinCode, phone, gstin: gstin || undefined
     };
 
+    // Parse weight string to grams
+    const parseWeightToGrams = (weightStr: string): number => {
+      if (!weightStr) return 0;
+      const clean = weightStr.toLowerCase().trim();
+      const num = parseFloat(clean.replace(/[^0-9.]/g, ""));
+      if (isNaN(num)) return 0;
+      if (clean.includes("kg")) {
+        return num * 1000;
+      }
+      return num;
+    };
+
+    const b2cWeightGrams = items
+      .filter(item => item.priceTier !== "B2B")
+      .reduce((sum, item) => {
+        const matchingColor = item.selectedVariants["Color"] || item.selectedVariants["color"];
+        const activeVariant = item.product.colorVariants?.find(cv => cv.color === matchingColor)
+          || item.product.colorVariants?.[0];
+        const activeSubVariant = activeVariant?.subVariants?.find(sv =>
+          (!item.selectedVariants["Size"] || sv.size === item.selectedVariants["Size"]) &&
+          (!item.selectedVariants["Weight"] || sv.weight === item.selectedVariants["Weight"])
+        ) || activeVariant?.subVariants?.[0];
+        const unitWeightStr = activeSubVariant?.weight || "0g";
+        return sum + (parseWeightToGrams(unitWeightStr) * item.quantity);
+      }, 0);
+
+    const hasB2B = items.some(item => item.priceTier === "B2B");
+    const hasB2C = items.some(item => item.priceTier !== "B2B");
+
+    const b2bFixed = shippingConfig?.b2bFixedCharge ?? 150;
+    const slabs = shippingConfig?.weightSlabs || [];
+
+    const b2bShipping = hasB2B ? b2bFixed : 0;
+    const { calculateShippingByWeight } = require("@/lib/priceTierHelper");
+    const b2cShipping = hasB2C ? calculateShippingByWeight(b2cWeightGrams, slabs) : 0;
+
+    const shippingCharge = b2bShipping + b2cShipping;
+    const amountToPay = Math.max(0, grandTotal + shippingCharge - couponDiscount);
+
     if (paymentMethod === "Razorpay") {
-      const amountToPay = Math.max(0, grandTotal - couponDiscount);
       setIsSubmitting(true);
       
       try {
@@ -330,7 +389,7 @@ export function CheckoutView() {
       try {
         const orderId = await createOrder(
           items, 
-          Math.max(0, grandTotal - couponDiscount), 
+          amountToPay, 
           shippingAddress,
           {
             paymentMethod: "COD",
@@ -407,6 +466,7 @@ export function CheckoutView() {
               hsnBreakdown={hsnBreakdown}
               grandTotal={grandTotal}
               isSubmitting={isSubmitting}
+              shippingConfig={shippingConfig}
             >
               <CouponInput 
                 appliedCoupon={appliedCoupon}

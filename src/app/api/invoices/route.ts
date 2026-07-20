@@ -20,8 +20,8 @@ async function getSellerInfo() {
   };
 }
 
-async function generateInvoiceId(type: "invoice" | "receipt"): Promise<string> {
-  const prefix = type === "invoice" ? "INV" : "RCP";
+async function generateInvoiceId(type: "invoice" | "receipt" | "quote"): Promise<string> {
+  const prefix = type === "invoice" ? "INV" : type === "receipt" ? "RCP" : "QUO";
   const year = new Date().getFullYear();
   const regex = new RegExp(`^${prefix}-${year}-`);
   const lastDoc = await InvoiceModel.findOne({ _id: regex })
@@ -320,6 +320,7 @@ export async function POST(request: Request) {
           phone: newCustomer.phone || "",
           gstin: newCustomer.gstin || "",
           initials,
+          customerTypes: newCustomer.customerTypes || ["B2C"],
         });
 
         resolvedCustomerId = newCustId;

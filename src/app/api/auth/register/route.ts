@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     await dbConnect();
     const body = await req.json();
     const validatedData = registerSchema.parse(body);
-    const { name, email, password, company, address, city, state, pinCode, phone, gstin } = validatedData;
+    const { name, email, password, company, address, city, state, pinCode, phone, gstin, customerTypes } = validatedData;
 
     // Check if email already exists
     const existingCustomer = await Customer.findOne({ email: email.toLowerCase() });
@@ -58,6 +58,7 @@ export async function POST(req: Request) {
       phone,
       initials,
       gstin: gstin || "",
+      customerTypes: customerTypes || ["B2C"],
     });
 
     await newCustomer.save();
@@ -80,6 +81,7 @@ export async function POST(req: Request) {
       userId: customerId,
       email: newCustomer.email,
       role: newCustomer.role,
+      customerTypes: newCustomer.customerTypes,
     });
 
     await setTokenCookie(token);

@@ -49,7 +49,7 @@ function ProductFormInner() {
         <APlusContentCard />
 
         {/* Sticky Save Bar at the bottom of the screen */}
-        <div className="sticky bottom-0 -mx-6 md:-mx-8 mt-8 bg-card/90 backdrop-blur border-t py-4 px-6 flex justify-end gap-3 z-30 shadow-md">
+        <div className="sticky bottom-0 -mx-6 md:-mx-8  flex justify-end gap-3 z-30 ">
           <Link href="/admin/products">
             <Button type="button" variant="outline" size="lg" className="h-10 text-sm font-semibold cursor-pointer" disabled={isSaving}>Cancel</Button>
           </Link>

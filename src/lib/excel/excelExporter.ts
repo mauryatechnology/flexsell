@@ -205,7 +205,7 @@ export async function exportToExcel(
             categoryText,
             p.hsnCode || "",
             p.priceIncludesGst !== undefined ? (p.priceIncludesGst ? "TRUE" : "FALSE") : "TRUE",
-            p.moq !== undefined ? p.moq : 1,
+            sv.b2bMoq !== undefined ? sv.b2bMoq : 1,
             (p.tags || []).join(", "),
             (p.cardTags || []).join(", "),
             p.seoTitle || "",
@@ -223,10 +223,12 @@ export async function exportToExcel(
           values.push(
             sv.size || "",
             sv.weight || "",
-            sv.price !== undefined ? sv.price : "",
+            sv.b2cPrice !== undefined ? sv.b2cPrice : "",
             sv.mrp !== undefined ? sv.mrp : "",
             sv.stock !== undefined ? sv.stock : 0,
-            sv.sku || ""
+            sv.sku || "",
+            sv.b2bPrice !== undefined ? sv.b2bPrice : "",
+            sv.dropshippingPrice !== undefined ? sv.dropshippingPrice : ""
           );
 
           row.values = values;

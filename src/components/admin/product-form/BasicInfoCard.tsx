@@ -41,7 +41,7 @@ export function BasicInfoCard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Product Title / Name</label>
+            <label className="text-sm font-medium">Product Title / Name *</label>
             <Input
               placeholder="e.g. Mitti Handi / Clay Cookware"
               value={title}
@@ -51,7 +51,7 @@ export function BasicInfoCard() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Category</label>
+            <label className="text-sm font-medium">Category *</label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
@@ -93,7 +93,7 @@ export function BasicInfoCard() {
         {/* Rich Text Editor for Description */}
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <label className="text-sm font-medium">Description</label>
+            <label className="text-sm font-medium">Description *</label>
             <div className="flex bg-secondary/50 rounded-md p-0.5 border">
               <button
                 type="button"

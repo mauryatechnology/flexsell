@@ -9,11 +9,11 @@ import { Customer } from "@/types";
 import { useToastStore } from "@/stores/toastStore";
 
 const INDIAN_STATES = [
-  "Madhya Pradesh", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", 
-  "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", 
-  "Karnataka", "Kerala", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", 
-  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", 
-  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", 
+  "Madhya Pradesh", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar",
+  "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+  "Karnataka", "Kerala", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
   "Delhi", "Union Territory"
 ];
 
@@ -24,15 +24,15 @@ export default function ClientProfilePage() {
   const [lastName, setLastName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
-  
+
   const [company, setCompany] = React.useState("");
   const [gstin, setGstin] = React.useState("");
   const [address, setAddress] = React.useState("");
   const [city, setCity] = React.useState("");
   const [state, setState] = React.useState(INDIAN_STATES[0]);
   const [pinCode, setPinCode] = React.useState("");
-  const [businessType, setBusinessType] = React.useState("wholesaler");
-  
+  const [customerTypes, setCustomerTypes] = React.useState<("B2C" | "B2B" | "Dropshipping")[]>(["B2C"]);
+
   const [isSubmittingPersonal, setIsSubmittingPersonal] = React.useState(false);
   const [isSubmittingBusiness, setIsSubmittingBusiness] = React.useState(false);
 
@@ -49,7 +49,7 @@ export default function ClientProfilePage() {
       setCity(cust.city || "");
       setState(cust.state || INDIAN_STATES[0]);
       setPinCode(cust.pinCode || "");
-      setBusinessType(cust.businessType || "wholesaler");
+      setCustomerTypes(cust.customerTypes || ["B2C"]);
     }).catch(console.error);
   }, []);
 
@@ -82,7 +82,7 @@ export default function ClientProfilePage() {
         city,
         state,
         pinCode,
-        businessType: businessType as "distributor" | "wholesaler" | "retailer"
+        customerTypes
       });
       setActiveCustomer(updated);
       addToast("Business information updated successfully!", "success");
@@ -102,7 +102,7 @@ export default function ClientProfilePage() {
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Account Profile</h1>
-          <p className="text-muted-foreground mt-1">Manage your personal and B2B business details.</p>
+          <p className="text-muted-foreground mt-1">Manage your personal and business details.</p>
         </div>
       </div>
 
@@ -160,12 +160,12 @@ export default function ClientProfilePage() {
                   <Input value={gstin} onChange={(e) => setGstin(e.target.value)} className="text-sm font-mono font-bold" placeholder="Optional" />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">Billing Address *</label>
                 <Input value={address} onChange={(e) => setAddress(e.target.value)} required className="text-sm font-semibold" placeholder="Street Address" />
               </div>
-              
+
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase text-muted-foreground">City *</label>
@@ -173,7 +173,7 @@ export default function ClientProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase text-muted-foreground">State *</label>
-                  <select 
+                  <select
                     value={state}
                     onChange={(e) => setState(e.target.value)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -186,20 +186,34 @@ export default function ClientProfilePage() {
                   <Input value={pinCode} onChange={(e) => setPinCode(e.target.value)} required className="text-sm font-mono font-bold" />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Business Type</label>
-                <select 
-                  value={businessType}
-                  onChange={(e) => setBusinessType(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="distributor">Distributor / Dealer</option>
-                  <option value="wholesaler">Wholesaler</option>
-                  <option value="retailer">Retailer</option>
-                </select>
+                <label className="text-xs font-bold uppercase text-muted-foreground">Customer Type *</label>
+                <div className="flex gap-4 items-center pt-1">
+                  {(["B2C", "B2B", "Dropshipping"] as const).map((type) => (
+                    <label key={type} className="flex items-center gap-1.5 text-sm font-semibold cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="rounded text-primary focus:ring-primary bg-background border-border"
+                        checked={customerTypes.includes(type)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setCustomerTypes(prev => [...prev, type]);
+                          } else {
+                            if (customerTypes.length > 1) {
+                              setCustomerTypes(prev => prev.filter(t => t !== type));
+                            } else {
+                              addToast("At least one customer type is required.", "warning");
+                            }
+                          }
+                        }}
+                      />
+                      <span>{type}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-              
+
               <Button type="submit" className="font-bold" disabled={isSubmittingBusiness}>
                 {isSubmittingBusiness ? "Saving..." : "Update Business Profile"}
               </Button>

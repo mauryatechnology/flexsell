@@ -376,6 +376,8 @@ export async function POST(request: Request) {
           generatedAt,
           generatedBy: "system",
           status: "issued",
+          couponCode,
+          couponDiscount,
         } as any);
 
         // Link invoice to order
