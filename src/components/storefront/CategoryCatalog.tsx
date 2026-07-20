@@ -24,7 +24,7 @@ import { useProductStore } from "@/stores/productStore";
 import { useCategoryStore } from "@/stores/categoryStore";
 import Image from "next/image";
 import { Pagination } from "@/components/ui/Pagination";
-import { notFound } from "next/navigation";
+import { notFound, usePathname, useSearchParams } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { ProductCard } from "./ProductCard";
 import { ExportCatalogButton } from "./ExportCatalogButton";
@@ -107,6 +107,52 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
     setInStockOnly(false);
     setMinDiscount(0);
   };
+
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Load initial filters from URL search params on mount
+  React.useEffect(() => {
+    if (!searchParams) return;
+    const subParam = searchParams.get("subcategories") || searchParams.get("subcategory");
+    if (subParam) {
+      setSelectedSubcategories(subParam.split(",").filter(Boolean));
+    }
+    const minP = searchParams.get("minPrice");
+    if (minP) setMinPrice(Number(minP));
+
+    const maxP = searchParams.get("maxPrice");
+    if (maxP) setMaxPrice(Number(maxP));
+
+    const inStock = searchParams.get("inStock");
+    if (inStock === "true") setInStockOnly(true);
+
+    const minDisc = searchParams.get("minDiscount");
+    if (minDisc) setMinDiscount(Number(minDisc));
+
+    const sortP = searchParams.get("sort");
+    if (sortP) setSortBy(sortP);
+  }, [searchParams]);
+
+  // Sync filter changes dynamically to browser URL search params
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+
+    if (selectedSubcategories.length > 0) {
+      params.set("subcategories", selectedSubcategories.join(","));
+    }
+    if (minPrice !== "") params.set("minPrice", String(minPrice));
+    if (maxPrice !== "") params.set("maxPrice", String(maxPrice));
+    if (inStockOnly) params.set("inStock", "true");
+    if (minDiscount > 0) params.set("minDiscount", String(minDiscount));
+    if (sortBy && sortBy !== "recommended") params.set("sort", sortBy);
+
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+
+    window.history.replaceState(null, "", newUrl);
+  }, [selectedSubcategories, minPrice, maxPrice, inStockOnly, minDiscount, sortBy, pathname]);
 
   // Filter Logic
   const filteredProducts = React.useMemo(() => {
