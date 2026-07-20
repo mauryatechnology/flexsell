@@ -4,7 +4,7 @@ import { validateCsrf } from "@/lib/csrf";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
   const { pathname } = request.nextUrl;
 

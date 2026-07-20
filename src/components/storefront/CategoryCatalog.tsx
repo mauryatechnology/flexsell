@@ -347,7 +347,7 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
           {sortedProducts.length === 0 ? (
             <div className="text-center py-20 bg-secondary/10 rounded-xl border border-dashed flex flex-col items-center justify-center">
               <Info className="h-8 w-8 text-muted-foreground/60 mb-3 animate-pulse" />
-              <p className="font-bold text-foreground text-base">No cargo lines found</p>
+              <p className="font-bold text-foreground text-base">No Product found</p>
               <p className="text-sm text-muted-foreground max-w-xs mt-1">Try adjusting price bounds, checking subcategories, or resetting active filters.</p>
               <Button size="sm" onClick={handleClearFilters} className="mt-4">Reset Filters</Button>
             </div>
