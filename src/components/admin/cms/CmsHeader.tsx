@@ -20,14 +20,14 @@ export function CmsHeader({ onOpenSeedModal }: CmsHeaderProps) {
         </p>
       </div>
 
-      <Button
+      {/* <Button
         type="button"
         onClick={onOpenSeedModal}
         variant="outline"
         className="font-bold border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 gap-2 cursor-pointer shrink-0"
       >
         <Database className="h-4 w-4" /> Seed / Reset Database Defaults
-      </Button>
+      </Button> */}
     </div>
   );
 }

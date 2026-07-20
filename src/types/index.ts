@@ -282,13 +282,6 @@ export interface Notification extends BaseDocument {
   isRead: boolean;
 }
 
-export interface WebhookSubscription extends BaseDocument {
-  url: string;
-  event: "order.created" | "order.status_updated" | "customer.created";
-  secret: string;
-  isActive: boolean;
-}
-
 export interface ShippingWeightSlab {
   _id?: string;
   fromGram: number;
