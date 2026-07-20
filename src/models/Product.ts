@@ -68,7 +68,6 @@ const ProductSchema = new Schema<ProductType & Document>(
   { timestamps: true }
 );
 
-ProductSchema.index({ slug: 1 });
 ProductSchema.index({ categoryId: 1 });
 ProductSchema.index({ isActive: 1 });
 ProductSchema.index({ "colorVariants.subVariants.sku": 1 });

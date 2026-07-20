@@ -70,11 +70,7 @@ export default function AdminCmsPage() {
   const [deleteIndex, setDeleteIndex] = React.useState<number | null>(null);
   const [seedModalOpen, setSeedModalOpen] = React.useState(false);
 
-  React.useEffect(() => {
-    fetchCmsData();
-  }, []);
-
-  const fetchCmsData = async () => {
+  const fetchCmsData = React.useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch("/api/cms");
@@ -99,7 +95,11 @@ export default function AdminCmsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [addToast]);
+
+  React.useEffect(() => {
+    fetchCmsData();
+  }, [fetchCmsData]);
 
   const handleSaveCmsKey = async (key: string, value: any) => {
     try {

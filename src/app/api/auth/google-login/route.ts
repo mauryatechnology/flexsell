@@ -25,7 +25,13 @@ export async function POST(req: Request) {
     const payload = await response.json();
 
     // Verify audience
-    if (payload.aud !== GOOGLE_CLIENT_ID) {
+    const validClientIds = [
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      "652908610181-88s80steoogb6d6lsg60eo5vsc7pn5ff.apps.googleusercontent.com",
+    ].filter(Boolean);
+
+    if (validClientIds.length > 0 && !validClientIds.includes(payload.aud)) {
       return NextResponse.json({ message: "Token client ID mismatch" }, { status: 400 });
     }
 

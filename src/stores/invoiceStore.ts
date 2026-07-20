@@ -17,7 +17,7 @@ interface InvoiceStoreState {
   deleteInvoice: (id: string) => Promise<void>;
 }
 
-export const useInvoiceStore = create<InvoiceStoreState>()((set, get) => ({
+export const useInvoiceStore = create<InvoiceStoreState>()((set) => ({
   invoices: [],
   isLoading: false,
   error: null,

@@ -197,4 +197,3 @@ export const collectionSchema = z.object({
   seoDescription: z.string().optional().nullable(),
   seoKeywords: z.string().optional().nullable(),
 });
-

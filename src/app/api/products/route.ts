@@ -31,8 +31,8 @@ export async function GET(request: Request) {
       });
     }
 
-    // Retrieve products sorted by newest first
-    const products = await Product.find({}).sort({ createdAt: -1 });
+    // Retrieve products sorted by newest first (capped at 500 to prevent OOM at scale)
+    const products = await Product.find({}).sort({ createdAt: -1 }).limit(500);
     return NextResponse.json(products);
   } catch (error: unknown) {
     return NextResponse.json({ message: (error as any).message || "Failed to fetch products" }, { status: 500 });

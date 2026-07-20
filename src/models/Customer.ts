@@ -43,8 +43,5 @@ const CustomerSchema = new Schema<CustomerType & Document>(
   { timestamps: true }
 );
 
-if (mongoose.models.Customer) {
-  delete mongoose.models.Customer;
-}
-
+// Standard Next.js hot-reload model caching pattern
 export default mongoose.models.Customer || mongoose.model("Customer", CustomerSchema);

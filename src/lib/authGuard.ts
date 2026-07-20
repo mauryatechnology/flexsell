@@ -27,7 +27,7 @@ export async function requireAuth(requiredRole?: "admin" | "customer"): Promise<
     }
 
     return { payload };
-  } catch (error) {
+  } catch (_error) {
     return { error: NextResponse.json({ message: "Auth validation error" }, { status: 401 }) };
   }
 }

@@ -19,7 +19,10 @@ if (
   });
 }
 
-// In-memory fallback for local dev
+// In-memory fallback for development and single-instance deployments.
+// WARNING: This fallback is per-process — in multi-instance deployments (e.g. Vercel
+// serverless, K8s), each instance tracks limits independently. For production at scale,
+// configure UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN environment variables.
 const fallbackMap = new Map<string, { count: number; resetTime: number }>();
 let cleanupCounter = 0;
 function cleanupExpired() {

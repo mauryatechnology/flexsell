@@ -34,7 +34,7 @@ export const useWishlistStore = create<WishlistState>()(
             const wishlistIds = nextItems.map(item => item._id);
             await customerService.updateActiveCustomer({ wishlist: wishlistIds });
           }
-        } catch (err) {
+        } catch (_err) {
           // Silent catch if guest or not authenticated
           console.log("Wishlist DB sync skipped: User not authenticated.");
         }
@@ -54,7 +54,7 @@ export const useWishlistStore = create<WishlistState>()(
             );
             set({ items: matchedProducts });
           }
-        } catch (err) {
+        } catch (_err) {
           console.log("Wishlist DB initial load skipped: User not authenticated.");
         }
       }

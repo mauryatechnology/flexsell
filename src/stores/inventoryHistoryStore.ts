@@ -22,7 +22,7 @@ interface InventoryHistoryState {
   clearLogs: () => Promise<void>;
 }
 
-export const useInventoryHistoryStore = create<InventoryHistoryState>()((set, get) => ({
+export const useInventoryHistoryStore = create<InventoryHistoryState>()((set) => ({
   logs: [],
   isLoading: false,
   error: null,

@@ -27,35 +27,55 @@ function LoginForm() {
   React.useEffect(() => {
     clearError();
 
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
+    const initGoogleGsi = () => {
+      if (typeof window !== "undefined" && (window as any).google?.accounts?.id) {
+        try {
+          (window as any).google.accounts.id.initialize({
+            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "652908610181-88s80steoogb6d6lsg60eo5vsc7pn5ff.apps.googleusercontent.com",
+            callback: handleGoogleResponse,
+          });
 
-    script.onload = () => {
-      if ((window as any).google) {
-        (window as any).google.accounts.id.initialize({
-          client_id: "652908610181-88s80steoogb6d6lsg60eo5vsc7pn5ff.apps.googleusercontent.com",
-          callback: handleGoogleResponse,
-        });
-        (window as any).google.accounts.id.renderButton(
-          document.getElementById("google-signin-btn"),
-          { theme: "outline", size: "large", width: "100%", text: "signin_with" }
-        );
+          const container = document.getElementById("google-signin-btn");
+          if (container) {
+            container.innerHTML = "";
+            (window as any).google.accounts.id.renderButton(container, {
+              theme: "outline",
+              size: "large",
+              width: "100%",
+              text: "signin_with",
+              shape: "rectangular",
+              logo_alignment: "left",
+            });
+          }
+        } catch (err) {
+          console.error("Failed to initialize Google Sign-In:", err);
+        }
       }
     };
 
-    return () => {
-      try {
-        document.body.removeChild(script);
-      } catch (e) {
-        // Ignore
+    if (typeof window !== "undefined" && (window as any).google?.accounts?.id) {
+      initGoogleGsi();
+    } else {
+      const existingScript = document.getElementById("google-gsi-script");
+      if (!existingScript) {
+        const script = document.createElement("script");
+        script.id = "google-gsi-script";
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        script.onload = initGoogleGsi;
+        document.body.appendChild(script);
+      } else {
+        existingScript.addEventListener("load", initGoogleGsi);
       }
-    };
+    }
   }, []);
 
   const handleGoogleResponse = async (response: any) => {
+    if (!response || !response.credential) {
+      addToast("Google Sign-In credential missing", "error");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const success = await loginWithGoogle(response.credential);
@@ -109,7 +129,7 @@ function LoginForm() {
         <div className="md:col-span-5 bg-gradient-to-br from-primary via-emerald-600 to-emerald-700 p-8 text-primary-foreground flex flex-col justify-between hidden md:flex">
           <div className="space-y-4">
             <span className="inline-block bg-white/20 backdrop-blur text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
-              FlexSell B2B
+              FlexSell Direct
             </span>
             <h2 className="text-2xl font-black leading-tight">
               India's Premier Factory Sourcing Platform
@@ -122,7 +142,7 @@ function LoginForm() {
           <div className="space-y-3 pt-6 border-t border-white/20 text-xs">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 shrink-0" />
-              <span>Verified GST B2B Invoices</span>
+              <span>Verified Tax Invoices & Billing</span>
             </div>
             <div className="flex items-center gap-2">
               <Truck className="h-4 w-4 shrink-0" />
@@ -140,7 +160,7 @@ function LoginForm() {
           <div className="text-center md:text-left space-y-1">
             <h1 className="text-2xl font-black tracking-tight">Welcome Back</h1>
             <p className="text-xs text-muted-foreground">
-              Sign in with your Email or Customer ID (e.g. FSW-0001)
+              Sign in with your Email or Account ID (e.g. FSW-0001)
             </p>
           </div>
 
@@ -152,10 +172,10 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold">Email or Customer ID</label>
+              <label className="text-xs font-bold">Email or Account ID</label>
               <Input
                 type="text"
-                placeholder="Enter email or FSW-000x"
+                placeholder="Enter email or Account ID"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 disabled={isSubmitting}
@@ -205,12 +225,12 @@ function LoginForm() {
             <div className="flex-grow border-t border-border"></div>
           </div>
 
-          <div id="google-signin-btn" className="w-full flex justify-center"></div>
+          <div id="google-signin-btn" className="w-full min-h-[40px] flex justify-center items-center"></div>
 
           <div className="text-center text-xs border-t pt-4">
             Don't have an account?{" "}
             <Link href="/register" className="text-primary font-bold hover:underline">
-              Register B2B Account
+              Create an Account
             </Link>
           </div>
         </div>

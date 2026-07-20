@@ -37,8 +37,8 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
 
-  // Network First for HTML and API
-  if (event.request.mode === "navigate" || url.pathname.startsWith("/api/")) {
+  // Network First for HTML navigation (exclude API routes from caching)
+  if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -54,6 +54,11 @@ self.addEventListener("fetch", (event) => {
           });
         })
     );
+    return;
+  }
+
+  // Skip caching for API routes — they contain authenticated/dynamic data
+  if (url.pathname.startsWith("/api/")) {
     return;
   }
 

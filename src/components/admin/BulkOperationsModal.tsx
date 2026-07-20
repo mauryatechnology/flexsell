@@ -121,8 +121,16 @@ export function BulkOperationsModal({
       const formData = new FormData();
       formData.append("file", file);
 
+      const matches = document.cookie.match(/csrf_token=([^;]+)/);
+      const csrfToken = matches ? matches[1] : null;
+      const headers: Record<string, string> = {};
+      if (csrfToken) {
+        headers["X-CSRF-Token"] = csrfToken;
+      }
+
       const response = await fetch("/api/products/import", {
         method: "POST",
+        headers,
         body: formData,
       });
 
@@ -191,9 +199,18 @@ export function BulkOperationsModal({
 
     setIsUploading(true);
     try {
+      const matches = document.cookie.match(/csrf_token=([^;]+)/);
+      const csrfToken = matches ? matches[1] : null;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (csrfToken) {
+        headers["X-CSRF-Token"] = csrfToken;
+      }
+
       const response = await fetch("/api/products/bulk", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ products: parsedData })
       });
 

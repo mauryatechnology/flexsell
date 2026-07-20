@@ -46,7 +46,7 @@ export default function AdminCouponsPage() {
     );
   }, [customersList, customerSearch]);
 
-  const fetchCoupons = async () => {
+  const fetchCoupons = React.useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await couponService.getCoupons();
@@ -57,9 +57,9 @@ export default function AdminCouponsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [addToast]);
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = React.useCallback(async () => {
     try {
       const response = await customerService.getCustomers();
       const list = Array.isArray(response)
@@ -71,12 +71,12 @@ export default function AdminCouponsPage() {
     } catch (err) {
       console.error("Failed to load customers list:", err);
     }
-  };
+  }, []);
 
   React.useEffect(() => {
     fetchCoupons();
     fetchCustomers();
-  }, []);
+  }, [fetchCoupons, fetchCustomers]);
 
   const resetForm = () => {
     setEditingId(null);

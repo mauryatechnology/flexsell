@@ -9,12 +9,14 @@ import { AlertTriangle, AlertCircle, Info, X } from "lucide-react";
 export function ConfirmDialog() {
   const { isOpen, options, close } = useConfirmStore();
   const [isActionLoading, setIsActionLoading] = React.useState(false);
+  const prevOpenRef = React.useRef(false);
 
-  React.useEffect(() => {
-    if (isOpen) {
-      setIsActionLoading(false);
-    }
-  }, [isOpen]);
+  // Reset loading when dialog opens (without setState inside effect body)
+  if (isOpen && !prevOpenRef.current) {
+    // This runs during render, not inside an effect — safe and synchronous
+    if (isActionLoading) setIsActionLoading(false);
+  }
+  prevOpenRef.current = isOpen;
 
   if (!options) return null;
 

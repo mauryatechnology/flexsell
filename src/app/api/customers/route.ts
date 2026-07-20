@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       const skip = (pageNum - 1) * limitNum;
 
       const [customers, total] = await Promise.all([
-        Customer.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+        Customer.find(query).select("-password").sort({ createdAt: -1 }).skip(skip).limit(limitNum),
         Customer.countDocuments(query)
       ]);
 
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     }
 
     // Filter out admin accounts
-    const customers = await Customer.find(query).sort({ createdAt: -1 });
+    const customers = await Customer.find(query).select("-password").sort({ createdAt: -1 });
     return NextResponse.json(customers);
   } catch (error: unknown) {
     return NextResponse.json({ message: (error as any).message || "Failed to fetch customers" }, { status: 500 });

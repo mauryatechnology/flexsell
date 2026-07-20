@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
+import { requireAuth } from "@/lib/authGuard";
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+
     const { amount, currency = "INR", receipt } = await request.json();
 
     if (!amount) {

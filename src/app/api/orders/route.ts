@@ -14,6 +14,7 @@ import { ZodError } from "zod";
 import { resolveVariantKeys } from "@/lib/variantMatcher";
 import nodemailer from "nodemailer";
 import { ORDER_STATUS_CLASSES } from "@/lib/constants";
+import { rateLimit } from "@/lib/rateLimit";
 
 async function generateInvoiceId(type: "invoice" | "receipt"): Promise<string> {
   const prefix = type === "invoice" ? "INV" : "RCP";
@@ -160,6 +161,14 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // Rate limit order creation to prevent abuse
+    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    try {
+      await rateLimit(ip);
+    } catch {
+      return NextResponse.json({ message: "Too many requests. Please try again later." }, { status: 429 });
+    }
+
     const auth = await requireAuth();
     if (auth.error) return auth.error;
     const payload = auth.payload!;

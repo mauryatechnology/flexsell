@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
@@ -12,7 +12,7 @@ interface RouteProps {
 }
 
 // GET: Retrieve a specific order by ID
-export async function GET(request: Request, { params }: RouteProps) {
+export async function GET(request: NextRequest, { params }: RouteProps) {
   try {
     const auth = await requireAuth();
     if (auth.error) return auth.error;
@@ -28,7 +28,7 @@ export async function GET(request: Request, { params }: RouteProps) {
     }
 
     // Verify ownership
-    if (payload.role !== "admin" && order.shippingAddress.email.toLowerCase() !== payload.email.toLowerCase()) {
+    if (payload.role !== "admin" && (order as any).shippingAddress?.email?.toLowerCase() !== payload.email.toLowerCase()) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
@@ -39,7 +39,7 @@ export async function GET(request: Request, { params }: RouteProps) {
 }
 
 // PUT: Modify order details (quantities, items, shipping address) - Restricted to Admin
-export async function PUT(request: Request, { params }: RouteProps) {
+export async function PUT(request: NextRequest, { params }: RouteProps) {
   try {
     const auth = await requireAuth("admin");
     if (auth.error) return auth.error;
@@ -48,7 +48,7 @@ export async function PUT(request: Request, { params }: RouteProps) {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const order = await Order.findById(id);
+    const order: any = await Order.findById(id);
     if (!order) {
       return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }
@@ -194,7 +194,7 @@ export async function PUT(request: Request, { params }: RouteProps) {
 }
 
 // DELETE: Cancel or Delete order permanently
-export async function DELETE(request: Request, { params }: RouteProps) {
+export async function DELETE(request: NextRequest, { params }: RouteProps) {
   try {
     const auth = await requireAuth("admin");
     if (auth.error) return auth.error;
@@ -203,7 +203,7 @@ export async function DELETE(request: Request, { params }: RouteProps) {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const order = await Order.findById(id);
+    const order: any = await Order.findById(id);
     if (!order) {
       return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }

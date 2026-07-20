@@ -11,7 +11,7 @@ interface RatingProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Rating({ 
   value, 
   max = 5, 
-  readonly = true, 
+  readonly: _readonly = true, 
   className, 
   ...props 
 }: RatingProps) {
