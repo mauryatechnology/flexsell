@@ -253,19 +253,46 @@ const CatalogTableRow = React.memo(function CatalogTableRow({
         )}
       </td>
 
-      {/* 5. Quantity (Editable on Screen, Static Text on PDF/Print) */}
+      {/* 5. Quantity (Editable on Screen with MOQ Enforcement, Static Text on PDF/Print) */}
       <td className="p-3 align-top text-center space-y-1">
-        {/* Screen View: Editable input respecting MOQ */}
+        {/* Screen View: Interactive stepper & input strictly enforcing MOQ */}
         <div className="no-print flex flex-col items-center gap-1">
-          <input
-            type="number"
-            min={row.moq}
-            value={row.quantity}
-            onChange={(e) => onQuantityChange(row.rowId, parseInt(e.target.value, 10))}
-            className="w-20 text-center font-bold text-xs bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
-          />
+          <div className="flex items-center justify-center gap-1">
+            <button
+              type="button"
+              onClick={() => onQuantityChange(row.rowId, Math.max(row.moq, row.quantity - 1))}
+              disabled={row.quantity <= row.moq}
+              className="h-7 w-7 rounded border border-border bg-secondary text-foreground text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-secondary/80 flex items-center justify-center cursor-pointer transition-colors"
+              title={`Minimum order quantity is ${row.moq}`}
+            >
+              -
+            </button>
+            <input
+              type="number"
+              min={row.moq}
+              value={row.quantity}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                onQuantityChange(row.rowId, isNaN(val) ? row.moq : val);
+              }}
+              onBlur={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (isNaN(val) || val < row.moq) {
+                  onQuantityChange(row.rowId, row.moq);
+                }
+              }}
+              className="w-16 text-center font-bold text-xs bg-background border border-border rounded px-1 py-1 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+            />
+            <button
+              type="button"
+              onClick={() => onQuantityChange(row.rowId, row.quantity + 1)}
+              className="h-7 w-7 rounded border border-border bg-secondary text-foreground text-xs font-bold hover:bg-secondary/80 flex items-center justify-center cursor-pointer transition-colors"
+            >
+              +
+            </button>
+          </div>
           <span className="text-[10px] text-muted-foreground font-mono">
-            Min MOQ: {row.moq} pcs
+            MOQ: {row.moq} pcs
           </span>
         </div>
 
@@ -326,7 +353,7 @@ export function B2BCatalogPrintModal({
     setActiveRows((prev) => prev.filter((r) => r.rowId !== rowId));
   }, []);
 
-  // Quantity change handler with MOQ enforcement
+  // Quantity change handler with strict MOQ enforcement
   const handleQuantityChange = React.useCallback((rowId: string, newQty: number) => {
     setActiveRows((prev) =>
       prev.map((r) => {
@@ -446,7 +473,7 @@ export function B2BCatalogPrintModal({
                   <th className="p-3">Product Name & Variant Specs</th>
                   <th className="p-3 w-28">HSN</th>
                   <th className="p-3 w-32 text-right">B2B Price</th>
-                  <th className="p-3 w-28 text-center">Quantity</th>
+                  <th className="p-3 w-36 text-center">Quantity</th>
                   <th className="p-3 w-12 text-center no-print">Action</th>
                 </tr>
               </thead>

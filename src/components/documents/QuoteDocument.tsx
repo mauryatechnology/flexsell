@@ -130,15 +130,16 @@ export function QuoteDocument({
           <h3 className="font-bold text-[10px] text-gray-400 uppercase tracking-widest mb-3">
             Itemized Price Schedule:
           </h3>
-          <table className="w-full text-left">
+          <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b-2 border-gray-800 uppercase text-[10px] font-bold text-gray-500 tracking-wider">
-                <th className="pb-2">#</th>
-                <th className="pb-2">Description</th>
-                <th className="pb-2 text-center">Qty</th>
-                <th className="pb-2 text-right">Unit Price</th>
-                <th className="pb-2 text-center">GST Rate</th>
-                <th className="pb-2 text-right">Total</th>
+                <th className="pb-3 px-1 w-[4%]">#</th>
+                <th className="pb-3 px-2 w-[36%]">Description</th>
+                <th className="pb-3 px-2 text-center w-[10%]">HSN</th>
+                <th className="pb-3 px-2 text-center w-[10%]">Qty</th>
+                <th className="pb-3 px-2 text-right w-[14%]">Unit Price</th>
+                <th className="pb-3 px-2 text-center w-[10%]">GST Rate</th>
+                <th className="pb-3 px-2 text-right w-[16%]">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -147,20 +148,23 @@ export function QuoteDocument({
                   .map(([key, val]) => `${key}: ${val}`)
                   .join(" • ");
                 const gstRate = item.product?.gstRate ?? 18;
+                const hsnCode = item.product?.hsnCode ?? "3924";
                 const lineTotal = item.pricePerUnit * item.quantity;
                 
-                const matchingColor = item.selectedVariants["Color"] || item.selectedVariants["color"];
+                const matchingColor = item.selectedVariants?.["Color"] || item.selectedVariants?.["color"];
                 const activeVariant = item.product?.colorVariants?.find((cv: any) => cv.color === matchingColor)
                   || item.product?.colorVariants?.[0];
+                const activeSub = activeVariant?.subVariants?.[0];
+                const sku = activeSub?.sku || (item.product?._id ? `SKU-${item.product._id.slice(-6)}` : "SKU-N/A");
                 const firstImg = activeVariant?.images?.[0];
                 const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
 
                 return (
                   <tr key={`${item.product?._id || index}-${index}`} className="border-b border-gray-100 text-xs">
-                    <td className="py-3 text-gray-500">{index + 1}</td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 relative flex-shrink-0 bg-gray-50 border border-gray-200 rounded overflow-hidden">
+                    <td className="py-3 px-1 text-gray-500 font-mono align-top">{index + 1}</td>
+                    <td className="py-3 px-2 align-top">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 relative flex-shrink-0 bg-gray-50 border border-gray-200 rounded overflow-hidden mt-0.5">
                           <Image
                             src={imgUrl || "https://placehold.co/400x400/10b981/ffffff?text=Product"}
                             alt={item.product?.title || "Product"}
@@ -170,18 +174,20 @@ export function QuoteDocument({
                             unoptimized
                           />
                         </div>
-                        <div>
-                          <span className="font-semibold text-gray-800 block">{item.product?.title || "Product"}</span>
-                          {formattedVariants && (
-                            <div className="text-[10px] text-gray-500 font-normal mt-0.5">{formattedVariants}</div>
-                          )}
+                        <div className="flex-1 min-w-0">
+                          <span className="font-semibold text-gray-800 block leading-tight break-words">{item.product?.title || "Product"}</span>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-gray-500 font-mono mt-1">
+                            <span className="bg-gray-100 text-gray-700 px-1 py-0.2 rounded border border-gray-200">SKU: {sku}</span>
+                            {formattedVariants && <span className="text-emerald-700 font-semibold">{formattedVariants}</span>}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 text-center font-bold">{item.quantity} units</td>
-                    <td className="py-3 text-right">₹{item.pricePerUnit.toFixed(2)}</td>
-                    <td className="py-3 text-center">{gstRate}%</td>
-                    <td className="py-3 text-right font-bold text-gray-800">₹{lineTotal.toFixed(2)}</td>
+                    <td className="py-3 px-2 text-center font-mono text-gray-600 font-semibold align-top whitespace-nowrap">{hsnCode}</td>
+                    <td className="py-3 px-2 text-center font-bold align-top whitespace-nowrap">{item.quantity} units</td>
+                    <td className="py-3 px-2 text-right align-top whitespace-nowrap">₹{item.pricePerUnit.toFixed(2)}</td>
+                    <td className="py-3 px-2 text-center align-top whitespace-nowrap">{gstRate}%</td>
+                    <td className="py-3 px-2 text-right font-bold text-gray-800 align-top whitespace-nowrap">₹{lineTotal.toFixed(2)}</td>
                   </tr>
                 );
               })}

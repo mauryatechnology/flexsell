@@ -248,9 +248,17 @@ export function InvoiceDocument({
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">{item.product?.title || "Product"}</p>
-                          {formattedVariants && (
-                            <p className="text-[10px] text-gray-500 mt-0.5">{formattedVariants}</p>
-                          )}
+                          <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-500 font-mono mt-0.5">
+                            {(() => {
+                              const matchingColor = item.selectedVariants?.["Color"] || item.selectedVariants?.["color"];
+                              const activeVariant = item.product?.colorVariants?.find((cv: any) => cv.color === matchingColor)
+                                || item.product?.colorVariants?.[0];
+                              const activeSub = activeVariant?.subVariants?.[0];
+                              const sku = activeSub?.sku || (item.product?._id ? `SKU-${item.product._id.slice(-6)}` : "SKU-N/A");
+                              return <span>SKU: {sku}</span>;
+                            })()}
+                            {formattedVariants && <span>• {formattedVariants}</span>}
+                          </div>
                         </div>
                       </div>
                     </td>
