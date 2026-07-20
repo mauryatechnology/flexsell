@@ -4,7 +4,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { Product, Category } from "@/types";
 import { Button } from "@/components/ui/Button";
-import { Printer, X, QrCode, Building2, Mail, Calendar, ShieldCheck, Layers } from "lucide-react";
+import { Printer, X, QrCode, Building2, Mail, Calendar, ShieldCheck, Layers, Trash2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 interface B2BCatalogPrintModalProps {
@@ -16,6 +16,307 @@ interface B2BCatalogPrintModalProps {
   filterSummary?: string;
 }
 
+export interface CatalogVariantRow {
+  rowId: string;
+  productId: string;
+  title: string;
+  color: string;
+  size: string;
+  weight: string;
+  sku: string;
+  barcode: string;
+  imageUrl: string;
+  categoryName: string;
+  hsnCode: string;
+  gstRate: number;
+  priceIncludesGst: boolean;
+  mrp: number;
+  b2bPrice: number;
+  dropshippingPrice: number;
+  moq: number;
+  quantity: number;
+  stock: number;
+  description: string;
+}
+
+// Smart image resolver for specific color variants
+function resolveVariantImage(product: Product, cvIdx: number): string {
+  const cv = product.colorVariants?.[cvIdx];
+
+  // 1. Specific image on current color variant
+  if (cv?.images && cv.images.length > 0) {
+    const firstImg = cv.images[0];
+    const url = typeof firstImg === "string" ? firstImg : firstImg?.url;
+    if (url) return url;
+  }
+
+  // 2. Primary color variant has multiple uploaded images indexed by cvIdx
+  const primaryCv = product.colorVariants?.[0];
+  if (primaryCv?.images && primaryCv.images.length > cvIdx) {
+    const nthImg = primaryCv.images[cvIdx];
+    const url = typeof nthImg === "string" ? nthImg : nthImg?.url;
+    if (url) return url;
+  }
+
+  // 3. Fallback to primary variant first image
+  if (primaryCv?.images && primaryCv.images.length > 0) {
+    const firstImg = primaryCv.images[0];
+    const url = typeof firstImg === "string" ? firstImg : firstImg?.url;
+    if (url) return url;
+  }
+
+  return "/icon.png";
+}
+
+// Standalone fast product variant flattener
+function flattenProductVariants(products: Product[], categories: Category[]): CatalogVariantRow[] {
+  const categoryMap = new Map<string, string>();
+  categories.forEach((c) => categoryMap.set(c._id, c.name));
+
+  const rows: CatalogVariantRow[] = [];
+
+  for (let i = 0; i < products.length; i++) {
+    const product = products[i];
+    const categoryName = categoryMap.get(product.categoryId) || "Wholesale Goods";
+    const hsn = product.hsnCode ?? "3924";
+    const gst = product.gstRate ?? 18;
+    const desc = product.description ? product.description.replace(/<[^>]*>?/gm, "") : "";
+
+    const colorVariants = product.colorVariants || [];
+    if (colorVariants.length === 0) {
+      rows.push({
+        rowId: `${product._id}-default`,
+        productId: product._id,
+        title: product.title,
+        color: "Standard",
+        size: "Standard",
+        weight: "",
+        sku: "SKU-N/A",
+        barcode: "",
+        imageUrl: resolveVariantImage(product, 0),
+        categoryName,
+        hsnCode: hsn,
+        gstRate: gst,
+        priceIncludesGst: product.priceIncludesGst ?? true,
+        mrp: 0,
+        b2bPrice: 0,
+        dropshippingPrice: 0,
+        moq: 1,
+        quantity: 1,
+        stock: product.totalStock ?? 0,
+        description: desc,
+      });
+      continue;
+    }
+
+    for (let cvIdx = 0; cvIdx < colorVariants.length; cvIdx++) {
+      const cv = colorVariants[cvIdx];
+      const colorName = cv.color || "Standard";
+      const colorImg = resolveVariantImage(product, cvIdx);
+
+      const subVariants = cv.subVariants || [];
+      if (subVariants.length === 0) {
+        rows.push({
+          rowId: `${product._id}-${cvIdx}-default`,
+          productId: product._id,
+          title: product.title,
+          color: colorName,
+          size: "Standard",
+          weight: "",
+          sku: `SKU-${product._id.slice(-6)}`,
+          barcode: "",
+          imageUrl: colorImg,
+          categoryName,
+          hsnCode: hsn,
+          gstRate: gst,
+          priceIncludesGst: product.priceIncludesGst ?? true,
+          mrp: 0,
+          b2bPrice: 0,
+          dropshippingPrice: 0,
+          moq: 1,
+          quantity: 1,
+          stock: product.totalStock ?? 0,
+          description: desc,
+        });
+        continue;
+      }
+
+      for (let svIdx = 0; svIdx < subVariants.length; svIdx++) {
+        const sv = subVariants[svIdx];
+        const b2bPrice = sv.b2bPrice || sv.b2cPrice || 0;
+        const moq = sv.b2bMoq || 1;
+        rows.push({
+          rowId: `${product._id}-${cvIdx}-${sv.id || svIdx}`,
+          productId: product._id,
+          title: product.title,
+          color: colorName,
+          size: sv.size || "Standard",
+          weight: sv.weight || "",
+          sku: sv.sku || `SKU-${product._id.slice(-6)}`,
+          barcode: sv.barcode || "",
+          imageUrl: colorImg,
+          categoryName,
+          hsnCode: hsn,
+          gstRate: gst,
+          priceIncludesGst: product.priceIncludesGst ?? true,
+          mrp: sv.mrp || 0,
+          b2bPrice,
+          dropshippingPrice: sv.dropshippingPrice || 0,
+          moq,
+          quantity: moq,
+          stock: sv.stock ?? 0,
+          description: desc,
+        });
+      }
+    }
+  }
+
+  return rows;
+}
+
+// Memoized individual row renderer for instant deletion and quantity update performance
+const CatalogTableRow = React.memo(function CatalogTableRow({
+  row,
+  onRemove,
+  onQuantityChange,
+}: {
+  row: CatalogVariantRow;
+  onRemove: (rowId: string) => void;
+  onQuantityChange: (rowId: string, qty: number) => void;
+}) {
+  return (
+    <tr className="hover:bg-secondary/10 transition-colors print-avoid-break">
+      {/* 1. Variant Thumbnail Image */}
+      <td className="p-3 text-center align-top">
+        <div className="w-14 h-14 relative rounded-lg border border-border overflow-hidden bg-secondary/20 mx-auto shrink-0">
+          <img
+            src={row.imageUrl}
+            alt={row.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      </td>
+
+      {/* 2. Product Name & Variant Specs & SKU */}
+      <td className="p-3 align-top space-y-1">
+        <div className="flex items-center gap-2">
+          <p className="font-bold text-foreground text-sm line-clamp-2">
+            {row.title}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+          <span className="bg-secondary text-foreground px-2 py-0.5 rounded border border-border">
+            Color: <strong className="text-primary">{row.color}</strong>
+          </span>
+          {row.size && row.size !== "Standard" && (
+            <span className="bg-secondary text-foreground px-2 py-0.5 rounded border border-border">
+              Size: <strong>{row.size}</strong>
+            </span>
+          )}
+          {row.weight && (
+            <span className="bg-secondary text-foreground px-2 py-0.5 rounded border border-border">
+              Weight: <strong>{row.weight}</strong>
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground font-mono pt-0.5">
+          <span>SKU: {row.sku}</span>
+          {row.barcode && <span>• Barcode: {row.barcode}</span>}
+        </div>
+      </td>
+
+      {/* 3. HSN & GST */}
+      <td className="p-3 align-top space-y-1">
+        <p className="font-bold text-foreground text-xs font-mono">
+          HSN: {row.hsnCode}
+        </p>
+        <p className="text-[11px] text-muted-foreground font-mono">
+          GST: {row.gstRate}%
+        </p>
+        <p className="text-[10px] text-muted-foreground">
+          {row.priceIncludesGst ? "GST Incl." : "+ GST Extra"}
+        </p>
+      </td>
+
+      {/* 4. Wholesale B2B Price */}
+      <td className="p-3 align-top text-right space-y-0.5">
+        <p className="text-sm font-black text-primary">
+          ₹{row.b2bPrice.toLocaleString("en-IN")}
+        </p>
+        {row.mrp > row.b2bPrice && (
+          <p className="text-[11px] text-muted-foreground line-through">
+            MRP: ₹{row.mrp.toLocaleString("en-IN")}
+          </p>
+        )}
+      </td>
+
+      {/* 5. Quantity (Editable on Screen with MOQ Enforcement, Static Text on PDF/Print) */}
+      <td className="p-3 align-top text-center space-y-1">
+        {/* Screen View: Interactive stepper & input strictly enforcing MOQ */}
+        <div className="no-print flex flex-col items-center gap-1">
+          <div className="flex items-center justify-center gap-1">
+            <button
+              type="button"
+              onClick={() => onQuantityChange(row.rowId, Math.max(row.moq, row.quantity - 1))}
+              disabled={row.quantity <= row.moq}
+              className="h-7 w-7 rounded border border-border bg-secondary text-foreground text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-secondary/80 flex items-center justify-center cursor-pointer transition-colors"
+              title={`Minimum order quantity is ${row.moq}`}
+            >
+              -
+            </button>
+            <input
+              type="number"
+              min={row.moq}
+              value={row.quantity}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                onQuantityChange(row.rowId, isNaN(val) ? row.moq : val);
+              }}
+              onBlur={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (isNaN(val) || val < row.moq) {
+                  onQuantityChange(row.rowId, row.moq);
+                }
+              }}
+              className="w-16 text-center font-bold text-xs bg-background border border-border rounded px-1 py-1 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+            />
+            <button
+              type="button"
+              onClick={() => onQuantityChange(row.rowId, row.quantity + 1)}
+              className="h-7 w-7 rounded border border-border bg-secondary text-foreground text-xs font-bold hover:bg-secondary/80 flex items-center justify-center cursor-pointer transition-colors"
+            >
+              +
+            </button>
+          </div>
+          <span className="text-[10px] text-muted-foreground font-mono">
+            MOQ: {row.moq} pcs
+          </span>
+        </div>
+
+        {/* Print View: Clean static text for PDF export */}
+        <div className="hidden print:block text-center font-bold text-foreground text-xs">
+          {row.quantity} pcs
+        </div>
+      </td>
+
+      {/* 6. Screen-Only Action (Hidden on Print) */}
+      <td className="p-3 align-top text-center no-print">
+        <button
+          type="button"
+          onClick={() => onRemove(row.rowId)}
+          className="no-print p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+          title="Remove variant line from catalog"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </td>
+    </tr>
+  );
+});
+
 export function B2BCatalogPrintModal({
   isOpen,
   onClose,
@@ -26,6 +327,8 @@ export function B2BCatalogPrintModal({
 }: B2BCatalogPrintModalProps) {
   const [mounted, setMounted] = React.useState(false);
   const [currentUrl, setCurrentUrl] = React.useState<string>("");
+  const [activeRows, setActiveRows] = React.useState<CatalogVariantRow[]>([]);
+  const prevIsOpenRef = React.useRef(false);
 
   React.useEffect(() => {
     setMounted(true);
@@ -37,6 +340,32 @@ export function B2BCatalogPrintModal({
     }
   }, [isOpen]);
 
+  // Fast initialization: flatten products ONLY when modal transitions from closed to open
+  React.useEffect(() => {
+    if (isOpen && !prevIsOpenRef.current) {
+      setActiveRows(flattenProductVariants(products, categories));
+    }
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, products, categories]);
+
+  // Instant deletion handler
+  const handleRemoveRow = React.useCallback((rowId: string) => {
+    setActiveRows((prev) => prev.filter((r) => r.rowId !== rowId));
+  }, []);
+
+  // Quantity change handler with strict MOQ enforcement
+  const handleQuantityChange = React.useCallback((rowId: string, newQty: number) => {
+    setActiveRows((prev) =>
+      prev.map((r) => {
+        if (r.rowId === rowId) {
+          const validQty = isNaN(newQty) ? r.moq : Math.max(r.moq, newQty);
+          return { ...r, quantity: validQty };
+        }
+        return r;
+      })
+    );
+  }, []);
+
   if (!isOpen || !mounted) return null;
 
   const formattedDate = new Date().toLocaleDateString("en-IN", {
@@ -44,19 +373,6 @@ export function B2BCatalogPrintModal({
     month: "long",
     day: "numeric",
   });
-
-  const getPrimaryImage = (product: Product): string => {
-    if (!product.colorVariants || product.colorVariants.length === 0) return "/icon.png";
-    const primaryColor = product.colorVariants[0];
-    if (!primaryColor.images || primaryColor.images.length === 0) return "/icon.png";
-    const img = primaryColor.images[0];
-    return typeof img === "string" ? img : img.url || "/icon.png";
-  };
-
-  const getCategoryName = (categoryId: string): string => {
-    const found = categories.find((c) => c._id === categoryId);
-    return found ? found.name : "Wholesale Goods";
-  };
 
   const handlePrint = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -108,7 +424,7 @@ export function B2BCatalogPrintModal({
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Layers className="h-3.5 w-3.5 text-primary shrink-0" />
-                  <span>Total Items: {products.length} Products</span>
+                  <span>Total Variant Lines: {activeRows.length} Lines</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -147,122 +463,37 @@ export function B2BCatalogPrintModal({
           </div>
         </div>
 
-        {/* Structured Product Catalog Table */}
+        {/* Structured Individual Product Variant Catalog Table */}
         <div className="p-4 sm:p-6">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-secondary/40 border-b border-border text-foreground font-bold uppercase tracking-wider text-[11px]">
                   <th className="p-3 w-16 text-center">Image</th>
-                  <th className="p-3">Product Specs & SKU</th>
-                  <th className="p-3 w-28">Category & HSN</th>
-                  <th className="p-3 w-32 text-right">Wholesale Bulk Price</th>
-                  <th className="p-3 w-24 text-center">MOQ / Stock</th>
-                  <th className="p-3 w-36">Variants & Colors</th>
+                  <th className="p-3">Product Name & Variant Specs</th>
+                  <th className="p-3 w-28">HSN</th>
+                  <th className="p-3 w-32 text-right">B2B Price</th>
+                  <th className="p-3 w-36 text-center">Quantity</th>
+                  <th className="p-3 w-12 text-center no-print">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {products.map((product, idx) => {
-                  const primaryColor = product.colorVariants?.[0];
-                  const primarySub = primaryColor?.subVariants?.[0];
-
-                  const b2bPrice = primarySub?.b2bPrice ?? primarySub?.b2cPrice ?? 0;
-                  const mrp = primarySub?.mrp ?? 0;
-                  const moq = primarySub?.b2bMoq ?? 1;
-                  const sku = primarySub?.sku ?? "SKU-N/A";
-                  const hsn = product.hsnCode ?? "3924";
-                  const gst = product.gstRate ?? 18;
-                  const imageUrl = getPrimaryImage(product);
-
-                  const availableColors = product.colorVariants?.map((cv) => cv.color).join(", ") || "Standard";
-                  const availableSizes = primaryColor?.subVariants?.map((sv) => sv.size).filter((s) => s && s !== "Standard").join(", ");
-
-                  return (
-                    <tr key={product._id || idx} className="hover:bg-secondary/10 transition-colors print-avoid-break">
-                      
-                      {/* Thumbnail Image */}
-                      <td className="p-3 text-center align-top">
-                        <div className="w-14 h-14 relative rounded-lg border border-border overflow-hidden bg-secondary/20 mx-auto shrink-0">
-                          <img
-                            src={imageUrl}
-                            alt={product.title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-                      </td>
-
-                      {/* Title & SKU */}
-                      <td className="p-3 align-top space-y-1">
-                        <p className="font-bold text-foreground text-sm line-clamp-2">
-                          {product.title}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground font-mono">
-                          <span>SKU: {sku}</span>
-                          {product.tags && product.tags.length > 0 && (
-                            <span className="text-primary font-sans text-[10px] bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
-                              {product.tags[0]}
-                            </span>
-                          )}
-                        </div>
-                        {product.description && (
-                          <p className="text-[11px] text-muted-foreground line-clamp-1 italic font-normal">
-                            {product.description.replace(/<[^>]*>?/gm, "")}
-                          </p>
-                        )}
-                      </td>
-
-                      {/* Category & HSN */}
-                      <td className="p-3 align-top space-y-1">
-                        <p className="font-semibold text-foreground text-xs">
-                          {getCategoryName(product.categoryId)}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground font-mono">
-                          HSN: {hsn} ({gst}% GST)
-                        </p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {product.priceIncludesGst ? "Gst Incl." : "+ GST Extra"}
-                        </p>
-                      </td>
-
-                      {/* Wholesale Price Breakdown */}
-                      <td className="p-3 align-top text-right space-y-0.5">
-                        <p className="text-sm font-black text-primary">
-                          ₹{b2bPrice.toLocaleString("en-IN")}
-                        </p>
-                        {mrp > b2bPrice && (
-                          <p className="text-[11px] text-muted-foreground line-through">
-                            MRP: ₹{mrp.toLocaleString("en-IN")}
-                          </p>
-                        )}
-                        {primarySub?.dropshippingPrice ? (
-                          <p className="text-[10px] text-muted-foreground">
-                            Dropship: ₹{primarySub.dropshippingPrice}
-                          </p>
-                        ) : null}
-                      </td>
-
-                      {/* MOQ & Stock */}
-                      <td className="p-3 align-top text-center space-y-1">
-                        <span className="inline-block font-bold text-foreground bg-secondary px-2 py-0.5 rounded text-xs border border-border">
-                          MOQ: {moq} pcs
-                        </span>
-                        <p className="text-[11px] text-muted-foreground font-medium">
-                          Stock: {product.totalStock > 0 ? `${product.totalStock} units` : "Out of stock"}
-                        </p>
-                      </td>
-
-                      {/* Variants & Colors */}
-                      <td className="p-3 align-top space-y-1 text-xs text-muted-foreground">
-                        <p><span className="font-semibold text-foreground">Colors:</span> {availableColors}</p>
-                        {availableSizes && (
-                          <p><span className="font-semibold text-foreground">Sizes:</span> {availableSizes}</p>
-                        )}
-                      </td>
-
-                    </tr>
-                  );
-                })}
+                {activeRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center p-8 text-muted-foreground italic">
+                      No variant lines remaining in catalog. Close dialog to reset.
+                    </td>
+                  </tr>
+                ) : (
+                  activeRows.map((row) => (
+                    <CatalogTableRow
+                      key={row.rowId}
+                      row={row}
+                      onRemove={handleRemoveRow}
+                      onQuantityChange={handleQuantityChange}
+                    />
+                  ))
+                )}
               </tbody>
             </table>
           </div>
