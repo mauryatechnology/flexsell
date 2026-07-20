@@ -25,6 +25,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const data = await apiClient.post<{ customer: Customer; message: string }>("/auth/login", { identifier, password });
       set({ customer: data.customer, isLoading: false });
+      if (data.customer?.customerTypes?.length > 0) {
+        try {
+          const { useDashboardViewStore } = require("./dashboardViewStore");
+          useDashboardViewStore.getState().setActiveView(data.customer.customerTypes[0]);
+        } catch (e) {
+          console.error("Failed to set dashboard view", e);
+        }
+      }
       return true;
     } catch (err: unknown) {
       set({ error: err instanceof Error ? (err as any).message : "Login failed", isLoading: false });
@@ -37,6 +45,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const data = await apiClient.post<{ customer: Customer; message: string }>("/auth/register", customerData);
       set({ customer: data.customer, isLoading: false });
+      if (data.customer?.customerTypes?.length > 0) {
+        try {
+          const { useDashboardViewStore } = require("./dashboardViewStore");
+          useDashboardViewStore.getState().setActiveView(data.customer.customerTypes[0]);
+        } catch (e) {
+          console.error("Failed to set dashboard view", e);
+        }
+      }
       return true;
     } catch (err: unknown) {
       set({ error: err instanceof Error ? (err as any).message : "Registration failed", isLoading: false });
@@ -49,6 +65,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const data = await apiClient.post<{ customer: Customer; message: string }>("/auth/google-login", { idToken });
       set({ customer: data.customer, isLoading: false });
+      if (data.customer?.customerTypes?.length > 0) {
+        try {
+          const { useDashboardViewStore } = require("./dashboardViewStore");
+          useDashboardViewStore.getState().setActiveView(data.customer.customerTypes[0]);
+        } catch (e) {
+          console.error("Failed to set dashboard view", e);
+        }
+      }
       return true;
     } catch (err: unknown) {
       set({ error: err instanceof Error ? (err as any).message : "Google authentication failed", isLoading: false });
@@ -73,6 +97,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const data = await apiClient.get<Customer>("/customers/active");
       set({ customer: data });
+      if (data?.customerTypes?.length > 0) {
+        try {
+          const { useDashboardViewStore } = require("./dashboardViewStore");
+          // Only override if active view is not in customerTypes
+          const currentView = useDashboardViewStore.getState().activeView;
+          if (!data.customerTypes.includes(currentView)) {
+            useDashboardViewStore.getState().setActiveView(data.customerTypes[0]);
+          }
+        } catch (e) {
+          console.error("Failed to sync dashboard view", e);
+        }
+      }
     } catch (err) {
       set({ customer: null });
     } finally {

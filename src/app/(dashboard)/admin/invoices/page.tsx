@@ -10,10 +10,12 @@ import { useProductStore } from "@/stores/productStore";
 import { useToastStore } from "@/stores/toastStore";
 import { useConfirmStore } from "@/stores/confirmStore";
 import { customerService } from "@/services/customerService";
+import { shippingService } from "@/services/shippingService";
 import { InvoiceDocument } from "@/components/documents/InvoiceDocument";
 import { formatPrice } from "@/lib/utils";
 import { Customer, Product, Invoice, CartItem, TaxBreakdown } from "@/types";
 import { INDIAN_STATES } from "@/lib/constants";
+import { resolvePrice } from "@/lib/priceTierHelper";
 
 export default function AdminInvoicesPage() {
   const { invoices, total, page, totalPages, initializeInvoices, createInvoice, updateInvoice, voidInvoice, deleteInvoice, isLoading } = useInvoiceStore();
@@ -21,7 +23,7 @@ export default function AdminInvoicesPage() {
   const { addToast } = useToastStore();
   const confirmAction = useConfirmStore((state) => state.confirm);
 
-  const [activeTab, setActiveTab] = React.useState<"invoice" | "receipt">("invoice");
+  const [activeTab, setActiveTab] = React.useState<"invoice" | "receipt" | "quote">("invoice");
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("");
   const [startDate, setStartDate] = React.useState("");
@@ -33,6 +35,9 @@ export default function AdminInvoicesPage() {
 
   // Creation Form State
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+  const [formDocType, setFormDocType] = React.useState<"invoice" | "receipt" | "quote">("invoice");
+  const [formCustomerType, setFormCustomerType] = React.useState<"B2B" | "B2C" | "Dropshipping">("B2B");
+  const [shippingConfig, setShippingConfig] = React.useState<any>(null);
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [customerMode, setCustomerMode] = React.useState<"existing" | "new">("existing");
   const [selectedCustomerId, setSelectedCustomerId] = React.useState("");
@@ -51,7 +56,7 @@ export default function AdminInvoicesPage() {
   // Pay Modal State
   const [isPayModalOpen, setIsPayModalOpen] = React.useState(false);
   const [payInvoiceId, setPayInvoiceId] = React.useState<string | null>(null);
-  const [payInvoiceType, setPayInvoiceType] = React.useState<"invoice" | "receipt">("receipt");
+  const [payInvoiceType, setPayInvoiceType] = React.useState<"invoice" | "receipt" | "quote">("receipt");
   const [paymentType, setPaymentType] = React.useState<"cash" | "online">("cash");
   const [onlineMethod, setOnlineMethod] = React.useState<"UPI" | "Razorpay" | "Bank Transfer">("UPI");
   const [txnId, setTxnId] = React.useState("");
@@ -92,12 +97,16 @@ export default function AdminInvoicesPage() {
   React.useEffect(() => {
     // Load products and customers for generation modal
     if (isCreateModalOpen) {
+      setFormDocType(activeTab);
       initializeProducts();
       customerService.getCustomers()
         .then(setCustomers)
         .catch(err => console.error("Failed to load customers:", err));
+      shippingService.getConfig()
+        .then(setShippingConfig)
+        .catch(err => console.error("Failed to load shipping config:", err));
     }
-  }, [isCreateModalOpen, initializeProducts]);
+  }, [isCreateModalOpen, initializeProducts, activeTab]);
 
   // Handle Product Select in Creation Form to setup variant drop downs
   const currentSelectedProduct = React.useMemo(() => {
@@ -133,9 +142,9 @@ export default function AdminInvoicesPage() {
     ) || currentSelectedColorVariant.subVariants[0];
 
     if (sub) {
-      setItemPrice(sub.price);
+      setItemPrice(resolvePrice(sub, formCustomerType));
     }
-  }, [currentSelectedColorVariant, selectedSize, selectedWeight]);
+  }, [currentSelectedColorVariant, selectedSize, selectedWeight, formCustomerType]);
 
   // Reset variant selections when selected product changes
   React.useEffect(() => {
@@ -191,7 +200,7 @@ export default function AdminInvoicesPage() {
       },
       selectedVariants,
       quantity: itemQty,
-      pricePerUnit: itemPrice || subVar.price
+      pricePerUnit: itemPrice || (currentSelectedProduct ? resolvePrice(subVar, formCustomerType) : 0)
     };
 
     setFormItems(prev => [...prev, newItem]);
@@ -206,6 +215,11 @@ export default function AdminInvoicesPage() {
   const handleRemoveItem = (id: string) => {
     setFormItems(prev => prev.filter(i => i.id !== id));
   };
+
+  // Filter registered customers by formCustomerType ordering mode
+  const filteredCustomers = React.useMemo(() => {
+    return customers.filter((c) => c.customerTypes?.includes(formCustomerType));
+  }, [customers, formCustomerType]);
 
   // Determine buyer state for tax preview
   const buyerStateForForm = React.useMemo(() => {
@@ -272,9 +286,39 @@ export default function AdminInvoicesPage() {
     };
   }, [formItems, buyerStateForForm]);
 
-  const formGrandTotal = React.useMemo(() => {
+  const formTotalWeight = React.useMemo(() => {
+    return formItems.reduce((sum, item) => {
+      const unitWeightStr = item.selectedVariants["Weight"] || "";
+      const parseWeightToGrams = (wStr: string): number => {
+        if (!wStr) return 0;
+        const clean = wStr.toLowerCase().trim();
+        const val = parseFloat(clean);
+        if (isNaN(val)) return 0;
+        if (clean.includes("kg")) return val * 1000;
+        return val;
+      };
+      return sum + (parseWeightToGrams(unitWeightStr) * item.quantity);
+    }, 0);
+  }, [formItems]);
+
+  const formShippingCharge = React.useMemo(() => {
+    if (formCustomerType === "B2B") {
+      return shippingConfig?.b2bFixedCharge ?? 150;
+    } else {
+      const slabs = shippingConfig?.weightSlabs || [];
+      if (slabs.length === 0) return 0;
+      const matchedSlab = slabs.find((s: any) => formTotalWeight >= s.fromGram && formTotalWeight <= s.uptoGram);
+      return matchedSlab ? matchedSlab.amount : 0;
+    }
+  }, [formCustomerType, formTotalWeight, shippingConfig]);
+
+  const formItemsTotal = React.useMemo(() => {
     return formItems.reduce((sum, item) => sum + (item.pricePerUnit * item.quantity), 0);
   }, [formItems]);
+
+  const formGrandTotal = React.useMemo(() => {
+    return formItemsTotal + formShippingCharge;
+  }, [formItemsTotal, formShippingCharge]);
 
   // Submit invoice creation
   const handleSaveInvoice = async (e: React.FormEvent) => {
@@ -283,6 +327,17 @@ export default function AdminInvoicesPage() {
     if (formItems.length === 0) {
       addToast("Please add at least one item to generate an invoice.", "warning");
       return;
+    }
+
+    if (formCustomerType === "B2B" && customerMode === "new") {
+      if (!newCustCompany) {
+        addToast("Company name is required for B2B clients.", "warning");
+        return;
+      }
+      if (!newCustGstin) {
+        addToast("GSTIN is required for B2B clients.", "warning");
+        return;
+      }
     }
 
     let customerPayload: any = {};
@@ -300,7 +355,7 @@ export default function AdminInvoicesPage() {
         customerGstin: cust.gstin,
         shippingAddress: {
           firstName: cust.name.split(" ")[0] || "Client",
-          lastName: cust.name.split(" ").slice(1).join(" ") || "B2B",
+          lastName: cust.name.split(" ").slice(1).join(" ") || String(formCustomerType),
           email: cust.email,
           company: cust.company,
           address: cust.address || "Main Street",
@@ -326,14 +381,15 @@ export default function AdminInvoicesPage() {
           address: newCustAddress,
           city: newCustCity,
           state: newCustState,
-          pinCode: newCustPinCode
+          pinCode: newCustPinCode,
+          customerTypes: [formCustomerType],
         },
         customerName: newCustName,
         customerEmail: newCustEmail.toLowerCase(),
         customerGstin: newCustGstin || undefined,
         shippingAddress: {
           firstName: newCustName.split(" ")[0] || "Client",
-          lastName: newCustName.split(" ").slice(1).join(" ") || "B2B",
+          lastName: newCustName.split(" ").slice(1).join(" ") || String(formCustomerType),
           email: newCustEmail.toLowerCase(),
           company: newCustCompany || undefined,
           address: newCustAddress,
@@ -349,7 +405,7 @@ export default function AdminInvoicesPage() {
     setIsSubmitting(true);
     try {
       await createInvoice({
-        type: activeTab,
+        type: formDocType,
         ...customerPayload,
         items: formItems,
         amount: formGrandTotal,
@@ -360,7 +416,8 @@ export default function AdminInvoicesPage() {
         notes: invoiceNotes || undefined
       });
 
-      addToast(`${activeTab === "invoice" ? "Invoice" : "Receipt"} generated successfully!`, "success");
+      const docLabel = formDocType === "invoice" ? "Invoice" : formDocType === "receipt" ? "Receipt" : "Price Quote";
+      addToast(`${docLabel} generated successfully!`, "success");
       setIsCreateModalOpen(false);
       
       // Reset form
@@ -386,9 +443,10 @@ export default function AdminInvoicesPage() {
   };
 
   const handleVoidInvoice = (id: string) => {
+    const docLabel = activeTab === "invoice" ? "Invoice" : activeTab === "receipt" ? "Receipt" : "Quote";
     confirmAction({
-      title: `Void B2B ${activeTab === "invoice" ? "Invoice" : "Receipt"}`,
-      message: `Are you sure you want to void this B2B ${activeTab}? This action cannot be undone.`,
+      title: `Void B2B ${docLabel}`,
+      message: `Are you sure you want to void this B2B ${docLabel}? This action cannot be undone.`,
       confirmText: "Yes, Void Document",
       cancelText: "Cancel",
       type: "danger",
@@ -442,7 +500,7 @@ export default function AdminInvoicesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Invoice & Receipt Manager</h1>
-          <p className="text-muted-foreground mt-1"> Persist, monitor, and print B2B commercial invoices and transaction logs.</p>
+          <p className="text-muted-foreground mt-1"> Persist, monitor, and print commercial invoices, payment receipts, and price quotes.</p>
         </div>
         <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center gap-1.5 font-semibold">
           <Plus className="h-4.5 w-4.5" /> Generate Document
@@ -471,6 +529,16 @@ export default function AdminInvoicesPage() {
         >
           <Check className="h-4 w-4" /> Payment Receipts (Failed/Draft)
         </button>
+        <button
+          onClick={() => { setActiveTab("quote"); setCurrentPage(1); }}
+          className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "quote"
+              ? "border-primary text-primary font-bold bg-primary/5"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <FileText className="h-4 w-4" /> Price Quotes
+        </button>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
@@ -481,7 +549,7 @@ export default function AdminInvoicesPage() {
               <div className="relative w-full sm:w-72">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder={`Search ${activeTab === "invoice" ? "invoices" : "receipts"}...`}
+                  placeholder={`Search ${activeTab === "invoice" ? "invoices" : activeTab === "receipt" ? "receipts" : "quotes"}...`}
                   className="pl-9 text-foreground text-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -541,7 +609,7 @@ export default function AdminInvoicesPage() {
                     ) : invoices.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="p-8 text-center text-muted-foreground italic">
-                          No B2B {activeTab === "invoice" ? "invoices" : "receipts"} found matching the query.
+                          No {activeTab === "invoice" ? "invoices" : activeTab === "receipt" ? "receipts" : "price quotes"} found matching the query.
                         </td>
                       </tr>
                     ) : (
@@ -683,7 +751,9 @@ export default function AdminInvoicesPage() {
                     history: [],
                     paymentMethod: selectedInvoice.paymentMethod as any,
                     paymentStatus: selectedInvoice.paymentStatus as any,
-                    transactionId: selectedInvoice.transactionId
+                    transactionId: selectedInvoice.transactionId,
+                    couponCode: selectedInvoice.couponCode,
+                    couponDiscount: selectedInvoice.couponDiscount,
                   }}
                   sellerInfo={selectedInvoice.sellerInfo}
                   taxBreakdown={selectedInvoice.taxDetails}
@@ -709,7 +779,9 @@ export default function AdminInvoicesPage() {
           <div className="bg-background border rounded-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
             <div className="p-6 border-b sticky top-0 bg-background z-10 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-bold text-foreground">Generate New B2B {activeTab === "invoice" ? "Invoice" : "Receipt"}</h2>
+                <h2 className="text-xl font-bold text-foreground">
+                  Generate New {formDocType === "invoice" ? "Invoice" : formDocType === "receipt" ? "Receipt" : "Price Quote"}
+                </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">Input billing, product items, and payment details to build a sequential record.</p>
               </div>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setIsCreateModalOpen(false)}>
@@ -718,9 +790,40 @@ export default function AdminInvoicesPage() {
             </div>
 
             <form onSubmit={handleSaveInvoice} className="p-6 space-y-6">
+              {/* Type and Mode Selectors */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-secondary/10 p-4 rounded-lg border border-border/80">
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground block mb-1">Document Type</label>
+                  <select
+                    value={formDocType}
+                    onChange={(e) => setFormDocType(e.target.value as any)}
+                    className="bg-background text-foreground text-sm w-full px-3 py-2 border rounded-md font-bold cursor-pointer"
+                  >
+                    <option value="invoice">Tax Invoice</option>
+                    <option value="receipt">Payment Receipt</option>
+                    <option value="quote">Price Quote</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground block mb-1">Client Ordering Mode (Customer Type)</label>
+                  <select
+                    value={formCustomerType}
+                    onChange={(e) => {
+                      setFormCustomerType(e.target.value as any);
+                      setSelectedCustomerId("");
+                    }}
+                    className="bg-background text-foreground text-sm w-full px-3 py-2 border rounded-md font-bold cursor-pointer"
+                  >
+                    <option value="B2C">B2C (Retail)</option>
+                    <option value="B2B">B2B (Wholesale Bulk)</option>
+                    <option value="Dropshipping">Dropshipping</option>
+                  </select>
+                </div>
+              </div>
+
               {/* Customer selection */}
               <div className="space-y-4">
-                <h3 className="font-bold text-xs uppercase tracking-wider text-primary border-b pb-1.5">1. B2B Client Details</h3>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-primary border-b pb-1.5">1. {formCustomerType} Client Details</h3>
                 <div className="flex border-b border-border/60 max-w-xs">
                   <button
                     type="button"
@@ -748,10 +851,10 @@ export default function AdminInvoicesPage() {
                     <select
                       value={selectedCustomerId}
                       onChange={(e) => setSelectedCustomerId(e.target.value)}
-                      className="bg-background text-foreground text-sm w-full px-3 py-2 border rounded-md font-medium"
+                      className="bg-background text-foreground text-sm w-full px-3 py-2.5 border rounded-md font-medium cursor-pointer"
                     >
-                      <option value="">-- Choose Buyer Profile --</option>
-                      {customers.map((c) => (
+                      <option value="">-- Choose {formCustomerType} Profile --</option>
+                      {filteredCustomers.map((c) => (
                         <option key={c._id} value={c._id}>
                           {c.name} ({c.email}) {c.company ? ` - ${c.company}` : ""}
                         </option>
@@ -792,8 +895,11 @@ export default function AdminInvoicesPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Company / Organization</label>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                        Company / Organization{formCustomerType === "B2B" && " *"}
+                      </label>
                       <Input
+                        required={formCustomerType === "B2B"}
                         value={newCustCompany}
                         onChange={(e) => setNewCustCompany(e.target.value)}
                         placeholder="XYZ Solutions Ltd"
@@ -801,8 +907,11 @@ export default function AdminInvoicesPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-muted-foreground block mb-1">GSTIN</label>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                        GSTIN{formCustomerType === "B2B" && " *"}
+                      </label>
                       <Input
+                        required={formCustomerType === "B2B"}
                         value={newCustGstin}
                         onChange={(e) => setNewCustGstin(e.target.value)}
                         placeholder="24AAACF1001M1Z5"
@@ -1052,7 +1161,7 @@ export default function AdminInvoicesPage() {
                 {/* Tax Breakdown Preview */}
                 <div className="bg-secondary/15 p-4 rounded-lg border space-y-3 text-xs">
                   <h4 className="font-bold text-[10px] text-muted-foreground uppercase tracking-widest border-b pb-1">
-                    GST Computation Preview
+                    GST & Cost Computation Preview
                   </h4>
                   <div className="space-y-2">
                     <div className="flex justify-between">
@@ -1062,22 +1171,37 @@ export default function AdminInvoicesPage() {
                     {formTaxBreakdown.isIntrastate ? (
                       <>
                         <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                          <span>CGST (Central Tax 9%):</span>
+                          <span>CGST (Central Tax):</span>
                           <span>₹{formTaxBreakdown.cgst.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                          <span>SGST (State Tax 9%):</span>
+                          <span>SGST (State Tax):</span>
                           <span>₹{formTaxBreakdown.sgst.toFixed(2)}</span>
                         </div>
                       </>
                     ) : (
                       <div className="flex justify-between text-blue-600 dark:text-blue-400">
-                        <span>IGST (Integrated Tax 18%):</span>
+                        <span>IGST (Integrated Tax):</span>
                         <span>₹{formTaxBreakdown.igst.toFixed(2)}</span>
                       </div>
                     )}
+                    <div className="flex justify-between font-bold text-foreground border-t border-border/40 pt-1">
+                      <span>Items Total (Incl. GST):</span>
+                      <span>₹{formItemsTotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground border-t border-border/40 pt-1">
+                      <span>Shipping & Handling ({formCustomerType}):</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                        {formShippingCharge > 0 ? `₹${formShippingCharge.toFixed(2)}` : "Free"}
+                      </span>
+                    </div>
+                    {formTotalWeight > 0 && formCustomerType !== "B2B" && (
+                      <div className="text-[10px] text-right text-muted-foreground -mt-1 font-mono">
+                        Package weight: {formTotalWeight}g
+                      </div>
+                    )}
                     <div className="flex justify-between border-t border-border pt-2 font-bold text-sm text-foreground">
-                      <span>Total (incl. GST):</span>
+                      <span>Grand Total:</span>
                       <span className="text-primary text-base">₹{formGrandTotal.toFixed(2)}</span>
                     </div>
                   </div>

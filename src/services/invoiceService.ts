@@ -2,7 +2,7 @@ import { Invoice } from "@/types";
 import { apiClient } from "@/lib/apiClient";
 
 export interface InvoiceListParams {
-  type?: "invoice" | "receipt";
+  type?: "invoice" | "receipt" | "quote";
   status?: string;
   customerId?: string;
   startDate?: string;

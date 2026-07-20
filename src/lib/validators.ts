@@ -16,6 +16,10 @@ export const registerSchema = z.object({
   pinCode: z.string().regex(/^\d{6}$/, "Pin code must be exactly 6 digits"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   gstin: z.string().optional(),
+  customerTypes: z.array(z.enum(["B2C", "B2B", "Dropshipping"]))
+    .min(1, "At least one customer type is required")
+    .max(3)
+    .default(["B2C"]),
 });
 
 export const forgotPasswordSchema = z.object({
@@ -104,12 +108,15 @@ export const orderSchema = z.object({
 export const subVariantSchema = z.object({
   id: z.string(),
   size: z.string(),
-  weight: z.string(),
-  price: z.number().positive(),
+  weight: z.string().min(1, "Weight is required"),
   mrp: z.number().positive(),
+  b2cPrice: z.number().positive("B2C Price is required"),
+  b2bPrice: z.number().nonnegative().default(0),
+  dropshippingPrice: z.number().nonnegative().default(0),
+  b2bMoq: z.number().int().nonnegative().nullable().default(null),
   discount: z.number().nonnegative(),
   stock: z.number().int().nonnegative(),
-  sku: z.string(),
+  sku: z.string().min(1, "SKU is required"),
   barcode: z.string().optional(),
   isActive: z.boolean().default(true),
 });
@@ -149,7 +156,7 @@ export const productSchema = z.object({
   hsnCode: z.string().optional().nullable(),
   gstRate: z.number().nonnegative().optional().nullable(),
   priceIncludesGst: z.boolean().default(true),
-  moq: z.number().int().positive().default(1),
+  defaultPriceTier: z.enum(["B2C", "B2B", "Dropshipping"]).default("B2C"),
   seoTitle: z.string().optional().nullable(),
   seoDescription: z.string().optional().nullable(),
   seoKeywords: z.string().optional().nullable(),
@@ -161,3 +168,33 @@ export const productSchema = z.object({
     showImages: z.boolean().default(true),
   }).optional(),
 });
+
+export const collectionConditionSchema = z.object({
+  field: z.enum(["tag", "category", "price", "title", "stock", "vendor"]),
+  operator: z.enum(["equals", "not_equals", "contains", "starts_with", "greater_than", "less_than"]),
+  value: z.string().min(1, "Condition value is required"),
+});
+
+export const collectionRulesSchema = z.object({
+  matchType: z.enum(["all", "any"]),
+  conditions: z.array(collectionConditionSchema).default([]),
+});
+
+export const collectionSchema = z.object({
+  title: z.string().min(2, "Title must be at least 2 characters"),
+  slug: z.string().min(2, "Slug must be at least 2 characters"),
+  description: z.string().optional().nullable(),
+  type: z.enum(["manual", "smart"]),
+  image: z.string().optional().nullable(),
+  bannerImage: z.string().optional().nullable(),
+  productIds: z.array(z.string()).optional(),
+  rules: collectionRulesSchema.optional().nullable(),
+  linkedCategoryIds: z.array(z.string()).optional(),
+  isActive: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
+  order: z.number().int().optional(),
+  seoTitle: z.string().optional().nullable(),
+  seoDescription: z.string().optional().nullable(),
+  seoKeywords: z.string().optional().nullable(),
+});
+

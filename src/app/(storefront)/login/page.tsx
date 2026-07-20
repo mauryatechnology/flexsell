@@ -6,9 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck, Truck, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useToastStore } from "@/stores/toastStore";
+import { motion } from "framer-motion";
 
 function LoginForm() {
   const router = useRouter();
@@ -24,10 +25,8 @@ function LoginForm() {
   const { addToast } = useToastStore();
 
   React.useEffect(() => {
-    // Clear any previous auth errors when page loads
     clearError();
 
-    // Dynamically load Google Identity Services script
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
@@ -51,7 +50,7 @@ function LoginForm() {
       try {
         document.body.removeChild(script);
       } catch (e) {
-        // Ignore if already removed
+        // Ignore
       }
     };
   }, []);
@@ -62,7 +61,6 @@ function LoginForm() {
       const success = await loginWithGoogle(response.credential);
       if (success) {
         addToast("Logged in via Google successfully!", "success");
-        // Get user role to determine redirection
         const currentCustomer = useAuthStore.getState().customer;
         const redirectDest = currentCustomer?.role === "admin" ? "/admin" : (callbackUrl || "/client");
         router.push(redirectDest);
@@ -100,24 +98,61 @@ function LoginForm() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-16 flex justify-center text-foreground">
-      <Card className="w-full max-w-md border border-border">
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-          <CardDescription>
-            Enter your email/Customer ID and password to access your B2B account
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+    <div className="container mx-auto px-4 py-12 flex justify-center items-center text-foreground min-h-[75vh]">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 rounded-2xl overflow-hidden border border-border shadow-xl bg-card"
+      >
+        {/* Left Branding Panel */}
+        <div className="md:col-span-5 bg-gradient-to-br from-primary via-emerald-600 to-emerald-700 p-8 text-primary-foreground flex flex-col justify-between hidden md:flex">
+          <div className="space-y-4">
+            <span className="inline-block bg-white/20 backdrop-blur text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
+              FlexSell B2B
+            </span>
+            <h2 className="text-2xl font-black leading-tight">
+              India's Premier Factory Sourcing Platform
+            </h2>
+            <p className="text-xs text-white/90 leading-relaxed">
+              Access container-load pricing, verified quality checks, and nationwide cargo shipping directly from manufacturers.
+            </p>
+          </div>
+
+          <div className="space-y-3 pt-6 border-t border-white/20 text-xs">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 shrink-0" />
+              <span>Verified GST B2B Invoices</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Truck className="h-4 w-4 shrink-0" />
+              <span>Surat Cargo Logistics Dispatch</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 shrink-0" />
+              <span>Dropshipper White-Label Shipping</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Form Panel */}
+        <div className="md:col-span-7 p-6 sm:p-8 space-y-6">
+          <div className="text-center md:text-left space-y-1">
+            <h1 className="text-2xl font-black tracking-tight">Welcome Back</h1>
+            <p className="text-xs text-muted-foreground">
+              Sign in with your Email or Customer ID (e.g. FSW-0001)
+            </p>
+          </div>
+
           {error && (
-            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md border border-destructive/20 text-center font-medium">
+            <div className="bg-destructive/10 text-destructive text-xs p-3 rounded-md border border-destructive/20 text-center font-medium">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email or Customer ID (e.g. FSW-0001)</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold">Email or Customer ID</label>
               <Input
                 type="text"
                 placeholder="Enter email or FSW-000x"
@@ -125,14 +160,15 @@ function LoginForm() {
                 onChange={(e) => setIdentifier(e.target.value)}
                 disabled={isSubmitting}
                 required
+                className="text-xs"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="text-sm font-medium">Password</label>
+                <label className="text-xs font-bold">Password</label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs text-primary font-semibold hover:underline"
+                  className="text-[11px] text-primary font-bold hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -145,7 +181,7 @@ function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isSubmitting}
                   required
-                  className="pr-10"
+                  className="pr-10 text-xs"
                 />
                 <button
                   type="button"
@@ -158,27 +194,27 @@ function LoginForm() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
+            <Button type="submit" className="w-full font-bold mt-2" disabled={isSubmitting}>
               {isSubmitting ? "Signing In..." : "Sign In"}
             </Button>
           </form>
 
           <div className="relative flex py-2 items-center">
             <div className="flex-grow border-t border-border"></div>
-            <span className="flex-shrink mx-4 text-muted-foreground text-xs uppercase">Or continue with</span>
+            <span className="flex-shrink mx-4 text-muted-foreground text-[10px] uppercase font-bold">Or continue with</span>
             <div className="flex-grow border-t border-border"></div>
           </div>
 
           <div id="google-signin-btn" className="w-full flex justify-center"></div>
 
-          <div className="text-center text-sm border-t pt-4">
+          <div className="text-center text-xs border-t pt-4">
             Don't have an account?{" "}
             <Link href="/register" className="text-primary font-bold hover:underline">
-              Register now
+              Register B2B Account
             </Link>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </motion.div>
     </div>
   );
 }

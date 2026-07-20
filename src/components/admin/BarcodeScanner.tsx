@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Barcode } from "@/components/ui/Barcode";
 import { formatPrice } from "@/lib/utils";
+import { resolvePrice } from "@/lib/priceTierHelper";
 import { X, Search, QrCode, Minus, Plus, Camera, CameraOff } from "lucide-react";
 import { useBarcodeScanner } from "./useBarcodeScanner";
 
@@ -172,7 +173,7 @@ export function BarcodeScanner({ isOpen, onClose }: BarcodeScannerProps) {
                   <div className="border-t pt-4 flex justify-between items-center text-sm">
                     <div>
                       <span className="text-muted-foreground">Price: </span>
-                      <span className="font-bold text-foreground">{formatPrice(scannedSubVariant.price)}</span>
+                      <span className="font-bold text-foreground">{formatPrice(resolvePrice(scannedSubVariant, scannedProduct.defaultPriceTier || "B2C"))}</span>
                     </div>
                     <div className="text-xs text-success bg-success/15 px-2.5 py-1 rounded-full font-semibold">
                       Fulfillments Enabled

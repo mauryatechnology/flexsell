@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Search, Filter, Eye, Download, Info, FileText } from "lucide-react";
 import { useOrderStore, Order } from "@/stores/orderStore";
+import { useDashboardViewStore } from "@/stores/dashboardViewStore";
 import { formatPrice } from "@/lib/utils";
 import { Pagination } from "@/components/ui/Pagination";
 
@@ -24,15 +25,30 @@ export function ClientOrdersView() {
     initializeOrders();
   }, [initializeOrders]);
 
-  // Filter orders
+  // Filter orders dynamically based on active dashboard view
+  const { activeView } = useDashboardViewStore();
+
   const filteredOrders = React.useMemo(() => {
+    const viewFiltered = orders.filter(o => {
+      const hasB2BItem = o.items?.some((item: any) => item.priceTier === "B2B");
+      const hasDropshipItem = o.items?.some((item: any) => item.priceTier === "Dropshipping");
+      
+      if (activeView === "B2B") {
+        return hasB2BItem;
+      }
+      if (activeView === "Dropshipping") {
+        return hasDropshipItem || (!hasB2BItem && o.paymentMethod === "COD");
+      }
+      return !hasB2BItem && !hasDropshipItem;
+    });
+
     const term = searchTerm.toLowerCase();
-    if (!term) return orders;
-    return orders.filter(o => 
+    if (!term) return viewFiltered;
+    return viewFiltered.filter(o => 
       o._id.toLowerCase().includes(term) || 
       o.customerName.toLowerCase().includes(term)
     );
-  }, [orders, searchTerm]);
+  }, [orders, searchTerm, activeView]);
 
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = 5;

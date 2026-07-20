@@ -18,6 +18,7 @@ import { BarcodeScanner } from "./BarcodeScanner";
 import { Barcode } from "@/components/ui/Barcode";
 import { Pagination } from "@/components/ui/Pagination";
 import { getBarcodeSvgString } from "@/lib/barcodeHelper";
+import { resolvePrice } from "@/lib/priceTierHelper";
 import { InventoryManager } from "./InventoryManager";
 import { BulkOperationsModal } from "./BulkOperationsModal";
 import { ProductFilters } from "./products/ProductFilters";
@@ -53,6 +54,44 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
   // Pagination states
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = 10;
+
+  const [globalHighlightPrice, setGlobalHighlightPrice] = React.useState<"B2C" | "B2B" | "Dropshipping" | "">("");
+
+  // Fetch current global highlight price from CMS configuration
+  React.useEffect(() => {
+    fetch("/api/cms")
+      .then(res => res.json())
+      .then(data => {
+        if (data.globalHighlightPrice) {
+          setGlobalHighlightPrice(data.globalHighlightPrice);
+        } else {
+          setGlobalHighlightPrice("B2C");
+        }
+      })
+      .catch(err => {
+        console.error("Failed to load global highlight price", err);
+        setGlobalHighlightPrice("B2C");
+      });
+  }, []);
+
+  const handleGlobalHighlightPriceChange = async (tier: "B2C" | "B2B" | "Dropshipping") => {
+    setGlobalHighlightPrice(tier);
+    try {
+      const res = await fetch("/api/products/global-highlight-price", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ defaultPriceTier: tier })
+      });
+      if (!res.ok) throw new Error("Failed to update global highlight price");
+      
+      addToast(`Successfully set global highlight price to ${tier} for all products!`, "success");
+      
+      // Force refresh of products in store to update UI instantly!
+      await initializeProducts(undefined, true);
+    } catch (err: unknown) {
+      addToast((err as any).message || "Failed to update global highlight price", "error");
+    }
+  };
 
   // Sync server data into client stores
   React.useEffect(() => {
@@ -118,8 +157,10 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
 
     // Sorting
     list.sort((a, b) => {
-      const priceA = a.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
-      const priceB = b.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
+      const svA = a.colorVariants?.[0]?.subVariants?.[0];
+      const priceA = svA ? resolvePrice(svA, a.defaultPriceTier || "B2C") : 0;
+      const svB = b.colorVariants?.[0]?.subVariants?.[0];
+      const priceB = svB ? resolvePrice(svB, b.defaultPriceTier || "B2C") : 0;
 
       switch (sortBy) {
         case "title-asc":
@@ -424,6 +465,36 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
           </Link>
         </div>
       </div>
+
+      {/* Global Setting for Default Highlight Price */}
+      {globalHighlightPrice && (
+        <Card className="border border-border/80 p-4 bg-secondary/5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-sm text-foreground flex items-center gap-1">
+                Global Highlight Price Setting
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Change the default price tier displayed to guest users on the public storefront. Updates all product highlights instantly.
+              </p>
+            </div>
+            <div className="flex flex-col space-y-1.5 min-w-[240px]">
+              <label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-0.5">
+                Default Highlight Price <span className="text-destructive">*</span>
+              </label>
+              <select
+                value={globalHighlightPrice}
+                onChange={(e) => handleGlobalHighlightPriceChange(e.target.value as any)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
+              >
+                <option value="B2C">B2C Price (Selling Price)</option>
+                <option value="B2B">B2B Price (Trade Price)</option>
+                <option value="Dropshipping">Dropshipping Price</option>
+              </select>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Panel Tab Switcher */}
       <div className="flex border-b border-border mb-6">

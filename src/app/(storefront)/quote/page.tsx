@@ -9,6 +9,7 @@ import { SellerInfo } from "@/types";
 export default function QuotePage() {
   const { items, buyerState, getTaxDetails, hydrateProducts } = useCartStore();
   const [cmsData, setCmsData] = React.useState<any>(null);
+  const [shippingConfig, setShippingConfig] = React.useState<any>(null);
 
   React.useEffect(() => {
     const init = async () => {
@@ -23,18 +24,115 @@ export default function QuotePage() {
     fetch("/api/cms")
       .then(res => res.json())
       .then(data => setCmsData(data))
-      .catch(err => console.error("Failed to load CMS data:", err));
+      .catch((err: unknown) => console.error("Failed to load CMS data:", err));
+
+    const { shippingService } = require("@/services/shippingService");
+    shippingService.getConfig()
+      .then((config: any) => setShippingConfig(config))
+      .catch((err: unknown) => console.error("Failed to load shipping config:", err));
   }, [hydrateProducts]);
 
+  const b2bItems = React.useMemo(() => {
+    const { resolvePrice } = require("@/lib/priceTierHelper");
+    return items.map((item) => {
+      const matchingColor = item.selectedVariants["Color"] || item.selectedVariants["color"];
+      const activeVariant = item.product?.colorVariants?.find((cv: any) => cv.color === matchingColor)
+        || item.product?.colorVariants?.[0];
+      const activeSubVariant = activeVariant?.subVariants?.find((sv: any) =>
+        (!item.selectedVariants["Size"] || sv.size === item.selectedVariants["Size"]) &&
+        (!item.selectedVariants["Weight"] || sv.weight === item.selectedVariants["Weight"])
+      ) || activeVariant?.subVariants?.[0];
+
+      const b2bUnitPrice = activeSubVariant ? resolvePrice(activeSubVariant, "B2B") : item.pricePerUnit;
+
+      return {
+        ...item,
+        priceTier: "B2B" as const,
+        pricePerUnit: b2bUnitPrice,
+      };
+    });
+  }, [items]);
+
   const taxDetails = React.useMemo(() => {
-    const raw = getTaxDetails();
+    const isIntrastate = (buyerState || "Madhya Pradesh") === "Madhya Pradesh";
+    const hsnBreakdown: Record<string, any> = {};
+    
+    let baseSubtotal = 0;
+    let totalCgst = 0;
+    let totalSgst = 0;
+    let totalIgst = 0;
+    let grandTotal = 0;
+
+    const storeProducts = useProductStore.getState().products;
+
+    b2bItems.forEach((item) => {
+      const p = storeProducts.find(prod => prod._id === (item.productId || item.product?._id)) || item.product;
+      const rate = p?.gstRate ?? 18;
+      const hsn = p?.hsnCode ?? "3924";
+      const isIncl = p?.priceIncludesGst ?? true;
+      
+      const unitPrice = item.pricePerUnit;
+      const qty = item.quantity;
+      const totalAmount = unitPrice * qty;
+
+      let basePrice = unitPrice;
+      let itemTax = 0;
+
+      if (isIncl) {
+        // Price includes GST
+        basePrice = unitPrice / (1 + rate / 100);
+        const itemBase = basePrice * qty;
+        itemTax = totalAmount - itemBase;
+        baseSubtotal += itemBase;
+        grandTotal += totalAmount;
+      } else {
+        // Price excludes GST
+        const itemBase = unitPrice * qty;
+        itemTax = itemBase * (rate / 100);
+        baseSubtotal += itemBase;
+        grandTotal += (itemBase + itemTax);
+      }
+
+      let cgst = 0;
+      let sgst = 0;
+      let igst = 0;
+
+      if (isIntrastate) {
+        cgst = itemTax / 2;
+        sgst = itemTax / 2;
+        totalCgst += cgst;
+        totalSgst += sgst;
+      } else {
+        igst = itemTax;
+        totalIgst += igst;
+      }
+
+      if (hsnBreakdown[hsn]) {
+        hsnBreakdown[hsn].baseAmount += (basePrice * qty);
+        hsnBreakdown[hsn].cgst += cgst;
+        hsnBreakdown[hsn].sgst += sgst;
+        hsnBreakdown[hsn].igst += igst;
+        hsnBreakdown[hsn].totalTax += itemTax;
+      } else {
+        hsnBreakdown[hsn] = {
+          hsnCode: hsn,
+          gstRate: rate,
+          baseAmount: (basePrice * qty),
+          cgst,
+          sgst,
+          igst,
+          totalTax: itemTax,
+        };
+      }
+    });
+
     return {
-      isIntrastate: raw.isIntrastate,
-      baseSubtotal: raw.baseSubtotal,
-      cgst: raw.totalCgst,
-      sgst: raw.totalSgst,
-      igst: raw.totalIgst,
-      hsnSlabs: Object.values(raw.hsnBreakdown).map((slab: any) => ({
+      isIntrastate,
+      baseSubtotal,
+      cgst: totalCgst,
+      sgst: totalSgst,
+      igst: totalIgst,
+      hsnSlabs: Object.values(hsnBreakdown).map((slab: any) => ({
         hsnCode: slab.hsnCode,
         gstRate: slab.gstRate,
         baseAmount: slab.baseAmount,
@@ -44,7 +142,7 @@ export default function QuotePage() {
         igst: slab.igst
       }))
     };
-  }, [items, buyerState, getTaxDetails]);
+  }, [b2bItems, buyerState]);
 
   if (items.length === 0) {
     return (
@@ -70,11 +168,12 @@ export default function QuotePage() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 print:bg-white print:py-0 print:px-0">
       <QuoteDocument
         quoteId={quoteId}
-        items={items}
+        items={b2bItems}
         taxDetails={taxDetails}
         buyerState={buyerState || "Madhya Pradesh"}
         sellerInfo={sellerInfo}
         showActions={true}
+        shippingConfig={shippingConfig}
       />
     </div>
   );

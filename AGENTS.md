@@ -20,7 +20,7 @@ Welcome! This file provides guidelines, command lists, and architectural pattern
 
 ## ⚡ B2B Unified Service Layer Conventions
 
-For all dynamic B2B enterprise features (Addresses, Reviews, Coupons, and Notifications/Webhooks), we use a unified client-side service layer inside `src/services/`.
+For all dynamic B2B enterprise features (Addresses, Reviews, Coupons, and Notifications), we use a unified client-side service layer inside `src/services/`.
 
 Every service MUST support:
 1. **Mock Mode Fallback:** If `isMockMode` is active (defined in `src/lib/apiClient.ts`), store/retrieve arrays using `localStorage` keys to enable a fully functional developer sandbox.
@@ -30,7 +30,7 @@ Every service MUST support:
 - **Addresses:** `customerService.ts` ➔ Key: `"flexsell-addresses-storage"`
 - **Product Reviews:** `reviewService.ts` ➔ Key: `"flexsell-reviews-storage"`
 - **Coupons:** `couponService.ts` ➔ Key: `"flexsell-coupons-storage"`
-- **Notifications/Webhooks:** `notificationService.ts` ➔ Keys: `"flexsell-notifications-storage"` and `"flexsell-webhooks-storage"`
+- **Notifications:** `notificationService.ts` ➔ Key: `"flexsell-notifications-storage"`
 
 ### Rule for Components:
 Components must **never** make direct `fetch` or `apiClient` requests to endpoints for address management, review submission/moderation, coupon validation, or webhook administration. They must call the appropriate service method.

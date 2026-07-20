@@ -17,20 +17,22 @@ export function FieldVisibilityCard() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-2">
           {Object.entries(fieldVisibility).map(([key, isChecked]) => {
             const label = key.replace("show", "").replace(/^\w/, (c) => c.toUpperCase());
+            const isWeights = key === "showWeights";
             return (
-              <label key={key} className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
+              <label key={key} className={`flex items-center gap-2 text-sm font-semibold cursor-pointer ${isWeights ? "opacity-60 cursor-not-allowed" : ""}`}>
                 <input
                   type="checkbox"
                   className="rounded text-primary focus:ring-primary bg-background border-border"
-                  checked={isChecked}
+                  checked={isWeights ? true : isChecked}
+                  disabled={isWeights}
                   onChange={(e) =>
-                    setFieldVisibility((prev) => ({
+                    !isWeights && setFieldVisibility((prev) => ({
                       ...prev,
                       [key]: e.target.checked,
                     }))
                   }
                 />
-                <span>Show {label}</span>
+                <span>Show {label} {isWeights && " (Required)"}</span>
               </label>
             );
           })}

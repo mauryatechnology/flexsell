@@ -19,13 +19,30 @@ export default function ClientDashboardPage() {
     customerService.getActiveCustomer().then(setActiveCustomer).catch(console.error);
   }, [initializeOrders]);
 
-  // Filter orders by active customer's email
+  // Filter orders by active customer's email and active dashboard view
+  const { useDashboardViewStore } = require("@/stores/dashboardViewStore");
+  const { activeView } = useDashboardViewStore();
+
   const customerOrders = React.useMemo(() => {
     if (!activeCustomer) return [];
-    return orders.filter(
+    
+    const matchedOrders = orders.filter(
       (o) => o.shippingAddress.email.toLowerCase() === activeCustomer.email.toLowerCase()
     );
-  }, [orders, activeCustomer]);
+
+    return matchedOrders.filter(o => {
+      const hasB2BItem = o.items?.some((item: any) => item.priceTier === "B2B");
+      const hasDropshipItem = o.items?.some((item: any) => item.priceTier === "Dropshipping");
+      
+      if (activeView === "B2B") {
+        return hasB2BItem;
+      }
+      if (activeView === "Dropshipping") {
+        return hasDropshipItem || (!hasB2BItem && o.paymentMethod === "COD");
+      }
+      return !hasB2BItem && !hasDropshipItem;
+    });
+  }, [orders, activeCustomer, activeView]);
 
   // Compute live stats
   const totalCount = customerOrders.length;

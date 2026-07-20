@@ -25,8 +25,8 @@ export interface ProductFormContextProps {
   setHsnCode: (c: string) => void;
   priceIncludesGst: boolean;
   setPriceIncludesGst: (b: boolean) => void;
-  moq: number;
-  setMoq: (n: number) => void;
+  defaultPriceTier: "B2C" | "B2B" | "Dropshipping";
+  setDefaultPriceTier: (t: "B2C" | "B2B" | "Dropshipping") => void;
   seoTitle: string;
   setSeoTitle: (t: string) => void;
   seoDescription: string;
@@ -111,7 +111,7 @@ export function useProductFormState(
   const [cardTagsText, setCardTagsText] = React.useState("");
   const [hsnCode, setHsnCode] = React.useState("3924");
   const [priceIncludesGst, setPriceIncludesGst] = React.useState(true);
-  const [moq, setMoq] = React.useState(1);
+  const [defaultPriceTier, setDefaultPriceTier] = React.useState<"B2C" | "B2B" | "Dropshipping">("B2C");
   const [seoTitle, setSeoTitle] = React.useState("");
   const [seoDescription, setSeoDescription] = React.useState("");
   const [seoKeywords, setSeoKeywords] = React.useState("");
@@ -134,8 +134,11 @@ export function useProductFormState(
         id: "sv-default",
         size: "Standard",
         weight: "250g",
-        price: 0,
         mrp: 0,
+        b2cPrice: 0,
+        b2bPrice: 0,
+        dropshippingPrice: 0,
+        b2bMoq: null,
         discount: 0,
         stock: 100,
         sku: ""
@@ -160,7 +163,7 @@ export function useProductFormState(
       setAPlusBlocks(existingProduct.aPlusContent || []);
       setHsnCode(existingProduct.hsnCode || "3924");
       setPriceIncludesGst(existingProduct.priceIncludesGst ?? true);
-      setMoq(existingProduct.moq ?? 1);
+      setDefaultPriceTier(existingProduct.defaultPriceTier || "B2C");
       setSeoTitle(existingProduct.seoTitle || "");
       setSeoDescription(existingProduct.seoDescription || "");
       setSeoKeywords(existingProduct.seoKeywords || "");
@@ -223,8 +226,11 @@ export function useProductFormState(
           id: `sv-${Date.now()}`,
           size: "Standard",
           weight: "250g",
-          price: 0,
           mrp: 0,
+          b2cPrice: 0,
+          b2bPrice: 0,
+          dropshippingPrice: 0,
+          b2bMoq: null,
           discount: 0,
           stock: 50,
           sku: ""
@@ -277,8 +283,11 @@ export function useProductFormState(
               id: `sv-${Date.now()}-${counter}`,
               size,
               weight,
-              price: item.subVariants[0]?.price || 0,
               mrp: item.subVariants[0]?.mrp || 0,
+              b2cPrice: item.subVariants[0]?.b2cPrice || 0,
+              b2bPrice: item.subVariants[0]?.b2bPrice || 0,
+              dropshippingPrice: item.subVariants[0]?.dropshippingPrice || 0,
+              b2bMoq: item.subVariants[0]?.b2bMoq || null,
               discount: item.subVariants[0]?.discount || 0,
               stock: 50,
               sku: `${item.subVariants[0]?.sku || 'SKU'}-${counter}`
@@ -290,18 +299,20 @@ export function useProductFormState(
       return { ...item, subVariants: newSubVariants };
     }));
   };
-
+ 
   const updateSubVariantField = (colorIdx: number, subId: string, field: string, value: any) => {
     setVariantsList(prev => prev.map((item, idx) => {
       if (idx !== colorIdx) return item;
       const newSubs = item.subVariants.map(sv => {
         if (sv.id !== subId) return sv;
         const updated = { ...sv, [field]: value };
-        if (field === "price" || field === "mrp") {
-          const p = field === "price" ? Number(value) : sv.price;
-          const m = field === "mrp" ? Number(value) : sv.mrp;
-          updated.discount = m > 0 ? Math.round(((m - p) / m) * 100) : 0;
-        }
+        
+        // Dynamic price discount recalculation
+        const priceField = defaultPriceTier === "B2B" ? "b2bPrice" : defaultPriceTier === "Dropshipping" ? "dropshippingPrice" : "b2cPrice";
+        const p = ["b2cPrice", "b2bPrice", "dropshippingPrice"].includes(field) ? Number(value) : (sv as any)[priceField];
+        const m = field === "mrp" ? Number(value) : sv.mrp;
+        updated.discount = m > 0 ? Math.round(((m - p) / m) * 100) : 0;
+        
         return updated;
       });
       return { ...item, subVariants: newSubs };
@@ -504,7 +515,7 @@ export function useProductFormState(
     const selectedCat = activeCategories.find(c => c._id === categoryId);
     const catName = selectedCat ? selectedCat.name : "Wholesale Supply";
     setSeoTitle(`${title} | Buy Bulk Online at Wholesale Price`);
-    setSeoDescription(`Purchase ${title} in bulk direct from manufacturers. Premium B2B cargo supply. MOQ: ${moq} units. Department: ${catName}. GST claimable tax invoice supplied.`);
+    setSeoDescription(`Purchase ${title} in bulk direct from manufacturers. Premium B2B cargo supply. Department: ${catName}. GST claimable tax invoice supplied.`);
     setSeoKeywords(`${title.toLowerCase()}, wholesale ${title.toLowerCase()}, B2B bulk buy, ${catName.toLowerCase()} supply`);
     addToast("SEO metadata tags successfully auto-generated!", "success");
   };
@@ -527,6 +538,13 @@ export function useProductFormState(
         images: validImages.length > 0 ? validImages : [{ url: "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80", alt: `${title || 'Product'} Default Image` }]
       };
     });
+
+    // Validate weight is not empty for any variant
+    const missingWeight = finalVariants.some(v => v.subVariants.some((sv: any) => !sv.weight || sv.weight.trim() === ""));
+    if (missingWeight) {
+      addToast("Each variant combination must have a weight specified.", "error");
+      return;
+    }
 
     const invalidSku = finalVariants.some(v => v.subVariants.some((sv: any) => !sv.sku));
     if (invalidSku) {
@@ -554,7 +572,7 @@ export function useProductFormState(
       hsnCode,
       gstRate: gstRateVal,
       priceIncludesGst,
-      moq: Number(moq),
+      defaultPriceTier,
       seoTitle,
       seoDescription,
       seoKeywords,
@@ -597,8 +615,8 @@ export function useProductFormState(
     setHsnCode,
     priceIncludesGst,
     setPriceIncludesGst,
-    moq,
-    setMoq,
+    defaultPriceTier,
+    setDefaultPriceTier,
     seoTitle,
     setSeoTitle,
     seoDescription,

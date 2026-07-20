@@ -68,7 +68,7 @@ export default function AdminCustomersPage() {
   const [pinCode, setPinCode] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [gstin, setGstin] = React.useState("");
-  const [businessType, setBusinessType] = React.useState("wholesaler");
+  const [customerTypes, setCustomerTypes] = React.useState<string[]>(["B2C"]);
 
   const fetchCustomers = async () => {
     try {
@@ -107,7 +107,7 @@ export default function AdminCustomersPage() {
     setPinCode("");
     setPhone("");
     setGstin("");
-    setBusinessType("wholesaler");
+    setCustomerTypes(["B2C"]);
   };
 
   const handleOpenAddModal = () => {
@@ -127,7 +127,7 @@ export default function AdminCustomersPage() {
     setPinCode(cust.pinCode);
     setPhone(cust.phone);
     setGstin(cust.gstin || "");
-    setBusinessType(cust.businessType || "wholesaler");
+    setCustomerTypes(cust.customerTypes || ["B2C"]);
     setIsModalOpen(true);
   };
 
@@ -156,7 +156,7 @@ export default function AdminCustomersPage() {
         pinCode,
         phone,
         gstin,
-        businessType
+        customerTypes
       };
 
       let res;
@@ -246,6 +246,7 @@ export default function AdminCustomersPage() {
                 <tr>
                   <th className="px-6 py-3.5">Customer Name</th>
                   <th className="px-6 py-3.5">Company Details</th>
+                  <th className="px-6 py-3.5">Customer Type</th>
                   <th className="px-6 py-3.5 text-center">Total Orders</th>
                   <th className="px-6 py-3.5 text-right">Total Revenue</th>
                   <th className="px-6 py-3.5 text-right">Actions</th>
@@ -281,6 +282,22 @@ export default function AdminCustomersPage() {
                         {cust.gstin && (
                           <p className="text-[10px] font-mono text-primary font-bold mt-0.5">GSTIN: {cust.gstin}</p>
                         )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {(cust.customerTypes || ["B2C"]).map(type => (
+                            <span
+                              key={type}
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                type === "B2C" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : type === "B2B" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                              }`}
+                            >
+                              {type}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-center font-bold">{cust.ordersCount} orders</td>
                       <td className="px-6 py-4 text-right font-black text-foreground">
@@ -352,12 +369,30 @@ export default function AdminCustomersPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-muted-foreground">Business Type</label>
-                <select value={businessType} onChange={(e) => setBusinessType(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                  <option value="distributor">Distributor / Dealer</option>
-                  <option value="wholesaler">Wholesaler</option>
-                  <option value="retailer">Retailer</option>
-                </select>
+                <label className="font-bold text-muted-foreground">Customer Type *</label>
+                <div className="flex gap-4 items-center pt-1">
+                  {(["B2C", "B2B", "Dropshipping"] as const).map((type) => (
+                    <label key={type} className="flex items-center gap-1.5 text-sm font-semibold cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="rounded text-primary focus:ring-primary bg-background border-border"
+                        checked={customerTypes.includes(type)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setCustomerTypes(prev => [...prev, type]);
+                          } else {
+                            if (customerTypes.length > 1) {
+                              setCustomerTypes(prev => prev.filter(t => t !== type));
+                            } else {
+                              addToast("At least one customer type is required.", "warning");
+                            }
+                          }
+                        }}
+                      />
+                      <span>{type}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-1.5">

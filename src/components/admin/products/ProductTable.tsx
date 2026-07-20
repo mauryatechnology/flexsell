@@ -7,6 +7,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Edit, Trash2, ExternalLink, Download } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { Product } from "@/types";
+import { resolvePrice } from "@/lib/priceTierHelper";
 
 interface ProductTableProps {
   isAllPageSelected: boolean;
@@ -97,7 +98,7 @@ export function ProductTable({
                           <div>
                             <p className="font-bold line-clamp-1">{product.title}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              Category: {getCategoryName(product.categoryId)} | {variantsCount} variants | MOQ: {product.moq || 1}
+                              Category: {getCategoryName(product.categoryId)} | {variantsCount} variants
                             </p>
                           </div>
                         </div>
@@ -110,7 +111,16 @@ export function ProductTable({
                         )}
                       </td>
                       <td className="px-6 py-4">
-                          <div className="font-bold text-foreground">{formatPrice(defaultVariant?.subVariants?.[0]?.price ?? 0)}</div>
+                        <div className="font-bold text-foreground">
+                          {formatPrice(
+                            defaultVariant?.subVariants?.[0] 
+                              ? resolvePrice(defaultVariant.subVariants[0], product.defaultPriceTier || "B2C") 
+                              : 0
+                          )}
+                          <span className="text-[9px] text-muted-foreground ml-1 font-semibold">
+                            ({product.defaultPriceTier || "B2C"})
+                          </span>
+                        </div>
                         <div className="text-[10px] text-muted-foreground">MRP: {formatPrice(defaultVariant?.subVariants?.[0]?.mrp ?? 0)}</div>
                       </td>
                       <td className="px-6 py-4">

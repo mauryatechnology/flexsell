@@ -75,7 +75,7 @@ export function VariantCard({
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase text-muted-foreground">Cargo Dimensions</label>
+            <label className="text-xs font-semibold uppercase text-muted-foreground"> Dimensions</label>
             <Input
               placeholder="e.g. 15x12x8 cm"
               value={item.dimensions}
@@ -98,7 +98,7 @@ export function VariantCard({
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase text-muted-foreground">Weights (comma separated)</label>
+            <label className="text-xs font-semibold uppercase text-muted-foreground">Weights (comma separated) *</label>
             <div className="flex gap-2">
               <Input
                 placeholder="e.g. 250g, 500g"
@@ -121,11 +121,13 @@ export function VariantCard({
             <table className="w-full text-sm text-left">
               <thead className="bg-secondary/50 text-xs uppercase">
                 <tr>
-                  <th className="px-4 py-3">Size / Weight</th>
-                  <th className="px-4 py-3">SKU</th>
-                  <th className="px-4 py-3">Price (₹)</th>
-                  <th className="px-4 py-3">MRP (₹)</th>
-                  <th className="px-4 py-3">Stock</th>
+                  <th className="px-4 py-3">Size / Weight *</th>
+                  <th className="px-4 py-3">SKU *</th>
+                  <th className="px-4 py-3">MRP (₹) *</th>
+                  <th className="px-4 py-3">B2C Price (₹) *</th>
+                  <th className="px-4 py-3">B2B Price (₹)</th>
+                  <th className="px-4 py-3">Dropshipping Price (₹)</th>
+                  <th className="px-4 py-3">Stock *</th>
                   <th className="px-4 py-3 text-center">Status</th>
                   <th className="px-4 py-3 text-center">Action</th>
                 </tr>
@@ -140,10 +142,27 @@ export function VariantCard({
                       <Input className="h-8 text-xs" value={sv.sku} onChange={e => updateSubVariantField(idx, sv.id, "sku", e.target.value)} required />
                     </td>
                     <td className="px-4 py-2">
-                      <Input type="number" className="h-8 text-xs w-24" value={sv.price ?? ""} onChange={e => updateSubVariantField(idx, sv.id, "price", e.target.value === "" ? 0 : Number(e.target.value))} required />
+                      <Input type="number" className="h-8 text-xs w-24" value={sv.mrp ?? ""} onChange={e => updateSubVariantField(idx, sv.id, "mrp", e.target.value === "" ? 0 : Number(e.target.value))} required />
                     </td>
                     <td className="px-4 py-2">
-                      <Input type="number" className="h-8 text-xs w-24" value={sv.mrp ?? ""} onChange={e => updateSubVariantField(idx, sv.id, "mrp", e.target.value === "" ? 0 : Number(e.target.value))} required />
+                      <Input type="number" className="h-8 text-xs w-24" value={sv.b2cPrice ?? ""} onChange={e => updateSubVariantField(idx, sv.id, "b2cPrice", e.target.value === "" ? 0 : Number(e.target.value))} required />
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="space-y-1">
+                        <Input type="number" className="h-8 text-xs w-24" value={sv.b2bPrice ?? ""} onChange={e => updateSubVariantField(idx, sv.id, "b2bPrice", e.target.value === "" ? 0 : Number(e.target.value))} />
+                        {(typeof sv.b2bPrice === "number" && sv.b2bPrice > 0) && (
+                          <Input
+                            type="number"
+                            className="h-7 text-[10px] w-24 border-primary/40 focus:border-primary"
+                            placeholder="Min Qty (MOQ)"
+                            value={sv.b2bMoq ?? ""}
+                            onChange={e => updateSubVariantField(idx, sv.id, "b2bMoq", e.target.value === "" ? null : Number(e.target.value))}
+                          />
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2">
+                      <Input type="number" className="h-8 text-xs w-24" value={sv.dropshippingPrice ?? ""} onChange={e => updateSubVariantField(idx, sv.id, "dropshippingPrice", e.target.value === "" ? 0 : Number(e.target.value))} />
                     </td>
                     <td className="px-4 py-2">
                       <Input type="number" className="h-8 text-xs w-24" value={sv.stock ?? ""} onChange={e => updateSubVariantField(idx, sv.id, "stock", e.target.value === "" ? 0 : Number(e.target.value))} required />
@@ -179,7 +198,7 @@ export function VariantCard({
 
         <div className="space-y-3 pt-4 border-t">
           <label className="text-xs font-semibold uppercase text-muted-foreground block">Variant Images (1:1 Ratio Only)</label>
-          
+
           {item.images && item.images.length > 0 && item.images[0] !== "" ? (
             <div className="border rounded-lg overflow-hidden bg-background">
               <table className="w-full text-left border-collapse text-xs">

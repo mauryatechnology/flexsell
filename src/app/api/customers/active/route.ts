@@ -18,7 +18,9 @@ export async function GET() {
 
     const customer = await Customer.findById(payload.userId).select("-password").lean();
     if (!customer) {
-      return NextResponse.json({ message: "Customer not found" }, { status: 404 });
+      const response = NextResponse.json({ message: "Session expired or user deleted" }, { status: 401 });
+      response.cookies.delete("token");
+      return response;
     }
 
     return NextResponse.json(customer);
@@ -41,11 +43,13 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { name, phone, company, gstin, address, city, state, pinCode, email, wishlist, businessType } = body;
+    const { name, phone, company, gstin, address, city, state, pinCode, email, wishlist, customerTypes } = body;
 
     const customer = await Customer.findById(payload.userId);
     if (!customer) {
-      return NextResponse.json({ message: "Customer not found" }, { status: 404 });
+      const response = NextResponse.json({ message: "Session expired or user deleted" }, { status: 401 });
+      response.cookies.delete("token");
+      return response;
     }
 
     if (name !== undefined) customer.name = name;
@@ -58,7 +62,7 @@ export async function PUT(request: Request) {
     if (pinCode !== undefined) customer.pinCode = pinCode;
     if (email !== undefined) customer.email = email.toLowerCase();
     if (wishlist !== undefined) customer.wishlist = wishlist;
-    if (businessType !== undefined) customer.businessType = businessType;
+    if (customerTypes !== undefined) customer.customerTypes = customerTypes;
 
     // Recalculate initials if name changed
     if (name) {

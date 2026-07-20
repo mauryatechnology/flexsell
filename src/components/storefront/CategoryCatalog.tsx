@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { Product, Category } from "@/types";
+import { resolvePrice } from "@/lib/priceTierHelper";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -121,13 +122,15 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
 
     if (minPrice !== "") {
       list = list.filter(p => {
-        const price = p.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
+        const sv = p.colorVariants?.[0]?.subVariants?.[0];
+        const price = sv ? resolvePrice(sv, p.defaultPriceTier || "B2C") : 0;
         return price >= Number(minPrice);
       });
     }
     if (maxPrice !== "") {
       list = list.filter(p => {
-        const price = p.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
+        const sv = p.colorVariants?.[0]?.subVariants?.[0];
+        const price = sv ? resolvePrice(sv, p.defaultPriceTier || "B2C") : 0;
         return price <= Number(maxPrice);
       });
     }
@@ -136,7 +139,10 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
     }
     if (minDiscount > 0) {
       list = list.filter(p => {
-        const discount = p.colorVariants?.[0]?.subVariants?.[0]?.discount ?? 0;
+        const sv = p.colorVariants?.[0]?.subVariants?.[0];
+        const price = sv ? resolvePrice(sv, p.defaultPriceTier || "B2C") : 0;
+        const mrp = sv?.mrp ?? 0;
+        const discount = mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0;
         return discount >= minDiscount;
       });
     }
@@ -149,15 +155,19 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
     const list = [...filteredProducts];
     if (sortBy === "price-asc") {
       return list.sort((a, b) => {
-        const priceA = a.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
-        const priceB = b.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
+        const svA = a.colorVariants?.[0]?.subVariants?.[0];
+        const priceA = svA ? resolvePrice(svA, a.defaultPriceTier || "B2C") : 0;
+        const svB = b.colorVariants?.[0]?.subVariants?.[0];
+        const priceB = svB ? resolvePrice(svB, b.defaultPriceTier || "B2C") : 0;
         return priceA - priceB;
       });
     }
     if (sortBy === "price-desc") {
       return list.sort((a, b) => {
-        const priceA = a.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
-        const priceB = b.colorVariants?.[0]?.subVariants?.[0]?.price ?? 0;
+        const svA = a.colorVariants?.[0]?.subVariants?.[0];
+        const priceA = svA ? resolvePrice(svA, a.defaultPriceTier || "B2C") : 0;
+        const svB = b.colorVariants?.[0]?.subVariants?.[0];
+        const priceB = svB ? resolvePrice(svB, b.defaultPriceTier || "B2C") : 0;
         return priceB - priceA;
       });
     }

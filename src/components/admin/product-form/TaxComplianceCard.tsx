@@ -13,15 +13,15 @@ export function TaxComplianceCard() {
     hsns,
     priceIncludesGst,
     setPriceIncludesGst,
-    moq,
-    setMoq
+    defaultPriceTier,
+    setDefaultPriceTier
   } = useProductForm();
 
   return (
     <Card>
       <CardContent className="p-6 space-y-6">
         <h3 className="font-bold text-lg border-b pb-2">B2B Compliance & Taxation</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* HSN Dropdown */}
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-1">
@@ -53,18 +53,6 @@ export function TaxComplianceCard() {
             >
               {priceIncludesGst ? "Prices INCLUDE GST" : "Prices EXCLUDE GST"}
             </button>
-          </div>
-
-          {/* MOQ Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Minimum Order Qty (MOQ)</label>
-            <Input
-              type="number"
-              min={1}
-              value={moq}
-              onChange={(e) => setMoq(Math.max(1, Number(e.target.value)))}
-              required
-            />
           </div>
         </div>
       </CardContent>

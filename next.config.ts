@@ -4,11 +4,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "*.unsplash.com" },
-      { protocol: "https", hostname: "*.vercel-storage.com" },
-      { protocol: "https", hostname: "placehold.co" },
-      { protocol: "https", hostname: "images.unsplash.com" },
-      { protocol: "https", hostname: "cdn.pixabay.com" },
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" },
     ],
   },
   async headers() {

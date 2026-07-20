@@ -164,8 +164,21 @@ export default function AdminCustomerDetailPage({ params }: PageProps) {
                 <p className="font-bold text-foreground pl-5">{customer.company || "Individual / Direct"}</p>
               </div>
               <div className="space-y-1">
-                <span className="text-muted-foreground font-semibold flex items-center gap-1.5"><Building className="h-3.5 w-3.5" /> Business Type:</span>
-                <p className="font-bold text-foreground pl-5 capitalize">{customer.businessType || "Wholesaler"}</p>
+                <span className="text-muted-foreground font-semibold flex items-center gap-1.5"><Building className="h-3.5 w-3.5" /> Customer Types:</span>
+                <div className="pl-5 flex flex-wrap gap-1 mt-0.5">
+                  {(customer.customerTypes || ["B2C"]).map(type => (
+                    <span
+                      key={type}
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        type === "B2C" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : type === "B2B" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                      }`}
+                    >
+                      {type}
+                    </span>
+                  ))}
+                </div>
               </div>
               {customer.gstin && (
                 <div className="space-y-1">

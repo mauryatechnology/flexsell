@@ -32,7 +32,7 @@ const SellerInfoSchema = new Schema({
 const InvoiceSchema = new Schema<InvoiceType & Document>(
   {
     _id: { type: String, required: true },
-    type: { type: String, enum: ["invoice", "receipt"], required: true },
+    type: { type: String, enum: ["invoice", "receipt", "quote"], required: true },
     orderId: { type: String, ref: "Order" },
     customerId: { type: String, ref: "Customer" },
     customerName: { type: String, required: true },
@@ -66,6 +66,8 @@ const InvoiceSchema = new Schema<InvoiceType & Document>(
       enum: ["draft", "issued", "paid", "cancelled", "void"],
       default: "issued",
     },
+    couponCode: { type: String },
+    couponDiscount: { type: Number },
   },
   { timestamps: true }
 );

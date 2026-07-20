@@ -37,10 +37,10 @@ export function ImageGallery() {
     : product.title;
 
   return (
-    <div className="md:col-span-5 flex flex-col-reverse md:flex-row gap-4 items-start w-full">
+    <div className="md:col-span-5 flex flex-col-reverse md:flex-row gap-4 items-start w-full md:sticky md:top-24 self-start z-10">
       {/* Slider thumbnails list (Left on desktop, bottom on mobile) */}
       {visibility.showImages && currentImages.length > 1 && (
-        <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto pb-2 pr-1 md:pb-0 md:pr-0 w-full md:w-24 md:h-[380px] flex-shrink-0">
+        <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto pb-2 pr-1 md:pb-0 md:pr-0 w-full md:w-24 md:max-h-[500px] flex-shrink-0 scrollbar-none">
           {currentImages.map((img, i) => {
             const rawUrl = typeof img === "string" ? img : img.url || "";
             const url = sanitizeImgUrl(rawUrl);

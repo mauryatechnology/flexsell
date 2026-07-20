@@ -132,7 +132,7 @@ export async function parseAndValidateExcel(
     const categoryVal = cleanStr(getCellVal(3));
     const hsnCode = cleanStr(getCellVal(4));
     const priceIncludesGst = cleanBool(getCellVal(5), true);
-    const moq = cleanNum(getCellVal(6), 1);
+    const b2bMoq = cleanNum(getCellVal(6), 1);
     const tags = cleanStr(getCellVal(7)).split(",").map((t) => t.trim()).filter(Boolean);
     const cardTags = cleanStr(getCellVal(8)).split(",").map((t) => t.trim()).filter(Boolean);
     const seoTitle = cleanStr(getCellVal(9));
@@ -151,10 +151,12 @@ export async function parseAndValidateExcel(
 
     const size = cleanStr(getCellVal(23)) || "Standard";
     const weight = cleanStr(getCellVal(24));
-    const price = cleanNum(getCellVal(25), -1);
+    const b2cPrice = cleanNum(getCellVal(25), -1);
     const mrp = cleanNum(getCellVal(26), -1);
     const stock = cleanNum(getCellVal(27), 0);
     const sku = cleanStr(getCellVal(28));
+    const b2bPrice = cleanNum(getCellVal(29), 0);
+    const dropshippingPrice = cleanNum(getCellVal(30), 0);
 
     // ── Validations ──────────────────────────────────────────────────
     if (!title) {
@@ -204,14 +206,14 @@ export async function parseAndValidateExcel(
       }
     }
 
-    if (price < 0) {
-      errors.push({ row: rowNumber, column: "Selling Price", message: "Selling Price is required.", type: "error", sku });
+    if (b2cPrice < 0) {
+      errors.push({ row: rowNumber, column: "B2C Price", message: "B2C Price is required.", type: "error", sku });
     }
     if (mrp < 0) {
       errors.push({ row: rowNumber, column: "MRP", message: "MRP is required.", type: "error", sku });
     }
-    if (price > mrp && mrp >= 0) {
-      errors.push({ row: rowNumber, column: "Price / MRP", message: "Selling Price cannot exceed MRP.", type: "error", sku });
+    if (b2cPrice > mrp && mrp >= 0) {
+      errors.push({ row: rowNumber, column: "B2C Price / MRP", message: "B2C Price cannot exceed MRP.", type: "error", sku });
     }
 
     // Minimum 1 image validation
@@ -279,7 +281,7 @@ export async function parseAndValidateExcel(
           categoryId,
           hsnCode,
           priceIncludesGst,
-          moq,
+          defaultPriceTier: "B2C",
           tags,
           cardTags,
           seoTitle,
@@ -311,9 +313,11 @@ export async function parseAndValidateExcel(
     colorGroup.subVariants.push({
       size,
       weight,
-      price,
+      b2cPrice,
+      b2bPrice: b2bPrice > 0 ? b2bPrice : b2cPrice,
+      dropshippingPrice: dropshippingPrice > 0 ? dropshippingPrice : b2cPrice,
+      b2bMoq,
       mrp,
-      discount: mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0,
       stock,
       sku,
       isActive: true,

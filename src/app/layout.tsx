@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Inter } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Analytics } from "@vercel/analytics/react";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-heading" });
 
 export const metadata: Metadata = {
   title: {
@@ -39,11 +40,31 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "FlexSell Wholesale",
+    "url": "https://flexsellwholesale.in",
+    "logo": "https://flexsellwholesale.in/Flexsell%20Logo.png",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+91-88877-66655",
+      "contactType": "customer service",
+      "areaServed": "IN",
+      "availableLanguage": ["en", "hi"]
+    }
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
-      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${outfit.variable} font-sans antialiased`} suppressHydrationWarning>
+
         <Script
           id="theme-initializer"
           strategy="beforeInteractive"

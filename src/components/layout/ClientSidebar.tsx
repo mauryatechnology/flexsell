@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Drawer } from "@/components/ui/Drawer";
 import { Customer } from "@/types";
 import { useAuthStore } from "@/stores/authStore";
+import { useDashboardViewStore } from "@/stores/dashboardViewStore";
 
 const sidebarLinks = [
   { name: "Dashboard", href: "/client", icon: User },
@@ -29,6 +30,42 @@ export function ClientSidebar({ activeCustomer }: ClientSidebarProps) {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const pathname = usePathname();
   const logout = useAuthStore((state) => state.logout);
+  const { activeView, setActiveView } = useDashboardViewStore();
+
+  const customerTypes = activeCustomer.customerTypes || ["B2C"];
+
+  React.useEffect(() => {
+    if (customerTypes.length === 1 && activeView !== customerTypes[0]) {
+      setActiveView(customerTypes[0]);
+    }
+  }, [customerTypes, activeView, setActiveView]);
+
+  const filteredLinks = React.useMemo(() => {
+    const baseLinks = [
+      { name: "Dashboard", href: "/client", icon: User },
+      { 
+        name: activeView === "B2C" ? "My Orders" : activeView === "B2B" ? "Bulk Orders" : "Fulfilled Orders", 
+        href: "/client/orders", 
+        icon: Package 
+      },
+      { name: "Wishlist", href: "/client/wishlist", icon: Heart },
+      { name: "Addresses", href: "/client/addresses", icon: MapPin },
+      { name: "Profile", href: "/client/profile", icon: User },
+    ];
+
+    if (activeView !== "Dropshipping") {
+      baseLinks.push(
+        { name: "My Reviews", href: "/client/reviews", icon: Star },
+        { name: "Coupons", href: "/client/coupons", icon: Ticket }
+      );
+    }
+
+    baseLinks.push(
+      { name: "Notifications", href: "/client/notifications", icon: Bell }
+    );
+
+    return baseLinks;
+  }, [activeView]);
 
   React.useEffect(() => {
     const saved = localStorage.getItem("client_sidebar_open");
@@ -63,8 +100,31 @@ export function ClientSidebar({ activeCustomer }: ClientSidebarProps) {
           <Avatar initials={activeCustomer.initials} className="mx-auto bg-primary-foreground text-primary border border-primary-foreground/20 flex-shrink-0" />
         )}
       </div>
+
+      {/* View Switcher Dropdown (Multi-type customers only) */}
+      {!isCollapsed && customerTypes.length > 1 && (
+        <div className="px-4 py-3 border-b border-border/60 bg-secondary/10">
+          <label className="text-[9px] font-extrabold uppercase tracking-wider text-muted-foreground block mb-1">
+            Dashboard View
+          </label>
+          <select
+            value={activeView}
+            onChange={(e) => setActiveView(e.target.value as any)}
+            className="w-full text-xs font-bold bg-background border border-border rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
+          >
+            {customerTypes.map(type => (
+              <option key={type} value={type}>
+                {type === "B2C" ? "🟢 B2C — Retail" : 
+                 type === "B2B" ? "🔵 B2B — Wholesale" : 
+                 "🟣 Dropshipping"}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <nav className="flex flex-col p-2 space-y-0.5">
-        {sidebarLinks.map((link) => {
+        {filteredLinks.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
           return (

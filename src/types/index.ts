@@ -18,8 +18,11 @@ export interface SubVariant {
   id: string;
   size: string;
   weight: string;
-  price: number;
   mrp: number;
+  b2cPrice: number;
+  b2bPrice: number;
+  dropshippingPrice: number;
+  b2bMoq?: number | null;
   discount: number;
   stock: number;
   sku: string;
@@ -75,7 +78,7 @@ export interface Product extends BaseDocument {
   hsnCode?: string;
   gstRate?: number;
   priceIncludesGst?: boolean;
-  moq?: number;
+  defaultPriceTier?: "B2C" | "B2B" | "Dropshipping";
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string;
@@ -105,6 +108,7 @@ export interface CartItem {
   selectedVariants: Record<string, string>;
   quantity: number;
   pricePerUnit: number;
+  priceTier?: "B2C" | "B2B";
 }
 
 export interface HistoryEvent {
@@ -184,7 +188,7 @@ export interface SellerInfo {
 }
 
 export interface Invoice extends BaseDocument {
-  type: "invoice" | "receipt";
+  type: "invoice" | "receipt" | "quote";
   orderId?: string;
   customerId?: string;
   customerName: string;
@@ -202,6 +206,8 @@ export interface Invoice extends BaseDocument {
   generatedAt: string;
   generatedBy: string;
   status: "draft" | "issued" | "paid" | "cancelled" | "void";
+  couponCode?: string;
+  couponDiscount?: number;
 }
 
 export interface SavedAddress {
@@ -236,7 +242,7 @@ export interface Customer {
   phone: string;
   initials: string;
   gstin?: string;
-  businessType?: "distributor" | "wholesaler" | "retailer";
+  customerTypes: ("B2C" | "B2B" | "Dropshipping")[];
   addresses?: SavedAddress[];
   wishlist?: string[];
 }
@@ -276,13 +282,45 @@ export interface Notification extends BaseDocument {
   isRead: boolean;
 }
 
-export interface WebhookSubscription extends BaseDocument {
-  url: string;
-  event: "order.created" | "order.status_updated" | "customer.created";
-  secret: string;
-  isActive: boolean;
+export interface ShippingWeightSlab {
+  _id?: string;
+  fromGram: number;
+  uptoGram: number;
+  amount: number;
 }
 
+export interface ShippingConfig {
+  _id?: string;
+  weightSlabs: ShippingWeightSlab[];
+  b2bFixedCharge: number;
+  updatedAt?: string;
+}
 
+export interface CollectionCondition {
+  field: "tag" | "category" | "price" | "title" | "stock" | "vendor";
+  operator: "equals" | "not_equals" | "contains" | "starts_with" | "greater_than" | "less_than";
+  value: string;
+}
 
+export interface CollectionRules {
+  matchType: "all" | "any";
+  conditions: CollectionCondition[];
+}
 
+export interface Collection extends BaseDocument {
+  title: string;
+  slug: string;
+  description?: string;
+  type: "manual" | "smart";
+  image?: string;
+  bannerImage?: string;
+  productIds?: string[];
+  rules?: CollectionRules | null;
+  linkedCategoryIds?: string[];
+  isActive: boolean;
+  isFeatured: boolean;
+  order: number;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+}
