@@ -12,6 +12,7 @@ import { useProductStore } from "@/stores/productStore";
 import Image from "next/image";
 
 import { INDIAN_STATES } from "@/lib/constants";
+import { SuggestedProductsCarousel } from "./SuggestedProductsCarousel";
 
 export function CartView() {
   const { items, updateQuantity, removeItem, buyerState, setBuyerState, getCartSubtotal, hydrateProducts, getTaxDetails } = useCartStore();
@@ -401,6 +402,9 @@ export function CartView() {
           </Card>
         </div>
       </div>
+
+      {/* Cart Suggested Products Carousel */}
+      <SuggestedProductsCarousel />
     </div>
   );
 }

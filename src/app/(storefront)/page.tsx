@@ -49,10 +49,6 @@ export default async function HomePage() {
       {/* Trust Stats Bar */}
       <TrustBar stats={cmsTrustStats?.value} />
 
-
-      {/* Brand Partners Marquee Bar */}
-      <BrandPartnersBar partners={cmsBrandPartners?.value} />
-
       {/* Categories Grid Section */}
       <section className="mx-auto max-w-8xl px-4 md:px-6 w-full py-4">
         <div className="flex justify-between items-end mb-8 border-b pb-4 border-border/60">
@@ -112,37 +108,20 @@ export default async function HomePage() {
       {/* Independent Dropshipping Business Section */}
       <DropshippingBusinessSection data={cmsDropshipBiz?.value} />
 
+      {/* Brand Partners Marquee Bar */}
+      <BrandPartnersBar partners={cmsBrandPartners?.value} />
+
       {/* Recently Viewed Carousel (Last 10 Products) */}
       <RecentlyViewed initialProducts={products} />
 
-      {/* Independent Testimonials — Wholesale Buyers */}
+      {/* Unified Single Frame Testimonials with 3-Tab Options */}
       <TestimonialsSection
-        title="Wholesale Buyer Feedback"
-        subtitle="Feedback from registered B2B shop owners and commercial bulk buyers."
-        testimonials={cmsTestimonialsWholesale?.value}
-        type="wholesale"
+        title="Partner & Client Feedback"
+        subtitle="Verified reviews across wholesale buyers, dropshipper partners, and retail clients."
+        wholesaleTestimonials={cmsTestimonialsWholesale?.value}
+        dropshipTestimonials={cmsTestimonialsDropshipper?.value}
+        clientTestimonials={cmsTestimonialsClient?.value}
       />
-
-      {/* Independent Testimonials — Dropshippers */}
-      {cmsTestimonialsDropshipper?.value && cmsTestimonialsDropshipper.value.length > 0 && (
-        <TestimonialsSection
-          title="Dropshipper Partner Reviews"
-          subtitle="Experiences from online store owners using FlexSell white-label fulfillment."
-          testimonials={cmsTestimonialsDropshipper?.value}
-          type="dropshipper"
-        />
-      )}
-
-      {/* Independent Testimonials — Client Reviews */}
-      {cmsTestimonialsClient?.value && cmsTestimonialsClient.value.length > 0 && (
-        <TestimonialsSection
-          title="Retail Client Reviews"
-          subtitle="Customer experiences across retail orders."
-          testimonials={cmsTestimonialsClient?.value}
-          type="client"
-        />
-      )}
-
     </div>
   );
 }

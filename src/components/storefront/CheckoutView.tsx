@@ -17,6 +17,7 @@ import { OrderSummary } from "./checkout/OrderSummary";
 import { CouponInput } from "./checkout/CouponInput";
 import { Card } from "@/components/ui/Card";
 import { useRazorpay } from "react-razorpay";
+import { SuggestedProductsCarousel } from "./SuggestedProductsCarousel";
 
 export function CheckoutView() {
   const router = useRouter();
@@ -480,6 +481,11 @@ export function CheckoutView() {
           </Card>
         </div>
       </form>
+
+      {/* Suggested Products Carousel based on items in cart */}
+      <div className="max-w-5xl mx-auto mt-8">
+        <SuggestedProductsCarousel />
+      </div>
     </div>
   );
 }
