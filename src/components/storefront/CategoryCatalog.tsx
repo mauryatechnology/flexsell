@@ -27,6 +27,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { notFound } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { ProductCard } from "./ProductCard";
+import { ExportCatalogButton } from "./ExportCatalogButton";
 
 interface CategoryCatalogProps {
   slug: string;
@@ -340,14 +341,20 @@ export function CategoryCatalog({ slug, initialProducts, initialCategories }: Ca
 
         {/* Right Column: Products Grid/List */}
         <div className="flex-1 w-full space-y-6">
-          <div className="flex justify-between items-center text-xs text-muted-foreground">
-            <p>Showing {sortedProducts.length} cargo matches in category</p>
+          <div className="flex flex-wrap justify-between items-center gap-3 text-xs text-muted-foreground bg-card p-3 rounded-xl border border-border">
+            <p className="font-medium">Showing <span className="text-foreground font-bold">{sortedProducts.length}</span> wholesale products in category</p>
+            <ExportCatalogButton 
+              products={sortedProducts} 
+              categories={initialCategories} 
+              catalogTitle={`${category ? category.name : "Category"} Wholesale Catalog`} 
+              filterSummary={category ? `Category: ${category.name}` : undefined}
+            />
           </div>
 
           {sortedProducts.length === 0 ? (
             <div className="text-center py-20 bg-secondary/10 rounded-xl border border-dashed flex flex-col items-center justify-center">
               <Info className="h-8 w-8 text-muted-foreground/60 mb-3 animate-pulse" />
-              <p className="font-bold text-foreground text-base">No cargo lines found</p>
+              <p className="font-bold text-foreground text-base">No Product found</p>
               <p className="text-sm text-muted-foreground max-w-xs mt-1">Try adjusting price bounds, checking subcategories, or resetting active filters.</p>
               <Button size="sm" onClick={handleClearFilters} className="mt-4">Reset Filters</Button>
             </div>

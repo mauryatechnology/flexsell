@@ -10,6 +10,8 @@ import { useProductStore } from "@/stores/productStore";
 import { useToastStore } from "@/stores/toastStore";
 import { customerService } from "@/services/customerService";
 import { couponService } from "@/services/couponService";
+import { useAuthStore } from "@/stores/authStore";
+import { shippingService } from "@/services/shippingService";
 import { INDIAN_STATES } from "@/lib/constants";
 import { ShippingForm } from "./checkout/ShippingForm";
 import { PaymentSection } from "./checkout/PaymentSection";
@@ -76,7 +78,6 @@ export function CheckoutView() {
   const [savedAddresses, setSavedAddresses] = React.useState<any[]>([]);
 
   // Dropshipping redirect guard
-  const { useAuthStore } = require("@/stores/authStore");
   const customer = useAuthStore((state: any) => state.customer);
   const isDropshipperOnly = customer && customer.customerTypes && customer.customerTypes.length === 1 && customer.customerTypes[0] === "Dropshipping";
 
@@ -87,7 +88,6 @@ export function CheckoutView() {
   }, [isDropshipperOnly]);
 
   React.useEffect(() => {
-    const { shippingService } = require("@/services/shippingService");
     shippingService.getConfig()
       .then((config: any) => {
         setShippingConfig(config);

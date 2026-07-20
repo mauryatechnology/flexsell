@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { collectionService } from "@/services/collectionService";
 import { ProductCard } from "@/components/storefront/ProductCard";
+import { ExportCatalogButton } from "@/components/storefront/ExportCatalogButton";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Layers, AlertCircle, ShoppingBag } from "lucide-react";
 
@@ -102,9 +103,16 @@ export default async function CollectionDetailPage({ params }: { params: Promise
               </p>
             )}
 
-            <div className="text-xs font-bold text-muted-foreground flex items-center gap-2 mt-4 pt-3 border-t border-border/40">
-              <ShoppingBag className="h-4 w-4 text-primary" />
-              <span>Showing {products.length} {products.length === 1 ? "factory line" : "factory lines"}</span>
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-muted-foreground mt-4 pt-3 border-t border-border/40">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4 text-primary" />
+                <span>Showing {products.length} {products.length === 1 ? "factory line" : "factory lines"}</span>
+              </div>
+              <ExportCatalogButton 
+                products={products} 
+                catalogTitle={`${toTitleCase(collection.title)} Collection`} 
+                filterSummary={`Collection: ${toTitleCase(collection.title)}`}
+              />
             </div>
           </div>
         </div>
