@@ -11,6 +11,9 @@ import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { formatPrice, sanitizeImgUrl } from "@/lib/utils";
 import { useToastStore } from "@/stores/toastStore";
+import { useAuthStore } from "@/stores/authStore";
+import { resolvePrice, canPurchase, resolveMoq } from "@/lib/priceTierHelper";
+import { motion } from "framer-motion";
 
 interface ProductCardProps {
   product: Product;
@@ -21,6 +24,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const { addItem } = useCartStore();
   const { toggleWishlist, isInWishlist } = useWishlistStore();
   const { addToast } = useToastStore();
+  const customer = useAuthStore((state: any) => state.customer);
 
   const [qty, setQty] = React.useState(1);
 
@@ -37,10 +41,6 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const secondImg = defaultVariant?.images?.[1];
   const rawSecondImgUrl = secondImg ? (typeof secondImg === "string" ? secondImg : secondImg.url || "") : "";
   const secondImgUrl = rawSecondImgUrl ? sanitizeImgUrl(rawSecondImgUrl) : "";
-
-  const { useAuthStore } = require("@/stores/authStore");
-  const customer = useAuthStore((state: any) => state.customer);
-  const { resolvePrice, canPurchase } = require("@/lib/priceTierHelper");
 
   let activeTier: "B2C" | "B2B" | "Dropshipping" = product.defaultPriceTier || "B2C";
   let activeCartTier: "B2C" | "B2B" = "B2C";
@@ -79,7 +79,6 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
       return;
     }
 
-    const { resolveMoq } = require("@/lib/priceTierHelper");
     const itemMoq = defaultSub ? resolveMoq(defaultSub, activeCartTier) : 1;
     let orderQty = qty;
     if (orderQty < itemMoq) {
@@ -91,9 +90,9 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
     addItem(
       product,
       {
-        Color: defaultVariant.color,
-        Size: defaultSub.size || "Standard",
-        Weight: defaultSub.weight || "250g"
+        Color: defaultVariant?.color || "Standard",
+        Size: defaultSub?.size || "Standard",
+        Weight: defaultSub?.weight || "250g"
       },
       orderQty,
       activeCartTier

@@ -2,15 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { categoryService } from "@/services/categoryService";
 import { productService } from "@/services/productService";
-import { pagesContent } from "@/config/pagesContent";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { ShieldCheck, BadgePercent, Truck } from "lucide-react";
+import { Card } from "@/components/ui/Card";
 import dbConnect from "@/lib/dbConnect";
 import CmsContent from "@/models/CmsContent";
 
 import { TrendingProducts } from "@/components/storefront/TrendingProducts";
 import { HeroCarousel } from "@/components/storefront/HeroCarousel";
+import { TrustBar } from "@/components/storefront/TrustBar";
+import { RecentlyViewed } from "@/components/storefront/RecentlyViewed";
+import { WholesaleBusinessSection } from "@/components/storefront/WholesaleBusinessSection";
+import { DropshippingBusinessSection } from "@/components/storefront/DropshippingBusinessSection";
+import { TestimonialsSection } from "@/components/storefront/TestimonialsSection";
+import { BrandPartnersBar } from "@/components/storefront/BrandPartnersBar";
 
 export const revalidate = 3600; // ISR revalidation every hour
 
@@ -18,56 +21,44 @@ export default async function HomePage() {
   await dbConnect();
 
   // Fetch CMS sections
-  const cmsHeroSlides = await CmsContent.findOne({ key: "hero_slides" });
-  const cmsWhyChooseUs = await CmsContent.findOne({ key: "why_choose_us" });
+  const cmsHeroBanners = await CmsContent.findOne({ key: "hero_banners" });
+  const cmsTrustStats = await CmsContent.findOne({ key: "trust_stats" });
+  const cmsWholesaleBiz = await CmsContent.findOne({ key: "wholesale_business_details" });
+  const cmsDropshipBiz = await CmsContent.findOne({ key: "dropshipping_business_details" });
+  const cmsTestimonialsWholesale = await CmsContent.findOne({ key: "testimonials_wholesale" });
+  const cmsTestimonialsDropshipper = await CmsContent.findOne({ key: "testimonials_dropshipper" });
+  const cmsTestimonialsClient = await CmsContent.findOne({ key: "testimonials_client" });
+  const cmsBrandPartners = await CmsContent.findOne({ key: "brand_partners" });
 
-  const homeData = pagesContent.homepage;
   const categories = await categoryService.getCategories();
   const products = await productService.getProducts();
 
-  // Hero carousel slides dynamic or fallback
-  const heroSlides = cmsHeroSlides?.value || [
+  const heroBanners = cmsHeroBanners?.value || [
     {
-      title: homeData.heroTitlePrefix,
-      highlight: homeData.heroTitleHighlight,
-      subtitle: homeData.heroSubtitle,
-      buttonText: homeData.heroButtonText,
-      buttonLink: "/products",
-      imageUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80"
+      imageUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1920&q=80",
+      redirectUrl: "/products",
+      altText: "FlexSell Wholesale B2B Cargo Sourcing"
     }
   ];
 
-  // Why choose us items dynamic or fallback
-  const whyChooseUsItems = cmsWhyChooseUs?.value || pagesContent.about.whyChooseUsItems.map((item, idx) => ({
-    ...item,
-    icon: idx === 0 ? "price" : idx === 1 ? "quality" : "shipping"
-  }));
-
-  // Map icon strings to lucide elements
-  const getWhyIcon = (iconName: string) => {
-    switch (iconName) {
-      case "price":
-        return <BadgePercent className="h-8 w-8 text-primary" />;
-      case "quality":
-        return <ShieldCheck className="h-8 w-8 text-primary" />;
-      case "shipping":
-        return <Truck className="h-8 w-8 text-primary" />;
-      default:
-        return <ShieldCheck className="h-8 w-8 text-primary" />;
-    }
-  };
-
   return (
-    <div className="flex flex-col gap-16 pb-16">
-      {/* Dynamic Hero Carousel */}
-      <HeroCarousel slides={heroSlides} />
+    <div className="flex flex-col gap-12 pb-16">
+      {/* Image-Only Dynamic Hero Banner Slider */}
+      <HeroCarousel slides={heroBanners} />
 
-      {/* Categories Grid Section with Navbar Match Padding */}
-      <section className="mx-auto max-w-8xl px-4 md:px-6 w-full">
+      {/* Trust Stats Bar */}
+      <TrustBar stats={cmsTrustStats?.value} />
+
+
+      {/* Brand Partners Marquee Bar */}
+      <BrandPartnersBar partners={cmsBrandPartners?.value} />
+
+      {/* Categories Grid Section */}
+      <section className="mx-auto max-w-8xl px-4 md:px-6 w-full py-4">
         <div className="flex justify-between items-end mb-8 border-b pb-4 border-border/60">
           <div>
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
-              {homeData.categoriesHeading}
+              Shop by Category
             </h2>
             <p className="text-sm text-muted-foreground mt-1">Sourced direct from global factory lines.</p>
           </div>
@@ -98,44 +89,60 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-secondary/15 py-16">
-        <div className="mx-auto max-w-8xl px-4 md:px-6 w-full">
-          <div className="text-center max-w-xl mx-auto mb-12">
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
-              {pagesContent.about.whyChooseUsTitle}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-2">Connecting global manufacturers directly to retail sellers.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {whyChooseUsItems.map((item: any, idx: number) => (
-              <Card key={idx} className="bg-card border-border p-6 space-y-4 hover:shadow-md transition-shadow">
-                <div className="p-3 bg-primary/10 rounded-full w-max">
-                  {getWhyIcon(item.icon)}
-                </div>
-                <h3 className="font-bold text-lg text-foreground">{item.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Independent B2B Wholesale Business Section */}
+      <WholesaleBusinessSection data={cmsWholesaleBiz?.value} />
 
       {/* Trending Products Grid Section */}
-      <section className="mx-auto max-w-8xl px-4 md:px-6 w-full">
+      <section className="mx-auto max-w-8xl px-4 md:px-6 w-full py-4">
         <div className="flex justify-between items-end mb-8 border-b pb-4 border-border/60">
           <div>
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
-              {homeData.trendingHeading}
+              Trending Consumer Gadgets
             </h2>
             <p className="text-sm text-muted-foreground mt-1">Our fastest selling consumer products and gadgets.</p>
           </div>
           <Link href="/products" className="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
-            {homeData.viewAllText} &rarr;
+            View All &rarr;
           </Link>
         </div>
 
         <TrendingProducts initialProducts={products} />
       </section>
+
+      {/* Independent Dropshipping Business Section */}
+      <DropshippingBusinessSection data={cmsDropshipBiz?.value} />
+
+      {/* Recently Viewed Carousel (Last 10 Products) */}
+      <RecentlyViewed initialProducts={products} />
+
+      {/* Independent Testimonials — Wholesale Buyers */}
+      <TestimonialsSection
+        title="Wholesale Buyer Feedback"
+        subtitle="Feedback from registered B2B shop owners and commercial bulk buyers."
+        testimonials={cmsTestimonialsWholesale?.value}
+        type="wholesale"
+      />
+
+      {/* Independent Testimonials — Dropshippers */}
+      {cmsTestimonialsDropshipper?.value && cmsTestimonialsDropshipper.value.length > 0 && (
+        <TestimonialsSection
+          title="Dropshipper Partner Reviews"
+          subtitle="Experiences from online store owners using FlexSell white-label fulfillment."
+          testimonials={cmsTestimonialsDropshipper?.value}
+          type="dropshipper"
+        />
+      )}
+
+      {/* Independent Testimonials — Client Reviews */}
+      {cmsTestimonialsClient?.value && cmsTestimonialsClient.value.length > 0 && (
+        <TestimonialsSection
+          title="Retail Client Reviews"
+          subtitle="Customer experiences across retail orders."
+          testimonials={cmsTestimonialsClient?.value}
+          type="client"
+        />
+      )}
+
     </div>
   );
 }

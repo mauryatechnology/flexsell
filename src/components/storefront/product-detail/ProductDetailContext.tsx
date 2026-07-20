@@ -86,12 +86,11 @@ export function ProductDetailProvider({
   React.useEffect(() => {
     if (!product) return;
     try {
-      const list = JSON.parse(localStorage.getItem("recently_viewed") || "[]");
-      const filtered = list.filter((id: string) => id !== product._id);
-      filtered.unshift(product._id);
-      localStorage.setItem("recently_viewed", JSON.stringify(filtered.slice(0, 10)));
+      const { addToRecentlyViewed } = require("@/lib/recentlyViewedTracker");
+      addToRecentlyViewed(product._id);
 
-      const recentItems = filtered
+      const list = JSON.parse(localStorage.getItem("flexsell-recently-viewed") || "[]");
+      const recentItems = list
         .filter((id: string) => id !== product._id)
         .map((id: string) => activeProducts.find((p) => p._id === id))
         .filter(Boolean) as Product[];

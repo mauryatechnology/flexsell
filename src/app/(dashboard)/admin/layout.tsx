@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, ShoppingBag, FolderTree, Users, 
   Settings, Palette, Tags, CreditCard, Menu, Percent, FileText, LogOut,
-  ChevronLeft, ChevronRight, MessageSquare, Truck, Image as ImageIcon, Layers, Megaphone,
+  ChevronLeft, ChevronRight, MessageSquare, MessageSquarePlus, Truck, Image as ImageIcon, Layers, Megaphone,
   BookOpen, Store, BarChart
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
@@ -43,14 +43,12 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     { name: "Customers", href: "/admin/customers", icon: Users },
     { name: "Vendors", href: "/admin/vendors", icon: Store },
     { name: "Reviews", href: "/admin/reviews", icon: MessageSquare },
+    { name: "Inquiries", href: "/admin/inquiries", icon: MessageSquarePlus },
     { name: "HSN Management", href: "/admin/hsn", icon: Percent },
     { name: "Shipping Options", href: "/admin/shipping", icon: Truck },
     { name: "Coupons", href: "/admin/coupons", icon: Tags },
     { name: "Website CMS", href: "/admin/cms", icon: FileText },
-    { name: "Banners", href: "/admin/banners", icon: ImageIcon },
-    { name: "Announcements", href: "/admin/announcements", icon: Megaphone },
     { name: "Blogs", href: "/admin/blogs", icon: BookOpen },
-    { name: "Pages", href: "/admin/pages", icon: FileText },
     { name: "Theme Editor", href: "/admin/theme", icon: Palette },
     { name: "Analytics", href: "/admin/analytics", icon: BarChart },
     { name: "Settings", href: "/admin/settings", icon: Settings },

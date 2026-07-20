@@ -2,7 +2,6 @@ import * as React from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { AnnouncementBar } from "./AnnouncementBar";
-import { pagesContent } from "@/config/pagesContent";
 import { categoryService } from "@/services/categoryService";
 import dbConnect from "@/lib/dbConnect";
 import CmsContent from "@/models/CmsContent";
@@ -18,8 +17,9 @@ export async function StorefrontLayout({ children }: StorefrontLayoutProps) {
   const cmsAnnouncements = await CmsContent.findOne({ key: "announcements" });
   const cmsFooter = await CmsContent.findOne({ key: "footer" });
 
-  // Use CMS announcements or fallback static text
-  const messages = cmsAnnouncements?.value || [pagesContent.announcement.text];
+  const messages = cmsAnnouncements?.value || [
+    "🎉 Mega B2B Monsoon Sale! Flat 12% OFF on Bulk orders above ₹20,000. Use Code: MEGAMONSOON"
+  ];
   const footerData = cmsFooter?.value || undefined;
 
   return (
