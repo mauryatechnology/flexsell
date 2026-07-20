@@ -27,7 +27,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ customer: data.customer, isLoading: false });
       if (data.customer?.customerTypes?.length > 0) {
         try {
-          const { useDashboardViewStore } = require("./dashboardViewStore");
+          const { useDashboardViewStore } = await import("./dashboardViewStore");
           useDashboardViewStore.getState().setActiveView(data.customer.customerTypes[0]);
         } catch (e) {
           console.error("Failed to set dashboard view", e);
@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ customer: data.customer, isLoading: false });
       if (data.customer?.customerTypes?.length > 0) {
         try {
-          const { useDashboardViewStore } = require("./dashboardViewStore");
+          const { useDashboardViewStore } = await import("./dashboardViewStore");
           useDashboardViewStore.getState().setActiveView(data.customer.customerTypes[0]);
         } catch (e) {
           console.error("Failed to set dashboard view", e);
@@ -67,7 +67,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ customer: data.customer, isLoading: false });
       if (data.customer?.customerTypes?.length > 0) {
         try {
-          const { useDashboardViewStore } = require("./dashboardViewStore");
+          const { useDashboardViewStore } = await import("./dashboardViewStore");
           useDashboardViewStore.getState().setActiveView(data.customer.customerTypes[0]);
         } catch (e) {
           console.error("Failed to set dashboard view", e);
@@ -99,7 +99,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ customer: data });
       if (data?.customerTypes?.length > 0) {
         try {
-          const { useDashboardViewStore } = require("./dashboardViewStore");
+          const { useDashboardViewStore } = await import("./dashboardViewStore");
           // Only override if active view is not in customerTypes
           const currentView = useDashboardViewStore.getState().activeView;
           if (!data.customerTypes.includes(currentView)) {

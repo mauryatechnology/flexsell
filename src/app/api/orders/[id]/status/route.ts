@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
 import Customer from "@/models/Customer";
@@ -7,7 +7,7 @@ import { dispatchWebhook } from "@/lib/webhookDispatcher";
 import { ORDER_STATUS_CLASSES } from "@/lib/constants";
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -29,7 +29,7 @@ export async function PUT(
       return NextResponse.json({ message: "Invalid order status" }, { status: 400 });
     }
 
-    const order = await Order.findById(id);
+    const order: any = await Order.findById(id);
     if (!order) {
       return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }

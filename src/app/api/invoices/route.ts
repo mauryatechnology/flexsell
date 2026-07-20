@@ -6,6 +6,7 @@ import Order from "@/models/Order";
 import CmsContent from "@/models/CmsContent";
 import { requireAuth } from "@/lib/authGuard";
 import { generateNextId } from "@/lib/idGenerator";
+import bcrypt from "bcryptjs";
 
 async function getSellerInfo() {
   const brandCms = await CmsContent.findOne({ key: "brandSettings" }).lean();
@@ -111,12 +112,12 @@ async function syncMissingInvoicesForOrders() {
     const sellerInfo = await getSellerInfo();
     const sellerState = sellerInfo.address.match(/(?:,\s*)([A-Za-z\s]+?)(?:\s*-\s*\d|$)/)?.[1]?.trim() || "Madhya Pradesh";
 
-    for (const order of orders) {
+    for (const order of orders as any[]) {
       // Check if an invoice document already exists for this orderId (to prevent duplicates)
       const existingDoc = await InvoiceModel.findOne({ orderId: order._id }).select("_id").lean();
       if (existingDoc) {
         // Just link it
-        await Order.findByIdAndUpdate(order._id, { invoiceId: existingDoc._id });
+        await Order.findByIdAndUpdate(order._id, { invoiceId: (existingDoc as any)._id });
         continue;
       }
 
@@ -295,7 +296,6 @@ export async function POST(request: Request) {
       } else {
         // Auto-create customer
         const newCustId = await generateNextId("customer");
-        const bcrypt = require("bcryptjs");
         const tempPassword = Math.random().toString(36).slice(-8);
         const hashedPassword = await bcrypt.hash(tempPassword, 10);
 

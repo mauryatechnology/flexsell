@@ -116,7 +116,7 @@ async function verifyJwtEdge(token: string) {
         .join("")
     );
     return JSON.parse(jsonPayload);
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -128,6 +128,7 @@ export const config = {
     "/login",
     "/register",
     "/forgot-password",
-    "/reset-password"
+    "/reset-password",
+    "/api/:path*"
   ],
 };

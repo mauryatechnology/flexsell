@@ -3,7 +3,9 @@ import { persist } from "zustand/middleware";
 import { Product, CartItem } from "@/types";
 import { useProductStore } from "./productStore";
 import { useToastStore } from "./toastStore";
+import { useAuthStore } from "./authStore";
 import { resolveVariantKeys } from "@/lib/variantMatcher";
+import { resolvePrice, resolveMoq } from "@/lib/priceTierHelper";
 
 interface TaxBreakdown {
   hsnCode: string;
@@ -54,7 +56,6 @@ export const useCartStore = create<CartState>()(
         const itemId = `${product._id}-${variantKey}-${priceTier}`;
 
         // Fetch active customer from authStore
-        const { useAuthStore } = require("./authStore");
         const customer = useAuthStore.getState().customer;
         
         if (customer && customer.customerTypes && customer.customerTypes.length === 1 && customer.customerTypes[0] === "Dropshipping") {
@@ -85,7 +86,6 @@ export const useCartStore = create<CartState>()(
           return;
         }
 
-        const { resolvePrice, resolveMoq } = require("@/lib/priceTierHelper");
         const calculatedPrice = resolvePrice(matchedVariant, priceTier);
         const availableStock = matchedVariant.stock;
         const moq = resolveMoq(matchedVariant, priceTier);
@@ -170,7 +170,6 @@ export const useCartStore = create<CartState>()(
 
         if (!matchedVariant) return;
 
-        const { resolveMoq } = require("@/lib/priceTierHelper");
         const availableStock = matchedVariant.stock;
         const itemTier = item.priceTier || "B2C";
         const moq = resolveMoq(matchedVariant, itemTier);

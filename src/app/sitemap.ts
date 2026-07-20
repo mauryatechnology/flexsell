@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { productService } from "@/services/productService";
 import { categoryService } from "@/services/categoryService";
+import { collectionService } from "@/services/collectionService";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://flexsellwholesale.in";
@@ -43,7 +44,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
-    return [...staticRoutes, ...productRoutes, ...categoryRoutes];
+    // Dynamic collections routes
+    const collections = await collectionService.getCollections();
+    const collectionRoutes = collections
+      .filter((c) => c.isActive)
+      .map((collection) => ({
+        url: `${baseUrl}/collections/${collection.slug}`,
+        lastModified: collection.updatedAt ? new Date(collection.updatedAt) : new Date(),
+        changeFrequency: "weekly" as const,
+        priority: 0.6,
+      }));
+
+    return [...staticRoutes, ...productRoutes, ...categoryRoutes, ...collectionRoutes];
   } catch (error) {
     console.error("Sitemap generation error, falling back to static routes:", error);
     return staticRoutes;
