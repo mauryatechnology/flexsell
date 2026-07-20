@@ -27,6 +27,7 @@ import { useCategoryStore } from "@/stores/categoryStore";
 import Image from "next/image";
 import { Pagination } from "@/components/ui/Pagination";
 import { formatPrice } from "@/lib/utils";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ProductCard } from "./ProductCard";
 import { ExportCatalogButton } from "./ExportCatalogButton";
 
@@ -99,12 +100,84 @@ export function ProductCatalog({ initialProducts, initialCategories }: ProductCa
     setMinDiscount(0);
   };
 
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Load initial filters from URL search params on mount
+  React.useEffect(() => {
+    if (!searchParams) return;
+    const catParam = searchParams.get("categories") || searchParams.get("category");
+    if (catParam) {
+      setSelectedCategories(catParam.split(",").filter(Boolean));
+    }
+    const minP = searchParams.get("minPrice");
+    if (minP) setMinPrice(Number(minP));
+
+    const maxP = searchParams.get("maxPrice");
+    if (maxP) setMaxPrice(Number(maxP));
+
+    const inStock = searchParams.get("inStock");
+    if (inStock === "true") setInStockOnly(true);
+
+    const minDisc = searchParams.get("minDiscount");
+    if (minDisc) setMinDiscount(Number(minDisc));
+
+    const sortP = searchParams.get("sort");
+    if (sortP) setSortBy(sortP);
+  }, [searchParams]);
+
+  // Sync filter changes dynamically to browser URL search params
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+
+    if (selectedCategories.length > 0) {
+      params.set("categories", selectedCategories.join(","));
+    }
+    if (minPrice !== "") params.set("minPrice", String(minPrice));
+    if (maxPrice !== "") params.set("maxPrice", String(maxPrice));
+    if (inStockOnly) params.set("inStock", "true");
+    if (minDiscount > 0) params.set("minDiscount", String(minDiscount));
+    if (sortBy && sortBy !== "recommended") params.set("sort", sortBy);
+
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+
+    window.history.replaceState(null, "", newUrl);
+  }, [selectedCategories, minPrice, maxPrice, inStockOnly, minDiscount, sortBy, pathname]);
+
+  // Category hierarchy matching: include selected categories and all their subcategories
+  const matchingCategoryIds = React.useMemo(() => {
+    if (selectedCategories.length === 0) return new Set<string>();
+
+    const activeCats = categories.length > 0 ? categories : initialCategories;
+    const ids = new Set<string>();
+
+    selectedCategories.forEach((catIdOrSlug) => {
+      const cat = activeCats.find(
+        (c) => c._id === catIdOrSlug || c.slug === catIdOrSlug || c.name.toLowerCase() === catIdOrSlug.toLowerCase()
+      );
+      if (cat) {
+        ids.add(cat._id);
+        // Include subcategories under this parent category
+        activeCats.filter((c) => c.parentId === cat._id).forEach((sub) => {
+          ids.add(sub._id);
+          activeCats.filter((c2) => c2.parentId === sub._id).forEach((sub2) => ids.add(sub2._id));
+        });
+      } else {
+        ids.add(catIdOrSlug);
+      }
+    });
+
+    return ids;
+  }, [selectedCategories, categories, initialCategories]);
+
   // Filter Logic
   const filteredProducts = React.useMemo(() => {
     let list = [...activeProducts];
 
-    if (selectedCategories.length > 0) {
-      list = list.filter(p => selectedCategories.includes(p.categoryId));
+    if (matchingCategoryIds.size > 0) {
+      list = list.filter(p => matchingCategoryIds.has(p.categoryId));
     }
     if (minPrice !== "") {
       list = list.filter(p => {
@@ -134,7 +207,7 @@ export function ProductCatalog({ initialProducts, initialCategories }: ProductCa
     }
 
     return list;
-  }, [activeProducts, selectedCategories, minPrice, maxPrice, inStockOnly, minDiscount]);
+  }, [activeProducts, matchingCategoryIds, minPrice, maxPrice, inStockOnly, minDiscount]);
 
   // Sorting logic
   const sortedProducts = React.useMemo(() => {
