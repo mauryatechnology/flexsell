@@ -102,6 +102,8 @@ export const orderSchema = z.object({
   }).optional(),
   couponCode: z.string().optional(),
   couponDiscount: z.number().optional(),
+  quoteId: z.string().optional(),
+  salesperson: z.string().optional(),
 });
 
 // Product validation schema

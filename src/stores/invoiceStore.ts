@@ -28,7 +28,7 @@ export const useInvoiceStore = create<InvoiceStoreState>()((set) => ({
   initializeInvoices: async (params) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await invoiceService.getInvoices(params);
+      const data = await invoiceService.getInvoices(params) as any;
       if (Array.isArray(data)) {
         set({ invoices: data, total: data.length, isLoading: false });
       } else {

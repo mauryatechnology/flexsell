@@ -28,7 +28,7 @@ async function generateInvoiceId(type: "invoice" | "receipt" | "quote"): Promise
   const lastDoc = await InvoiceModel.findOne({ _id: regex })
     .sort({ _id: -1 })
     .select("_id")
-    .lean();
+    .lean() as any;
 
   let nextSeq = 1;
   if (lastDoc) {
@@ -136,8 +136,9 @@ async function syncMissingInvoicesForOrders() {
         });
       }
 
-      const customerDoc = await Customer.findOne({ email: order.shippingAddress.email.toLowerCase() }).select("_id").lean();
+      const customerDoc = await Customer.findOne({ email: order.shippingAddress.email.toLowerCase() }).select("_id customerTypes").lean() as any;
       const customerId = customerDoc?._id ? String(customerDoc._id) : "legacy-sync";
+      const resolvedCustomerType = customerDoc?.customerTypes?.[0] || (order.shippingAddress.company || order.shippingAddress.gstin ? "B2B" : "B2C");
 
       await InvoiceModel.create({
         _id: invoiceId,
@@ -157,7 +158,8 @@ async function syncMissingInvoicesForOrders() {
         sellerInfo,
         generatedAt: parsedDate,
         generatedBy: "system",
-        status: "issued",
+        status: docType === "invoice" ? "paid" : "pending",
+        customerType: resolvedCustomerType,
       } as any);
 
       // Update order
@@ -186,10 +188,20 @@ export async function GET(request: Request) {
     const search = searchParams.get("search");
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");
+    const showArchived = searchParams.get("showArchived") === "true";
+    const customerType = searchParams.get("customerType");
 
     const query: any = {};
     if (type) query.type = type;
-    if (status) query.status = status;
+    if (status) {
+      query.status = status;
+    } else if (!showArchived) {
+      if (type === "quote") {
+        query.status = { $nin: ["archived", "converted"] };
+      } else {
+        query.status = { $ne: "archived" };
+      }
+    }
     if (customerId) query.customerId = customerId;
     if (orderId) query.orderId = orderId;
 
@@ -204,14 +216,56 @@ export async function GET(request: Request) {
       query.createdAt = dateQuery;
     }
 
+    const andConditions: any[] = [];
+
+    if (customerType) {
+      if (customerType === "B2B") {
+        andConditions.push({
+          $or: [
+            { customerType: "B2B" },
+            { 
+              customerType: { $exists: false },
+              $or: [
+                { customerGstin: { $exists: true, $nin: [null, ""] } },
+                { "shippingAddress.company": { $exists: true, $nin: [null, ""] } }
+              ]
+            }
+          ]
+        });
+      } else if (customerType === "Dropshipping") {
+        andConditions.push({ customerType: "Dropshipping" });
+      } else {
+        // B2C
+        andConditions.push({
+          $or: [
+            { customerType: "B2C" },
+            {
+              customerType: { $exists: false },
+              $and: [
+                { $or: [{ customerGstin: { $exists: false } }, { customerGstin: null }, { customerGstin: "" }] },
+                { $or: [{ "shippingAddress.company": { $exists: false } }, { "shippingAddress.company": null }, { "shippingAddress.company": "" }] }
+              ]
+            }
+          ]
+        });
+      }
+    }
+
     if (search) {
       const searchRegex = new RegExp(search, "i");
-      query.$or = [
-        { _id: searchRegex },
-        { customerName: searchRegex },
-        { customerEmail: searchRegex },
-        { orderId: searchRegex },
-      ];
+      andConditions.push({
+        $or: [
+          { _id: searchRegex },
+          { customerName: searchRegex },
+          { customerEmail: searchRegex },
+          { orderId: searchRegex },
+          { salesperson: searchRegex },
+        ]
+      });
+    }
+
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
     }
 
     // Non-admin users can only see their own invoices
@@ -277,6 +331,8 @@ export async function POST(request: Request) {
       transactionId,
       notes,
       newCustomer,
+      salesperson,
+      status
     } = body;
 
     // Handle new customer auto-creation
@@ -338,6 +394,26 @@ export async function POST(request: Request) {
       year: "numeric",
     });
 
+    let defaultStatus = "paid";
+    if (type === "quote") {
+      defaultStatus = "draft";
+    } else if (type === "receipt") {
+      defaultStatus = "pending";
+    }
+
+    // Resolve customerType
+    let resolvedCustomerType = "B2C";
+    if (body.customerType) {
+      resolvedCustomerType = body.customerType;
+    } else if (resolvedCustomerId && resolvedCustomerId !== "legacy-sync") {
+      const cust = await Customer.findById(resolvedCustomerId).lean() as any;
+      if (cust && cust.customerTypes && cust.customerTypes.length > 0) {
+        resolvedCustomerType = cust.customerTypes[0];
+      }
+    } else if (customerGstin || shippingAddress?.gstin) {
+      resolvedCustomerType = "B2B";
+    }
+
     const newInvoice = await InvoiceModel.create({
       _id: invoiceId,
       type,
@@ -350,9 +426,9 @@ export async function POST(request: Request) {
       amount,
       taxDetails: taxDetails || {
         isIntrastate: true,
-        baseSubtotal: amount / 1.18,
-        cgst: (amount - amount / 1.18) / 2,
-        sgst: (amount - amount / 1.18) / 2,
+        baseSubtotal: amount,
+        cgst: 0,
+        sgst: 0,
         igst: 0,
         hsnSlabs: [],
       },
@@ -363,8 +439,10 @@ export async function POST(request: Request) {
       sellerInfo,
       notes,
       generatedAt,
-      generatedBy: payload.role === "admin" ? payload.userId : "system",
-      status: "issued",
+      generatedBy: payload.role === "admin" ? payload.email : "system",
+      status: status || defaultStatus,
+      salesperson: salesperson || undefined,
+      customerType: resolvedCustomerType,
     } as any);
 
     // If linked to an order, update the order with the invoice ID

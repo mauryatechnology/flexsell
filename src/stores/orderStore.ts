@@ -9,7 +9,14 @@ interface OrderStoreState {
   orders: Order[];
   isLoading: boolean;
   error: string | null;
-  initializeOrders: (params?: { page?: number; limit?: number; startDate?: string; endDate?: string }) => Promise<void>;
+  initializeOrders: (params?: { 
+    page?: number; 
+    limit?: number; 
+    startDate?: string; 
+    endDate?: string;
+    orderType?: string;
+    origin?: string;
+  }) => Promise<void>;
   createOrder: (
     items: CartItem[], 
     amount: number, 
@@ -22,7 +29,7 @@ interface OrderStoreState {
     couponCode?: string,
     couponDiscount?: number
   ) => Promise<string>;
-  updateOrderStatus: (id: string, status: Order["status"]) => Promise<void>;
+  updateOrderStatus: (id: string, status: Order["status"], paymentDetails?: any) => Promise<void>;
   shipOrder: (id: string, shipmentDetails: ShipmentDetails) => Promise<void>;
 }
 
@@ -34,7 +41,7 @@ export const useOrderStore = create<OrderStoreState>()((set) => ({
   initializeOrders: async (params) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await orderService.getOrders(params);
+      const data = await orderService.getOrders(params) as any;
       const ordersList = Array.isArray(data) ? data : data.orders || [];
       set({ orders: ordersList, isLoading: false });
     } catch (err) {
@@ -63,10 +70,10 @@ export const useOrderStore = create<OrderStoreState>()((set) => ({
     }
   },
 
-  updateOrderStatus: async (id, status) => {
+  updateOrderStatus: async (id, status, paymentDetails) => {
     set({ isLoading: true, error: null });
     try {
-      const updatedOrder = await orderService.updateOrderStatus(id, status);
+      const updatedOrder = await orderService.updateOrderStatus(id, status, paymentDetails);
       set((state) => ({
         orders: state.orders.map((o) => (o._id === id ? updatedOrder : o)),
         isLoading: false

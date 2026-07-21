@@ -19,10 +19,23 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    const query = { role: { $ne: "admin" } };
     const { searchParams } = new URL(request.url);
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");
+    const search = searchParams.get("search") || searchParams.get("q");
+
+    const query: any = { role: { $ne: "admin" } };
+    if (search) {
+      const regex = new RegExp(search.trim(), "i");
+      query.$or = [
+        { _id: regex },
+        { name: regex },
+        { email: regex },
+        { company: regex },
+        { gstin: regex },
+        { phone: regex }
+      ];
+    }
 
     if (page && limit) {
       const pageNum = parseInt(page, 10) || 1;

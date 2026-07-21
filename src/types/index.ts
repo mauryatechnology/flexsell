@@ -155,8 +155,12 @@ export interface Order extends BaseDocument {
   paymentStatus?: "Pending" | "Paid" | "Failed";
   transactionId?: string;
   invoiceId?: string;
+  quoteId?: string;
+  salesperson?: string;
   couponCode?: string;
   couponDiscount?: number;
+  orderType?: "B2B" | "B2C";
+  origin?: "self" | "website";
 }
 
 export interface HsnSlab {
@@ -205,9 +209,26 @@ export interface Invoice extends BaseDocument {
   notes?: string;
   generatedAt: string;
   generatedBy: string;
-  status: "draft" | "issued" | "paid" | "cancelled" | "void";
+  salesperson?: string;
+  isArchived?: boolean;
+  status:
+    | "draft"
+    | "finalized"
+    | "sent"
+    | "accepted"
+    | "rejected"
+    | "expired"
+    | "converted"
+    | "cancelled"
+    | "pending"
+    | "failed"
+    | "refunded"
+    | "paid"
+    | "void"
+    | "archived";
   couponCode?: string;
   couponDiscount?: number;
+  customerType?: "B2C" | "B2B" | "Dropshipping";
 }
 
 export interface SavedAddress {
