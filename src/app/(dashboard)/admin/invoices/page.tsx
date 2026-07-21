@@ -661,6 +661,72 @@ export default function AdminInvoicesPage() {
         </Button>
       </div>
 
+      {/* Short Analytics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-background to-secondary/10 border-border/60">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                {activeTab === "quote" ? "Total Quotes" : activeTab === "receipt" ? "Total Receipts" : "Total Invoices"}
+              </p>
+              <h3 className="text-lg font-black mt-1 text-foreground">{invoices.length}</h3>
+            </div>
+            <div className="p-2 rounded-lg bg-primary/5 text-primary text-base">
+              📄
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-background to-secondary/10 border-border/60">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Total Value</p>
+              <h3 className="text-lg font-black mt-1 text-foreground">
+                {formatPrice(invoices.reduce((sum, i) => sum + i.amount, 0))}
+              </h3>
+            </div>
+            <div className="p-2 rounded-lg bg-green-500/5 text-green-600 dark:text-green-400 text-base">
+              💰
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-background to-secondary/10 border-border/60">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                {activeTab === "quote" ? "Converted" : activeTab === "receipt" ? "Paid Receipts" : "Paid Invoices"}
+              </p>
+              <h3 className="text-lg font-black mt-1 text-foreground">
+                {activeTab === "quote" 
+                  ? invoices.filter(i => i.status === "converted").length
+                  : invoices.filter(i => i.status === "paid").length}
+              </h3>
+            </div>
+            <div className="p-2 rounded-lg bg-green-500/5 text-green-600 dark:text-green-400 text-base">
+              ✅
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-background to-secondary/10 border-border/60">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                {activeTab === "quote" ? "Active Quotes" : activeTab === "receipt" ? "Pending/Failed" : "Void / Deleted"}
+              </p>
+              <h3 className="text-lg font-black mt-1 text-foreground">
+                {activeTab === "quote"
+                  ? invoices.filter(i => ["draft", "sent", "finalized"].includes(i.status)).length
+                  : activeTab === "receipt"
+                  ? invoices.filter(i => ["pending", "failed"].includes(i.status)).length
+                  : invoices.filter(i => i.status === "void").length}
+              </h3>
+            </div>
+            <div className="p-2 rounded-lg bg-yellow-500/5 text-yellow-600 dark:text-yellow-400 text-base">
+              ⚠️
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Tabs */}
       <div className="flex border-b border-border/80">
         <button

@@ -13,6 +13,7 @@ import { FulfillmentForm } from "./FulfillmentForm";
 import { CreateOrderModal } from "./CreateOrderModal";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { formatPrice } from "@/lib/utils";
 
 export function AdminOrdersManager() {
   const { orders, initializeOrders, updateOrderStatus, shipOrder } = useOrderStore();
@@ -241,6 +242,60 @@ export function AdminOrdersManager() {
         >
           <Plus className="h-4 w-4" /> Convert Quote
         </Button>
+      </div>
+
+      {/* Short Analytics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-background to-secondary/10 border-border/60">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Total Volume</p>
+              <h3 className="text-lg font-black mt-1 text-foreground">{orders.length}</h3>
+            </div>
+            <div className="p-2 rounded-lg bg-primary/5 text-primary text-base">
+              📦
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-background to-secondary/10 border-border/60">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Total Amount</p>
+              <h3 className="text-lg font-black mt-1 text-foreground">
+                {formatPrice(orders.reduce((sum, o) => sum + o.amount, 0))}
+              </h3>
+            </div>
+            <div className="p-2 rounded-lg bg-green-500/5 text-green-600 dark:text-green-400 text-base">
+              💰
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-background to-secondary/10 border-border/60">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Pending Payment</p>
+              <h3 className="text-lg font-black mt-1 text-foreground">
+                {orders.filter(o => o.paymentStatus !== "Paid").length}
+              </h3>
+            </div>
+            <div className="p-2 rounded-lg bg-yellow-500/5 text-yellow-600 dark:text-yellow-400 text-base">
+              ⏳
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-background to-secondary/10 border-border/60">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">To Dispatch</p>
+              <h3 className="text-lg font-black mt-1 text-foreground">
+                {orders.filter(o => o.status === "Processing").length}
+              </h3>
+            </div>
+            <div className="p-2 rounded-lg bg-blue-500/5 text-blue-600 dark:text-blue-400 text-base">
+              🚚
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabs */}
