@@ -68,7 +68,14 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const sku = defaultSub?.sku || "NO SKU";
 
   const isBestseller = product.cardTags?.some(tag => tag.toLowerCase() === "bestseller" || tag.toLowerCase() === "best seller");
-  const isNew = product.cardTags?.some(tag => tag.toLowerCase() === "new");
+  const [isNew, setIsNew] = React.useState(() =>
+    !!product.cardTags?.some(tag => tag.toLowerCase() === "new")
+  );
+  React.useEffect(() => {
+    const isTagNew = product.cardTags?.some(tag => tag.toLowerCase() === "new");
+    const isDateNew = product.createdAt ? (new Date().getTime() - new Date(product.createdAt).getTime()) <= 7 * 24 * 60 * 60 * 1000 : false;
+    setIsNew(!!(isTagNew || isDateNew));
+  }, [product.cardTags, product.createdAt]);
   const isTrending = product.cardTags?.some(tag => tag.toLowerCase() === "trending" || tag.toLowerCase() === "hot");
 
   const adjustQty = (amount: number) => {
