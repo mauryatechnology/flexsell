@@ -15,6 +15,8 @@ import { useWishlistStore } from "@/stores/wishlistStore";
 import { useAuthStore } from "@/stores/authStore";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { GlobalSearchInput } from "@/components/storefront/GlobalSearchInput";
+
 interface HeaderProps {
   categories: Category[];
   collections?: Collection[];
@@ -23,8 +25,6 @@ interface HeaderProps {
 export function Header({ categories, collections = [] }: HeaderProps) {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [isSearchFocused, setIsSearchFocused] = React.useState(false);
 
   const cartItemsCount = useCartStore((state) => state.getCartItemsCount());
   const wishlistItemsCount = useWishlistStore((state) => state.items.length);
@@ -38,13 +38,6 @@ export function Header({ categories, collections = [] }: HeaderProps) {
   React.useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all">
@@ -61,22 +54,7 @@ export function Header({ categories, collections = [] }: HeaderProps) {
 
         {/* Global Search Bar - Desktop Only */}
         <div className="hidden md:flex flex-1 max-w-md mx-8">
-          <form onSubmit={handleSearchSubmit} className="relative w-full">
-            <Input
-              type="search"
-              placeholder="Search trending products, categories, SKUs..."
-              className={`w-full h-10 pl-4 pr-10 rounded-full border border-input bg-muted/40 text-sm text-foreground transition-all duration-300 ${
-                isSearchFocused ? "bg-background ring-2 ring-primary border-primary shadow-sm" : "focus:bg-background"
-              }`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setIsSearchFocused(false)}
-            />
-            <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-0 h-10 w-10 rounded-full text-muted-foreground hover:text-foreground cursor-pointer">
-              <Search className="h-4.5 w-4.5 text-foreground" />
-            </Button>
-          </form>
+          <GlobalSearchInput placeholder="Search trending products, SKUs, categories..." />
         </div>
 
         {/* User Greeting & Utility Icons */}
@@ -146,18 +124,10 @@ export function Header({ categories, collections = [] }: HeaderProps) {
           </div>
 
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search products..."
-              className="w-full pl-9 text-xs text-foreground"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && searchQuery.trim()) {
-                  setIsMobileMenuOpen(false);
-                  router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-                }
-              }}
+            <GlobalSearchInput
+              isMobile
+              placeholder="Search SKUs or products..."
+              onSearchSubmitted={() => setIsMobileMenuOpen(false)}
             />
           </div>
 

@@ -8,6 +8,7 @@ import dbConnect from "@/lib/dbConnect";
 import CmsContent from "@/models/CmsContent";
 
 import { TrendingProducts } from "@/components/storefront/TrendingProducts";
+import { ProductCard } from "@/components/storefront/ProductCard";
 import { HeroCarousel } from "@/components/storefront/HeroCarousel";
 import { TrustBar } from "@/components/storefront/TrustBar";
 import { RecentlyViewed } from "@/components/storefront/RecentlyViewed";
@@ -34,6 +35,8 @@ export default async function HomePage() {
 
   const categories = await categoryService.getCategories();
   const products = await productService.getProducts();
+  const trendingProducts = await productService.getTrendingProducts();
+  const newArrivals = await productService.getNewArrivals();
   const collections = await collectionService.getCollections();
 
   // Resolve product counts for each featured collection
@@ -52,15 +55,30 @@ export default async function HomePage() {
 
   const heroBanners = cmsHeroBanners?.value || [
     {
+      mediaType: "video",
+      videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-cargo-ship-loading-containers-in-a-port-42847-large.mp4",
+      posterUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1920&q=80",
       imageUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1920&q=80",
       redirectUrl: "/products",
-      altText: "FlexSell Wholesale B2B Cargo Sourcing"
+      altText: "FlexSell Wholesale B2B Cargo Freight & Sourcing",
+      overlayTitle: "Global B2B Wholesale & Logistics Platform",
+      overlaySubtitle: "Direct factory sourcing, bulk discounts, and streamlined cargo logistics worldwide.",
+      ctaText: "Browse Catalogue"
+    },
+    {
+      mediaType: "image",
+      imageUrl: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=1920&q=80",
+      redirectUrl: "/dropshipping",
+      altText: "FlexSell Dropshipping Supply Chain",
+      overlayTitle: "Automated Dropshipping Fulfilment",
+      overlaySubtitle: "Scale your e-commerce storefront with zero inventory risk and instant automated dispatch.",
+      ctaText: "Start Dropshipping"
     }
   ];
 
   return (
     <div className="flex flex-col gap-12 pb-16">
-      {/* Image-Only Dynamic Hero Banner Slider */}
+      {/* High Performance Video & Image Hero Banner Carousel */}
       <HeroCarousel slides={heroBanners} />
 
       {/* Trust Stats Bar */}
@@ -122,8 +140,31 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <TrendingProducts initialProducts={products} />
+        <TrendingProducts initialProducts={trendingProducts} />
       </section>
+
+      {/* New Arrivals Section */}
+      {newArrivals.length > 0 && (
+        <section className="mx-auto max-w-8xl px-4 md:px-6 w-full py-4 animate-in fade-in duration-700">
+          <div className="flex justify-between items-end mb-8 border-b pb-4 border-border/60">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+                New Arrivals
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">Our latest wholesale products added in the last 7 days.</p>
+            </div>
+            <Link href="/products?sort=newest" className="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
+              View All &rarr;
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {newArrivals.map((product) => (
+              <ProductCard key={product._id} product={product} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Independent Dropshipping Business Section */}
       <DropshippingBusinessSection data={cmsDropshipBiz?.value} />

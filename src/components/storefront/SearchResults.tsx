@@ -83,31 +83,80 @@ export function SearchResults({ query, initialProducts, initialCategories }: Sea
   const activeProducts = products.length > 0 ? products : initialProducts;
   const lowercaseQuery = query.toLowerCase();
 
-  // Search Results base match list
+  // Exact SKU Match Detection
+  const exactSkuMatch = React.useMemo(() => {
+    if (!lowercaseQuery) return null;
+    for (const p of activeProducts) {
+      if (p.colorVariants) {
+        for (const cv of p.colorVariants) {
+          if (cv.subVariants) {
+            for (const sv of cv.subVariants) {
+              if (sv.sku && sv.sku.toLowerCase() === lowercaseQuery) {
+                return {
+                  product: p,
+                  sku: sv.sku,
+                  variantDetails: `${cv.color} • ${sv.size || "Standard"} • ${sv.weight || "250g"}`,
+                };
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }, [activeProducts, lowercaseQuery]);
+
+  // Search Results base match list with SKU priority sorting
   const results = React.useMemo(() => {
     if (!lowercaseQuery) return activeProducts;
-    return activeProducts.filter(p => {
-      // 1. Title, Description, and Tags match
-      const basicMatch = 
-        p.title.toLowerCase().includes(lowercaseQuery) ||
-        (p.description || "").toLowerCase().includes(lowercaseQuery) ||
-        p.tags?.some(tag => tag.toLowerCase().includes(lowercaseQuery));
-      if (basicMatch) return true;
 
-      // 2. Category Name match
-      const category = categories.find(c => c._id === p.categoryId);
-      if (category && category.name.toLowerCase().includes(lowercaseQuery)) {
-        return true;
-      }
+    const listWithScore = activeProducts
+      .map((p) => {
+        let score = 0;
+        let matchedBySku = false;
 
-      // 3. Variant SKU match
-      const skuMatch = p.colorVariants?.some(cv =>
-        cv.subVariants?.some(sv => (sv.sku || "").toLowerCase().includes(lowercaseQuery))
-      );
-      if (skuMatch) return true;
+        // 1. Exact Product ID match (+100)
+        if (p._id.toLowerCase() === lowercaseQuery) score += 100;
 
-      return false;
-    });
+        // 2. SKU and Barcode match (+95 exact, +70 partial)
+        p.colorVariants?.forEach((cv) => {
+          cv.subVariants?.forEach((sv) => {
+            const skuLower = (sv.sku || "").toLowerCase();
+            const barcodeLower = (sv.barcode || "").toLowerCase();
+            if (skuLower === lowercaseQuery || barcodeLower === lowercaseQuery) {
+              score += 95;
+              matchedBySku = true;
+            } else if (skuLower.startsWith(lowercaseQuery)) {
+              score += 70;
+              matchedBySku = true;
+            } else if (skuLower.includes(lowercaseQuery) || barcodeLower.includes(lowercaseQuery)) {
+              score += 50;
+              matchedBySku = true;
+            }
+          });
+        });
+
+        // 3. Title match (+60 exact, +40 start, +25 includes)
+        const titleLower = p.title.toLowerCase();
+        if (titleLower === lowercaseQuery) score += 60;
+        else if (titleLower.startsWith(lowercaseQuery)) score += 40;
+        else if (titleLower.includes(lowercaseQuery)) score += 25;
+
+        // 4. Category Name match (+30)
+        const category = categories.find((c) => c._id === p.categoryId);
+        if (category && category.name.toLowerCase().includes(lowercaseQuery)) score += 30;
+
+        // 5. Tags & HSN Code (+20)
+        if (p.hsnCode && p.hsnCode.toLowerCase().includes(lowercaseQuery)) score += 20;
+        if (p.tags?.some((t) => t.toLowerCase().includes(lowercaseQuery))) score += 20;
+        if ((p.description || "").toLowerCase().includes(lowercaseQuery)) score += 10;
+
+        return { product: p, score, matchedBySku };
+      })
+      .filter((item) => item.score > 0);
+
+    listWithScore.sort((a, b) => b.score - a.score);
+    return listWithScore.map((item) => item.product);
   }, [activeProducts, lowercaseQuery, categories]);
 
   const handleCategoryToggle = (catId: string) => {
@@ -204,6 +253,27 @@ export function SearchResults({ query, initialProducts, initialCategories }: Sea
 
   return (
     <div className="mx-auto max-w-8xl px-4 md:px-6 py-8 text-foreground w-full">
+      {/* Exact SKU Match Banner */}
+      {exactSkuMatch && (
+        <div className="mb-6 p-4 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <span className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs uppercase font-mono">
+              SKU
+            </span>
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-primary">Exact SKU Match Found</div>
+              <div className="text-sm font-semibold text-foreground">
+                <span className="font-mono bg-background px-2 py-0.5 rounded border border-border mr-2 font-bold">{exactSkuMatch.sku}</span>
+                {exactSkuMatch.product.title} ({exactSkuMatch.variantDetails})
+              </div>
+            </div>
+          </div>
+          <Link href={`/products/${exactSkuMatch.product.slug}`}>
+            <Button size="sm" className="font-bold">View Product &rarr;</Button>
+          </Link>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b pb-6 border-border/60">
         <div>

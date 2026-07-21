@@ -46,29 +46,98 @@ export function CmsFormModal({
           {activeTab === "hero" && (
             <>
               <div className="space-y-1">
-                <label className="font-bold">Desktop Image URL / Upload *</label>
-                <div className="flex gap-2">
-                  <Input value={formData.imageUrl || ""} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} className="text-xs" />
-                  <label className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 border rounded cursor-pointer font-bold flex items-center gap-1 shrink-0">
-                    <Upload className="h-3.5 w-3.5" /> Upload
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => onFileUpload(e, "imageUrl")} />
-                  </label>
+                <label className="font-bold text-foreground">Media Type *</label>
+                <select
+                  value={formData.mediaType || "image"}
+                  onChange={(e) => setFormData({ ...formData, mediaType: e.target.value })}
+                  className="w-full h-9 rounded-lg border border-input bg-background px-3 text-xs font-semibold"
+                >
+                  <option value="image">Image Banner</option>
+                  <option value="video">Video Banner (Performance Optimized MP4 / WebM)</option>
+                </select>
+              </div>
+
+              {(formData.mediaType === "video") ? (
+                <>
+                  <div className="space-y-1">
+                    <label className="font-bold">Desktop Video URL / Upload *</label>
+                    <div className="flex gap-2">
+                      <Input placeholder="https://... /video.mp4" value={formData.videoUrl || ""} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} className="text-xs" />
+                      <label className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 border rounded cursor-pointer font-bold flex items-center gap-1 shrink-0">
+                        <Upload className="h-3.5 w-3.5" /> Upload Video
+                        <input type="file" accept="video/*" className="hidden" onChange={(e) => onFileUpload(e, "videoUrl")} />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold">Mobile Video URL (Optional)</label>
+                    <div className="flex gap-2">
+                      <Input placeholder="Mobile video URL..." value={formData.mobileVideoUrl || ""} onChange={(e) => setFormData({ ...formData, mobileVideoUrl: e.target.value })} className="text-xs" />
+                      <label className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 border rounded cursor-pointer font-bold flex items-center gap-1 shrink-0">
+                        <Upload className="h-3.5 w-3.5" /> Upload
+                        <input type="file" accept="video/*" className="hidden" onChange={(e) => onFileUpload(e, "mobileVideoUrl")} />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold">Poster Thumbnail Image URL / Upload (Required for Fast FCP Paint)</label>
+                    <div className="flex gap-2">
+                      <Input placeholder="Poster thumbnail URL..." value={formData.posterUrl || formData.imageUrl || ""} onChange={(e) => setFormData({ ...formData, posterUrl: e.target.value, imageUrl: e.target.value })} className="text-xs" />
+                      <label className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 border rounded cursor-pointer font-bold flex items-center gap-1 shrink-0">
+                        <Upload className="h-3.5 w-3.5" /> Upload Image
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => onFileUpload(e, "posterUrl")} />
+                      </label>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-1">
+                    <label className="font-bold">Desktop Image URL / Upload *</label>
+                    <div className="flex gap-2">
+                      <Input value={formData.imageUrl || ""} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} className="text-xs" />
+                      <label className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 border rounded cursor-pointer font-bold flex items-center gap-1 shrink-0">
+                        <Upload className="h-3.5 w-3.5" /> Upload
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => onFileUpload(e, "imageUrl")} />
+                      </label>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold">Mobile Image URL (Optional)</label>
+                    <div className="flex gap-2">
+                      <Input value={formData.mobileImageUrl || ""} onChange={(e) => setFormData({ ...formData, mobileImageUrl: e.target.value })} className="text-xs" />
+                      <label className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 border rounded cursor-pointer font-bold flex items-center gap-1 shrink-0">
+                        <Upload className="h-3.5 w-3.5" /> Upload
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => onFileUpload(e, "mobileImageUrl")} />
+                      </label>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div className="space-y-1 border-t pt-2 mt-2">
+                <label className="font-bold text-primary">Text Overlay Title (Optional)</label>
+                <Input placeholder="e.g. Next-Gen B2B Cargo Sourcing" value={formData.overlayTitle || ""} onChange={(e) => setFormData({ ...formData, overlayTitle: e.target.value })} className="text-xs" />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-primary">Text Overlay Subtitle (Optional)</label>
+                <Input placeholder="e.g. Direct factory wholesale pricing & fast freight delivery" value={formData.overlaySubtitle || ""} onChange={(e) => setFormData({ ...formData, overlaySubtitle: e.target.value })} className="text-xs" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="font-bold">CTA Button Label</label>
+                  <Input placeholder="e.g. Shop Now" value={formData.ctaText || ""} onChange={(e) => setFormData({ ...formData, ctaText: e.target.value })} className="text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold">Redirect URL *</label>
+                  <Input value={formData.redirectUrl || "/products"} onChange={(e) => setFormData({ ...formData, redirectUrl: e.target.value })} className="text-xs" />
                 </div>
               </div>
-              <div className="space-y-1">
-                <label className="font-bold">Mobile Image URL (Optional)</label>
-                <div className="flex gap-2">
-                  <Input value={formData.mobileImageUrl || ""} onChange={(e) => setFormData({ ...formData, mobileImageUrl: e.target.value })} className="text-xs" />
-                  <label className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 border rounded cursor-pointer font-bold flex items-center gap-1 shrink-0">
-                    <Upload className="h-3.5 w-3.5" /> Upload
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => onFileUpload(e, "mobileImageUrl")} />
-                  </label>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="font-bold">Same-Tab Redirect URL *</label>
-                <Input value={formData.redirectUrl || "/products"} onChange={(e) => setFormData({ ...formData, redirectUrl: e.target.value })} className="text-xs" />
-              </div>
+
               <div className="space-y-1">
                 <label className="font-bold">Alt Text (SEO)</label>
                 <Input value={formData.altText || ""} onChange={(e) => setFormData({ ...formData, altText: e.target.value })} className="text-xs" />

@@ -71,6 +71,26 @@ const ProductSchema = new Schema<ProductType & Document>(
 ProductSchema.index({ categoryId: 1 });
 ProductSchema.index({ isActive: 1 });
 ProductSchema.index({ "colorVariants.subVariants.sku": 1 });
+ProductSchema.index({ "colorVariants.subVariants.barcode": 1 });
+ProductSchema.index({ hsnCode: 1 });
+ProductSchema.index({ isActive: 1, categoryId: 1 });
+ProductSchema.index(
+  {
+    title: "text",
+    description: "text",
+    tags: "text",
+    seoKeywords: "text",
+  },
+  {
+    weights: {
+      title: 10,
+      tags: 5,
+      seoKeywords: 3,
+      description: 1,
+    },
+    name: "product_text_search_index",
+  }
+);
 
 // Schema-cache buster for Next.js hot-reloading in development
 if (mongoose.models.Product) {

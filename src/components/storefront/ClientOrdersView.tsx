@@ -42,11 +42,17 @@ export function ClientOrdersView() {
       return !hasB2BItem && !hasDropshipItem;
     });
 
-    const term = searchTerm.toLowerCase();
+    const term = searchTerm.toLowerCase().trim();
     if (!term) return viewFiltered;
     return viewFiltered.filter(o => 
       o._id.toLowerCase().includes(term) || 
-      o.customerName.toLowerCase().includes(term)
+      ((o as any).orderId && (o as any).orderId.toLowerCase().includes(term)) ||
+      o.customerName.toLowerCase().includes(term) ||
+      o.items?.some((item: any) => 
+        (item.sku && item.sku.toLowerCase().includes(term)) ||
+        (item.productName && item.productName.toLowerCase().includes(term)) ||
+        (item.product?.title && item.product.title.toLowerCase().includes(term))
+      )
     );
   }, [orders, searchTerm, activeView]);
 
