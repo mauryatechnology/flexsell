@@ -1,8 +1,15 @@
 export interface BannerSlide {
+  mediaType?: "image" | "video";
   imageUrl: string;
   mobileImageUrl?: string;
+  videoUrl?: string;
+  mobileVideoUrl?: string;
+  posterUrl?: string;
   redirectUrl: string;
   altText?: string;
+  overlayTitle?: string;
+  overlaySubtitle?: string;
+  ctaText?: string;
 }
 
 export interface TrustStatItem {

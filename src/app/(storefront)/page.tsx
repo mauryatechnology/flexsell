@@ -52,15 +52,30 @@ export default async function HomePage() {
 
   const heroBanners = cmsHeroBanners?.value || [
     {
+      mediaType: "video",
+      videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-cargo-ship-loading-containers-in-a-port-42847-large.mp4",
+      posterUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1920&q=80",
       imageUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1920&q=80",
       redirectUrl: "/products",
-      altText: "FlexSell Wholesale B2B Cargo Sourcing"
+      altText: "FlexSell Wholesale B2B Cargo Freight & Sourcing",
+      overlayTitle: "Global B2B Wholesale & Logistics Platform",
+      overlaySubtitle: "Direct factory sourcing, bulk discounts, and streamlined cargo logistics worldwide.",
+      ctaText: "Browse Catalogue"
+    },
+    {
+      mediaType: "image",
+      imageUrl: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=1920&q=80",
+      redirectUrl: "/dropshipping",
+      altText: "FlexSell Dropshipping Supply Chain",
+      overlayTitle: "Automated Dropshipping Fulfilment",
+      overlaySubtitle: "Scale your e-commerce storefront with zero inventory risk and instant automated dispatch.",
+      ctaText: "Start Dropshipping"
     }
   ];
 
   return (
     <div className="flex flex-col gap-12 pb-16">
-      {/* Image-Only Dynamic Hero Banner Slider */}
+      {/* High Performance Video & Image Hero Banner Carousel */}
       <HeroCarousel slides={heroBanners} />
 
       {/* Trust Stats Bar */}

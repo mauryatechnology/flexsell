@@ -13,6 +13,10 @@ interface CmsViewModalProps {
 export function CmsViewModal({ isOpen, viewData, onClose }: CmsViewModalProps) {
   if (!isOpen || !viewData) return null;
 
+  const isVideo = viewData.mediaType === "video" || !!viewData.videoUrl || viewData.contentType === "video";
+  const videoSrc = viewData.videoUrl || viewData.mediaUrl;
+  const imageSrc = viewData.posterUrl || viewData.imageUrl || viewData.mediaUrl;
+
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-fade-in text-foreground">
@@ -23,20 +27,21 @@ export function CmsViewModal({ isOpen, viewData, onClose }: CmsViewModalProps) {
           </button>
         </div>
         <div className="space-y-3 text-xs">
-          {viewData.imageUrl && (
-            <div className="aspect-video relative rounded-lg overflow-hidden bg-secondary border">
-              <img src={viewData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+          {isVideo && videoSrc ? (
+            <div className="aspect-video relative rounded-lg overflow-hidden bg-black border border-border shadow">
+              <video
+                src={videoSrc}
+                poster={imageSrc}
+                controls
+                className="w-full h-full object-cover"
+              />
             </div>
-          )}
-          {viewData.mediaUrl && (
-            <div className="aspect-video relative rounded-lg overflow-hidden bg-secondary border">
-              {viewData.contentType === "video" ? (
-                <video src={viewData.mediaUrl} controls className="w-full h-full object-cover" />
-              ) : (
-                <img src={viewData.mediaUrl} alt="Preview" className="w-full h-full object-cover" />
-              )}
+          ) : imageSrc ? (
+            <div className="aspect-video relative rounded-lg overflow-hidden bg-secondary border border-border shadow">
+              <img src={imageSrc} alt="Preview" className="w-full h-full object-cover" />
             </div>
-          )}
+          ) : null}
+
           <pre className="p-3 bg-secondary/30 rounded-lg text-xs overflow-x-auto whitespace-pre-wrap font-sans">
             {JSON.stringify(viewData, null, 2)}
           </pre>

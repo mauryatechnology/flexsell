@@ -138,14 +138,30 @@ export default function AdminCmsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    addToast("Uploading file to Vercel Blob...", "info");
+    const isVideo = file.type.startsWith("video/");
+    const maxSizeBytes = isVideo ? 30 * 1024 * 1024 : 10 * 1024 * 1024;
+
+    if (file.size > maxSizeBytes) {
+      addToast(
+        `Selected ${isVideo ? "video" : "image"} (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds maximum limit (${isVideo ? "30MB" : "10MB"}). Please compress your file or paste a direct video URL.`,
+        "error"
+      );
+      e.target.value = "";
+      return;
+    }
+
+    addToast(`Uploading ${isVideo ? "video" : "file"} to Vercel Blob...`, "info");
     try {
       const formDataUpload = new FormData();
       formDataUpload.append("file", file);
 
       const res = await fetch("/api/upload", { method: "POST", body: formDataUpload });
-      if (!res.ok) throw new Error("Failed to upload file");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ message: "Failed to parse server upload response" }));
+      
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to upload file");
+      }
+      
       setFormData((prev: any) => ({ ...prev, [fieldName]: data.url }));
       addToast("File uploaded successfully", "success");
     } catch (err: unknown) {

@@ -2,6 +2,10 @@ import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 import { rateLimit } from "@/lib/rateLimit";
+import fs from "fs/promises";
+import path from "path";
+
+export const maxDuration = 60;
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
@@ -23,47 +27,76 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ message: "Invalid session" }, { status: 401 });
     }
 
-    const formData = await request.formData();
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch (err: unknown) {
+      console.error("FormData parse error in upload route:", err);
+      return NextResponse.json(
+        { message: "File upload failed or payload body exceeded server limit. Please use a smaller file or video URL." },
+        { status: 400 }
+      );
+    }
+
     const file = formData.get("file") as File;
 
     if (!file) {
       return NextResponse.json({ message: "No file uploaded" }, { status: 400 });
     }
 
-    // Validate file type — only allow image formats
+    const isVideo = file.type.startsWith("video/");
+
+    // Validate file type — allow common images and videos
     const ALLOWED_TYPES = [
       "image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml",
-      "image/jpg", "image/avif"
+      "image/jpg", "image/avif",
+      "video/mp4", "video/webm", "video/ogg", "video/quicktime", "video/x-matroska"
     ];
-    if (!ALLOWED_TYPES.includes(file.type)) {
+
+    if (!ALLOWED_TYPES.includes(file.type) && !file.type.startsWith("image/") && !isVideo) {
       return NextResponse.json(
-        { message: "File type not allowed. Only images (JPEG, PNG, WebP, GIF, SVG, AVIF) are accepted." },
+        { message: "File type not allowed. Supported formats: Images (JPEG, PNG, WebP, GIF, SVG) and Videos (MP4, WebM, QuickTime)." },
         { status: 400 }
       );
     }
 
-    // Validate file size — max 5MB
-    const MAX_SIZE = 5 * 1024 * 1024;
+    // Validate file size — 10MB for images, 30MB for videos
+    const MAX_SIZE = isVideo ? 30 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
-        { message: "File too large. Maximum allowed size is 5MB." },
+        { message: `File too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum allowed size is ${isVideo ? "30MB" : "10MB"}.` },
         { status: 400 }
       );
     }
 
     // Generate a clean safe filename prefixing with timestamp to avoid name collisions
     const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-    
-    // Upload to Vercel Blob using the environment token
-    const blob = await put(safeName, file, {
-      access: "public",
-    });
 
-    return NextResponse.json({ url: blob.url });
+    // 1. If Vercel Blob Token is configured, attempt upload to Vercel Blob store
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      try {
+        const blob = await put(safeName, file, { access: "public" });
+        if (blob?.url) {
+          return NextResponse.json({ url: blob.url });
+        }
+      } catch (blobError) {
+        console.warn("Vercel Blob upload failed, falling back to local file storage:", blobError);
+      }
+    }
+
+    // 2. Fallback: Save file locally in public/uploads for local development & self-hosted servers
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    await fs.mkdir(uploadDir, { recursive: true });
+    const filePath = path.join(uploadDir, safeName);
+    await fs.writeFile(filePath, buffer);
+
+    return NextResponse.json({ url: `/uploads/${safeName}` });
   } catch (error: unknown) {
-    console.error("Vercel Blob upload failed:", error);
+    console.error("File upload failed:", error);
     return NextResponse.json(
-      { message: (error as any).message || "Failed to upload file to Vercel Blob" },
+      { message: (error as any).message || "Failed to process file upload" },
       { status: 500 }
     );
   }
