@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { orderService } from "@/services/orderService";
 import { Order } from "@/types";
 import { formatPrice } from "@/lib/utils";
+import { InvoiceDocument } from "@/components/documents/InvoiceDocument";
 
 export default function OrderConfirmationPage() {
   const params = useParams();
@@ -18,6 +19,8 @@ export default function OrderConfirmationPage() {
   const [order, setOrder] = React.useState<Order | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
+  const [cmsData, setCmsData] = React.useState<any>(null);
+  const [invoice, setInvoice] = React.useState<any>(null);
 
   React.useEffect(() => {
     if (!orderId) return;
@@ -34,6 +37,23 @@ export default function OrderConfirmationPage() {
     };
 
     fetchOrder();
+
+    // Fetch CMS settings for seller details
+    fetch("/api/cms")
+      .then(res => res.json())
+      .then(data => setCmsData(data))
+      .catch(err => console.error("Failed to load CMS data:", err));
+
+    // Fetch original invoice matching this order ID
+    fetch(`/api/invoices?orderId=${orderId}`)
+      .then(res => res.json())
+      .then(data => {
+        const invs = Array.isArray(data) ? data : data.invoices || [];
+        if (invs.length > 0) {
+          setInvoice(invs[0]);
+        }
+      })
+      .catch(err => console.error("Failed to load invoice:", err));
   }, [orderId]);
 
   const handlePrint = () => {
@@ -75,10 +95,11 @@ export default function OrderConfirmationPage() {
 
   return (
     <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8 text-foreground w-full print:bg-white print:text-black">
-      <div className="max-w-3xl mx-auto space-y-8">
+      {/* Screen layout */}
+      <div className="max-w-3xl mx-auto space-y-8 print:hidden">
         
         {/* Success Header Card */}
-        <div className="text-center space-y-4 print:hidden">
+        <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center p-3 bg-emerald-500/10 text-emerald-500 rounded-full animate-bounce">
             <CheckCircle className="h-16 w-16" />
           </div>
@@ -98,18 +119,12 @@ export default function OrderConfirmationPage() {
           </div>
         </div>
 
-        {/* Print Only Header */}
-        <div className="hidden print:block text-left mb-6 pb-6 border-b">
-          <h1 className="text-2xl font-bold">FLEXSELL WHOLESALE PURCHASE INVOICE</h1>
-          <p className="text-xs text-gray-500">Factory Direct Bulk Sourcing Platform</p>
-        </div>
-
         {/* Main Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* Order Summary */}
-          <Card className="md:col-span-2 border-border/60 shadow-sm print:border-none print:shadow-none">
-            <CardHeader className="border-b bg-secondary/10 print:bg-transparent">
+          <Card className="md:col-span-2 border-border/60 shadow-sm">
+            <CardHeader className="border-b bg-secondary/10">
               <CardTitle className="text-lg flex items-center gap-2">
                 <ClipboardList className="h-5 w-5 text-primary" /> Order Overview
               </CardTitle>
@@ -170,8 +185,8 @@ export default function OrderConfirmationPage() {
 
           {/* Shipping details */}
           <div className="space-y-6">
-            <Card className="border-border/60 shadow-sm print:border-none print:shadow-none">
-              <CardHeader className="border-b bg-secondary/10 print:bg-transparent">
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="border-b bg-secondary/10">
                 <CardTitle className="text-base flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-primary" /> Delivery Dock
                 </CardTitle>
@@ -198,7 +213,7 @@ export default function OrderConfirmationPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-border/60 bg-primary/5 shadow-sm print:hidden">
+            <Card className="border-border/60 bg-primary/5 shadow-sm">
               <CardContent className="p-4 text-center space-y-3">
                 <ShieldCheck className="h-8 w-8 text-primary mx-auto" />
                 <p className="text-xs font-bold uppercase tracking-wider text-primary">Buyer Protection</p>
@@ -212,12 +227,30 @@ export default function OrderConfirmationPage() {
         </div>
 
         {/* Back Link */}
-        <div className="text-center print:hidden">
+        <div className="text-center">
           <Link href="/client/orders" className="text-sm font-semibold text-muted-foreground hover:text-primary inline-flex items-center gap-2 transition-colors">
             Go to My Purchase Orders Dashboard <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
+      </div>
+
+      {/* Print only original generated invoice or receipt */}
+      <div className="hidden print:block max-w-4xl mx-auto p-4">
+        <InvoiceDocument
+          type={invoice?.type || (order.paymentStatus === "Paid" ? "invoice" : "receipt")}
+          documentNumber={invoice?._id || `RCP-${order._id.replace("ORD-", "")}`}
+          order={order}
+          customerId={invoice?.customerId}
+          sellerInfo={{
+            storeName: cmsData?.brandSettings?.storeName || "FlexSell Wholesale",
+            gstin: cmsData?.brandSettings?.gstin || "24AAACF1001M1Z5",
+            address: cmsData?.brandSettings?.companyAddress || "Plot No. 12, GIDC Industrial Estate, Sachin, Surat, Gujarat - 394230",
+            email: cmsData?.brandSettings?.supportEmail || "support@flexsell.in",
+            phone: cmsData?.brandSettings?.supportPhone || "+91 261 2409000",
+          }}
+          showActions={false}
+        />
       </div>
     </div>
   );
