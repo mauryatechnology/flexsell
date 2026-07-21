@@ -113,16 +113,32 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, [products]);
 
   const filteredVariants = React.useMemo(() => {
-    return flattenedVariants.filter((item) => {
-      const matchesSearch = 
-        item.product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.colorVariant.color.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) {
+      return stockFilter === "all"
+        ? flattenedVariants
+        : flattenedVariants.filter((item) =>
+            stockFilter === "low" ? item.stock > 0 && item.stock < 15 : item.stock === 0
+          );
+    }
 
-      const matchesStock = 
-        stockFilter === "all" ? true :
-        stockFilter === "low" ? item.stock > 0 && item.stock < 15 :
-        item.stock === 0;
+    return flattenedVariants.filter((item) => {
+      const matchesSearch =
+        item.sku.toLowerCase().includes(term) ||
+        (item.subVariant.barcode || "").toLowerCase().includes(term) ||
+        item.product.title.toLowerCase().includes(term) ||
+        item.product._id.toLowerCase() === term ||
+        (item.product.hsnCode || "").toLowerCase().includes(term) ||
+        item.colorVariant.color.toLowerCase().includes(term) ||
+        (item.subVariant.size || "").toLowerCase().includes(term) ||
+        (item.subVariant.weight || "").toLowerCase().includes(term);
+
+      const matchesStock =
+        stockFilter === "all"
+          ? true
+          : stockFilter === "low"
+          ? item.stock > 0 && item.stock < 15
+          : item.stock === 0;
 
       return matchesSearch && matchesStock;
     });

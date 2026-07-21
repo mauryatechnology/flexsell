@@ -17,6 +17,8 @@ import { Collection, Category, Product, CollectionCondition } from "@/types";
 import { Pagination } from "@/components/ui/Pagination";
 import { productService } from "@/services/productService";
 import { collectionService } from "@/services/collectionService";
+import { ProductSearchPicker } from "@/components/admin/ProductSearchPicker";
+import { calculateProductRelevanceScore } from "@/services/searchService";
 
 interface AdminCollectionsManagerProps {
   initialCollections: Collection[];
@@ -52,6 +54,7 @@ export function AdminCollectionsManager({ initialCollections }: AdminCollections
   const [selectedProductIds, setSelectedProductIds] = React.useState<string[]>([]);
   const [allProducts, setAllProducts] = React.useState<Product[]>([]);
   const [productSearch, setProductSearch] = React.useState("");
+  const [isSearchPickerOpen, setIsSearchPickerOpen] = React.useState(false);
 
   // Smart Rules Condition States
   const [matchType, setMatchType] = React.useState<"all" | "any">("all");
@@ -384,16 +387,24 @@ export function AdminCollectionsManager({ initialCollections }: AdminCollections
     return filteredCollections.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredCollections, currentPage]);
 
-  // Product Selection helpers
+  const categoryMap = React.useMemo(() => {
+    return new Map<string, Category>(categories.map(c => [c._id, c]));
+  }, [categories]);
+
+  // Product Selection helpers with SKU-first relevance scoring
   const filteredProductsForManual = React.useMemo(() => {
-    if (!productSearch) return allProducts.slice(0, 10);
-    const query = productSearch.toLowerCase();
-    return allProducts.filter(p => 
-      p.title.toLowerCase().includes(query) || 
-      p.slug.toLowerCase().includes(query) ||
-      (p.hsnCode && p.hsnCode.toLowerCase().includes(query))
-    ).slice(0, 10);
-  }, [allProducts, productSearch]);
+    if (!productSearch.trim()) return allProducts.slice(0, 15);
+    
+    return allProducts
+      .map(p => ({
+        product: p,
+        score: calculateProductRelevanceScore(p, productSearch, categoryMap).score
+      }))
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(item => item.product)
+      .slice(0, 20);
+  }, [allProducts, productSearch, categoryMap]);
 
   const handleAddProductToManual = (pid: string) => {
     if (!selectedProductIds.includes(pid)) {
@@ -868,14 +879,24 @@ export function AdminCollectionsManager({ initialCollections }: AdminCollections
                         <h3 className="font-bold text-sm text-foreground">Select Products to Add</h3>
                         <p className="text-xs text-muted-foreground mt-0.5">Search catalog and click add.</p>
                       </div>
-                      <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Search product..."
-                          value={productSearch}
-                          onChange={(e) => setProductSearch(e.target.value)}
-                          className="pl-9 h-10 text-foreground"
-                        />
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search SKU, name, HSN..."
+                            value={productSearch}
+                            onChange={(e) => setProductSearch(e.target.value)}
+                            className="pl-9 h-10 text-foreground"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsSearchPickerOpen(true)}
+                          className="h-10 text-xs font-bold shrink-0 border-primary/40 text-primary hover:bg-primary/10"
+                        >
+                          <Search className="h-3.5 w-3.5 mr-1" /> Browse SKUs
+                        </Button>
                       </div>
 
                       <div className="divide-y max-h-96 overflow-y-auto pr-1">
@@ -1199,6 +1220,16 @@ export function AdminCollectionsManager({ initialCollections }: AdminCollections
           </Card>
         </form>
       )}
+
+      {/* Product SKU Picker Modal */}
+      <ProductSearchPicker
+        isOpen={isSearchPickerOpen}
+        onClose={() => setIsSearchPickerOpen(false)}
+        onSelectProduct={(p) => handleAddProductToManual(p._id)}
+        selectedProductIds={selectedProductIds}
+        multiSelect
+        title="Select Products for Collection by SKU or Name"
+      />
     </div>
   );
 }

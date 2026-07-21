@@ -18,6 +18,7 @@ import { BarcodeScanner } from "./BarcodeScanner";
 import { Barcode } from "@/components/ui/Barcode";
 import { Pagination } from "@/components/ui/Pagination";
 import { getBarcodeSvgString } from "@/lib/barcodeHelper";
+import { calculateProductRelevanceScore } from "@/services/searchService";
 import { resolvePrice } from "@/lib/priceTierHelper";
 import { InventoryManager } from "./InventoryManager";
 import { BulkOperationsModal } from "./BulkOperationsModal";
@@ -113,19 +114,18 @@ export function AdminProductsManager({ initialProducts, initialCategories }: Adm
   const processedProducts = React.useMemo(() => {
     let list = [...activeProducts];
 
-    // Text Search
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      list = list.filter(p => 
-        p.title.toLowerCase().includes(term) || 
-        p.colorVariants?.some(cv => 
-          cv.color.toLowerCase().includes(term) ||
-          cv.subVariants?.some(sv => 
-            sv.sku.toLowerCase().includes(term) ||
-            (sv.barcode && sv.barcode.toLowerCase().includes(term))
-          )
-        )
-      );
+    const catMap = new Map<string, Category>(activeCategories.map(c => [c._id, c]));
+
+    // Text Search with SKU priority scoring
+    if (searchTerm.trim()) {
+      list = list
+        .map(p => ({
+          product: p,
+          score: calculateProductRelevanceScore(p, searchTerm, catMap).score
+        }))
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map(item => item.product);
     }
 
     // Category Filter
