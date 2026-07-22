@@ -151,7 +151,9 @@ export function OtpVerificationModal({
           {digits.map((digit, idx) => (
             <Input
               key={idx}
-              ref={(el) => (inputRefs.current[idx] = el)}
+              ref={(el) => {
+                inputRefs.current[idx] = el;
+              }}
               type="text"
               inputMode="numeric"
               maxLength={1}

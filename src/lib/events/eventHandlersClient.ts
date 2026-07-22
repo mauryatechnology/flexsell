@@ -2,7 +2,7 @@ import { SystemEventPayload } from "./eventDispatcher";
 
 const NOTIFICATIONS_STORAGE_KEY = "flexsell-notifications-storage";
 
-async function saveInAppNotification(notifData: {
+function saveClientMockNotification(notifData: {
   customerId: string;
   recipientRole: "customer" | "admin";
   title: string;
@@ -11,98 +11,40 @@ async function saveInAppNotification(notifData: {
   link?: string;
   actionType?: string;
   entityId?: string;
-}): Promise<void> {
-  if (typeof window !== "undefined") {
-    try {
-      const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
-      const list = raw ? JSON.parse(raw) : [];
-      list.unshift({
-        _id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        ...notifData,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      });
-      localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(list));
-    } catch {
-      // ignore
-    }
-    return;
-  }
-
+}): void {
+  if (typeof window === "undefined") return;
   try {
-    const dbConnect = (await import("../dbConnect")).default;
-    const NotificationModel = (await import("@/models/Notification")).default;
-    await dbConnect();
-    await NotificationModel.create({
+    const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    list.unshift({
+      _id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       ...notifData,
       isRead: false,
+      createdAt: new Date().toISOString(),
     });
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(list));
   } catch (err) {
-    console.error("Failed to save DB notification:", err);
+    console.error("Failed to save mock notification to localStorage:", err);
   }
 }
 
-async function checkUserPreferences(
-  userId: string,
-  category: string
-): Promise<{ push: boolean; email: boolean }> {
-  if (typeof window !== "undefined") {
-    return { push: true, email: true };
-  }
-  try {
-    const dbConnect = (await import("../dbConnect")).default;
-    const NotificationPreferenceModel = (await import("@/models/NotificationPreference")).default;
-    await dbConnect();
-    const pref = await NotificationPreferenceModel.findOne({ userId });
-    if (!pref) {
-      return { push: true, email: true };
-    }
-    const pushEnabled = pref.pushNotifications && (pref.categories as any)?.[category] !== false;
-    const emailEnabled = pref.emailNotifications && (pref.categories as any)?.[category] !== false;
-    return { push: pushEnabled, email: emailEnabled };
-  } catch {
-    return { push: true, email: true };
-  }
-}
+export function handleClientMockEvent(event: SystemEventPayload): void {
+  const { eventType, recipient, actor, entity, data } = event;
 
-export async function handleSystemEvent(event: SystemEventPayload): Promise<void> {
-  if (typeof window !== "undefined") {
-    return;
-  }
-
-  const { eventType, category, actor, recipient, entity, data } = event;
-
-  console.log(`[EVENT HANDLER] Processing event ${eventType} under category ${category}`);
-
-  // Dynamic server imports to avoid browser bundling issues
-  const { emailService } = await import("../emailService");
-  const { pushServiceServer } = await import("../push/pushServiceServer");
-
-  // 1. Customer Notifications & Email Handler
+  // 1. Save in-app notification locally for sandbox UI feedback
   if (recipient.role === "customer" || recipient.role === "both") {
     const customerId = recipient.customerId || actor.id;
-    const customerEmail = recipient.email;
-    const customerName = recipient.name || "Valued Buyer";
-
-    const prefs = await checkUserPreferences(customerId, category);
-
     let notifTitle = "";
     let notifMessage = "";
     let notifType: "info" | "order" | "success" | "warning" | "security" = "info";
     let deepLink = "/";
-    let triggerEmailSend: () => Promise<any> = async () => {};
 
     switch (eventType) {
-      case "AUTH_OTP_REQUESTED":
-        break;
-
       case "AUTH_REGISTERED":
         notifTitle = "Welcome to FlexSell Wholesale!";
         notifMessage = `Your B2B buyer account (${customerId}) is active. Access tiered volume pricing and catalog specs.`;
         notifType = "success";
         deepLink = "/client/profile";
-        triggerEmailSend = () =>
-          emailService.sendWelcomeEmail({ _id: customerId, email: customerEmail, name: customerName });
         break;
 
       case "AUTH_PASSWORD_RESET_REQUESTED":
@@ -110,9 +52,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = "A password reset link was sent to your registered email address.";
         notifType = "security";
         deepLink = "/reset-password";
-        if (customerEmail && data?.resetLink) {
-          triggerEmailSend = () => emailService.sendPasswordResetEmail(customerEmail, data.resetLink);
-        }
         break;
 
       case "AUTH_PASSWORD_CHANGED":
@@ -120,9 +59,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = "Your account password was updated successfully.";
         notifType = "security";
         deepLink = "/login";
-        if (customerEmail) {
-          triggerEmailSend = () => emailService.sendPasswordChangedEmail(customerEmail);
-        }
         break;
 
       case "PROFILE_UPDATED":
@@ -130,9 +66,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = "Your account profile information was updated.";
         notifType = "security";
         deepLink = "/client/profile";
-        if (customerEmail) {
-          triggerEmailSend = () => emailService.sendProfileUpdatedEmail(customerEmail, customerName);
-        }
         break;
 
       case "ADDRESS_ADDED":
@@ -140,9 +73,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = "A shipping address was added or modified in your account profile.";
         notifType = "security";
         deepLink = "/client/profile";
-        if (customerEmail) {
-          triggerEmailSend = () => emailService.sendAddressChangedEmail(customerEmail, customerName);
-        }
         break;
 
       case "ORDER_CREATED":
@@ -150,9 +80,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = `Your order #${entity.id} for ₹${Number(data?.amount || 0).toLocaleString("en-IN")} has been placed successfully.`;
         notifType = "order";
         deepLink = `/client/orders/${entity.id}`;
-        if (customerEmail && data) {
-          triggerEmailSend = () => emailService.sendOrderConfirmationEmail(data, customerEmail);
-        }
         break;
 
       case "ORDER_MODIFIED":
@@ -160,10 +87,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = data?.changesSummary || `Your order #${entity.id} details have been updated by our fulfillment team.`;
         notifType = "warning";
         deepLink = `/client/orders/${entity.id}`;
-        if (data) {
-          triggerEmailSend = () =>
-            emailService.sendOrderModificationEmail(data.order || data, data.changesSummary || "Order details updated");
-        }
         break;
 
       case "ORDER_STATUS_CHANGED":
@@ -175,18 +98,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
           : `Order #${entity.id} status changed to ${data?.status}`;
         notifType = isShipped ? "success" : "info";
         deepLink = `/client/orders/${entity.id}`;
-
-        if (isShipped && data) {
-          triggerEmailSend = () =>
-            emailService.sendShipmentNotificationEmail(
-              data.order || data,
-              data.carrierName || "Delivery Partner",
-              data.trackingId || "N/A",
-              data.trackingUrl
-            );
-        } else if (customerEmail && data) {
-          triggerEmailSend = () => emailService.sendPaymentStatusEmail(data, customerEmail);
-        }
         break;
 
       case "PAYMENT_STATUS_CHANGED":
@@ -194,9 +105,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = `Payment status for order #${entity.id} is now: ${data?.paymentStatus || "Updated"}`;
         notifType = data?.paymentStatus === "Paid" ? "success" : "warning";
         deepLink = `/client/orders/${entity.id}`;
-        if (customerEmail && data) {
-          triggerEmailSend = () => emailService.sendPaymentStatusEmail(data, customerEmail);
-        }
         break;
 
       case "QUOTE_GENERATED":
@@ -204,9 +112,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = `Proforma Quote #${entity.id} for ₹${Number(data?.amount || 0).toLocaleString("en-IN")} is ready for review.`;
         notifType = "info";
         deepLink = `/client/orders/${entity.id}`;
-        if (customerEmail && data) {
-          triggerEmailSend = () => emailService.sendInvoiceQuoteEmail({ ...data, type: "quote" }, customerEmail);
-        }
         break;
 
       case "INVOICE_GENERATED":
@@ -214,9 +119,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = `GST Tax Invoice #${entity.id} of ₹${Number(data?.amount || 0).toLocaleString("en-IN")} is ready for download.`;
         notifType = "success";
         deepLink = `/client/orders/${data?.orderId || entity.id}`;
-        if (customerEmail && data) {
-          triggerEmailSend = () => emailService.sendInvoiceQuoteEmail({ ...data, type: "invoice" }, customerEmail);
-        }
         break;
 
       case "RECEIPT_GENERATED":
@@ -224,9 +126,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = `Payment Receipt #${entity.id} of ₹${Number(data?.amount || 0).toLocaleString("en-IN")} is ready for download.`;
         notifType = "success";
         deepLink = `/client/orders/${data?.orderId || entity.id}`;
-        if (customerEmail && data) {
-          triggerEmailSend = () => emailService.sendInvoiceQuoteEmail({ ...data, type: "receipt" }, customerEmail);
-        }
         break;
 
       case "REVIEW_MODERATED":
@@ -235,9 +134,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = `Your product review has been review moderated and is now ${approvedStatus ? "Approved" : "Rejected"}.`;
         notifType = approvedStatus ? "success" : "warning";
         deepLink = data?.productId ? `/products/${data.productId}` : "/";
-        if (customerEmail && data) {
-          triggerEmailSend = () => emailService.sendReviewModeratedEmail(data, customerEmail);
-        }
         break;
 
       case "INQUIRY_SUBMITTED":
@@ -245,9 +141,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = `We received your inquiry regarding "${data?.subject || "Wholesale Quotes"}".`;
         notifType = "info";
         deepLink = "/client/support";
-        if (customerEmail && data) {
-          triggerEmailSend = () => emailService.sendCustomerInquiryConfirmation(data, customerEmail);
-        }
         break;
 
       case "INQUIRY_RESPONDED":
@@ -255,15 +148,11 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         notifMessage = `Admin replied to support ticket #${entity.id}: "${data?.subject || ""}"`;
         notifType = "info";
         deepLink = "/client/support";
-        if (customerEmail && data) {
-          triggerEmailSend = () => emailService.sendInquiryResponseEmail(data, data.responseText || "Replied", customerEmail);
-        }
         break;
     }
 
     if (notifTitle && notifMessage) {
-      // 1. In-App Notification
-      await saveInAppNotification({
+      saveClientMockNotification({
         customerId,
         recipientRole: "customer",
         title: notifTitle,
@@ -273,34 +162,15 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         actionType: eventType,
         entityId: entity.id,
       });
-
-      // 2. Web Push Notification (Checks Preferences)
-      if (prefs.push) {
-        await pushServiceServer.sendPushNotification(customerId, "customer", {
-          title: notifTitle,
-          body: notifMessage,
-          link: deepLink,
-          entityId: entity.id,
-          actionType: eventType,
-        });
-      }
-
-      // 3. Email Notification (Checks Preferences)
-      if (prefs.email && customerEmail) {
-        await triggerEmailSend();
-      }
     }
   }
 
-  // 2. Admin Notifications Handler
+  // 2. Save admin notification locally
   if (recipient.role === "admin" || recipient.role === "both") {
-    const adminPrefs = await checkUserPreferences("admin", category);
-
     let adminTitle = "";
     let adminMessage = "";
     let adminType: "info" | "order" | "success" | "warning" | "security" = "info";
     let adminLink = "/admin";
-    let triggerAdminEmailSend: () => Promise<any> = async () => {};
 
     switch (eventType) {
       case "AUTH_REGISTERED":
@@ -308,7 +178,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         adminMessage = `New wholesale buyer "${recipient.name || "Buyer"}" (${recipient.email || ""}) registered. ID: ${entity.id}`;
         adminType = "info";
         adminLink = "/admin/customers";
-        triggerAdminEmailSend = () => emailService.sendAdminNewBuyerAlert(data || { name: recipient.name, email: recipient.email, _id: entity.id });
         break;
 
       case "ORDER_CREATED":
@@ -316,9 +185,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         adminMessage = `Buyer ${actor.name} placed a new order #${entity.id} for ₹${Number(data?.amount || 0).toLocaleString("en-IN")}.`;
         adminType = "order";
         adminLink = `/admin/orders/${entity.id}`;
-        if (data) {
-          triggerAdminEmailSend = () => emailService.sendAdminNewOrderAlert(data);
-        }
         break;
 
       case "QUOTE_ACCEPTED":
@@ -326,9 +192,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         adminMessage = `Buyer ${actor.name} accepted proforma quote for order #${entity.id}.`;
         adminType = "success";
         adminLink = `/admin/orders/${entity.id}`;
-        if (data) {
-          triggerAdminEmailSend = () => emailService.sendQuoteResponseNotification(data, true);
-        }
         break;
 
       case "QUOTE_REJECTED":
@@ -336,9 +199,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         adminMessage = `Buyer ${actor.name} rejected proforma quote for order #${entity.id}.`;
         adminType = "warning";
         adminLink = `/admin/orders/${entity.id}`;
-        if (data) {
-          triggerAdminEmailSend = () => emailService.sendQuoteResponseNotification(data, false);
-        }
         break;
 
       case "REVIEW_SUBMITTED":
@@ -346,9 +206,6 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         adminMessage = `Buyer ${actor.name} submitted a product review for product ${data?.productId || ""}.`;
         adminType = "warning";
         adminLink = `/admin/reviews`;
-        if (data) {
-          triggerAdminEmailSend = () => emailService.sendAdminReviewAlert(data);
-        }
         break;
 
       case "INQUIRY_SUBMITTED":
@@ -356,15 +213,11 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         adminMessage = `New wholesale inquiry from ${actor.name} regarding "${data?.subject || "Wholesale Quotes"}".`;
         adminType = "info";
         adminLink = `/admin/inquiries`;
-        if (data) {
-          triggerAdminEmailSend = () => emailService.sendAdminInquiryAlert(data);
-        }
         break;
     }
 
     if (adminTitle && adminMessage) {
-      // 1. In-App Notification for Admin
-      await saveInAppNotification({
+      saveClientMockNotification({
         customerId: "admin",
         recipientRole: "admin",
         title: adminTitle,
@@ -374,22 +227,17 @@ export async function handleSystemEvent(event: SystemEventPayload): Promise<void
         actionType: eventType,
         entityId: entity.id,
       });
-
-      // 2. Web Push Notification for Admin (Checks Preferences)
-      if (adminPrefs.push) {
-        await pushServiceServer.sendPushNotification("admin", "admin", {
-          title: adminTitle,
-          body: adminMessage,
-          link: adminLink,
-          entityId: entity.id,
-          actionType: eventType,
-        });
-      }
-
-      // 3. Email Notification for Admin (Checks Preferences)
-      if (adminPrefs.email) {
-        await triggerAdminEmailSend();
-      }
     }
+  }
+
+  // 3. Dispatch event to server endpoint asynchronously so Nodemailer SMTP email & Web Push notifications are dispatched
+  if (typeof window !== "undefined" && typeof fetch !== "undefined") {
+    fetch("/api/events/dispatch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(event),
+    }).catch((err) => {
+      console.warn("Failed to dispatch server event from client:", err);
+    });
   }
 }

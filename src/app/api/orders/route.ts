@@ -601,7 +601,7 @@ export async function POST(request: Request) {
     dispatchEvent({
       eventType: "ORDER_CREATED",
       category: "orders",
-      actor: { id: payload.userId, name: payload.email, role: payload.role },
+      actor: { id: payload.userId, name: payload.email, role: (payload.role as "admin" | "customer" | "system") || "customer" },
       recipient: { customerId: targetCustomerId, email: shippingAddress.email, name: `${shippingAddress.firstName} ${shippingAddress.lastName}`, role: "both" },
       entity: { type: "order", id: orderId },
       data: newOrder,

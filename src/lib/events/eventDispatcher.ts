@@ -1,4 +1,4 @@
-import { handleSystemEvent } from "./eventHandlers";
+import { handleClientMockEvent } from "./eventHandlersClient";
 
 export interface SystemEventPayload {
   eventId?: string;
@@ -34,8 +34,24 @@ export function dispatchEvent(payload: SystemEventPayload): void {
 
   // Non-blocking asynchronous event handling execution
   setTimeout(() => {
-    handleSystemEvent(fullPayload).catch((err) => {
-      console.error(`[EVENT HANDLER ERROR] Unhandled exception in event ${fullPayload.eventType}:`, err);
-    });
+    if (typeof window !== "undefined") {
+      // Browser environment: handle client-side mock events
+      try {
+        handleClientMockEvent(fullPayload);
+      } catch (err) {
+        console.error(`[CLIENT EVENT HANDLER ERROR] Unhandled exception in mock event ${fullPayload.eventType}:`, err);
+      }
+    } else {
+      // Server environment: dynamically import server handlers
+      import("./eventHandlers")
+        .then(({ handleSystemEvent }) => {
+          handleSystemEvent(fullPayload).catch((err) => {
+            console.error(`[EVENT HANDLER ERROR] Unhandled exception in event ${fullPayload.eventType}:`, err);
+          });
+        })
+        .catch((err) => {
+          console.error(`[EVENT DISPATCHER IMPORT ERROR] Failed to load server event handlers:`, err);
+        });
+    }
   }, 0);
 }

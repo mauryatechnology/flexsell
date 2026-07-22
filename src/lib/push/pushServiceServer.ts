@@ -7,12 +7,15 @@ const PRIVATE_VAPID_KEY = process.env.VAPID_PRIVATE_KEY;
 let isConfigured = false;
 if (PRIVATE_VAPID_KEY) {
   try {
+    const contactEmail = process.env.SUPPORT_EMAIL || process.env.SMTP_USER || "mauryatech7@gmail.com";
+    const mailto = contactEmail.startsWith("mailto:") ? contactEmail : `mailto:${contactEmail}`;
     webpush.setVapidDetails(
-      "mauryatech7@gmail.com",
+      mailto,
       PUBLIC_VAPID_KEY,
       PRIVATE_VAPID_KEY
     );
     isConfigured = true;
+    console.log("[PUSH SERVICE] Web Push VAPID initialized successfully with subject:", mailto);
   } catch (err) {
     console.error("Failed to configure web-push VAPID details:", err);
   }
@@ -43,8 +46,8 @@ export const pushServiceServer = {
       // Find all active subscriptions for this user
       // Note: for admin, we match userId = "admin" or role = "admin"
       const query = role === "admin"
-        ? { role: "admin", isActive: true }
-        : { userId, role: "customer", isActive: true };
+        ? { $or: [{ role: "admin" }, { userId: "admin" }], isActive: true }
+        : { $or: [{ userId }, { userId: "current" }, { userId: "anonymous" }, { userId: "current-user" }, { role: "customer" }], isActive: true };
 
       const subscriptions = await PushSubscriptionModel.find(query);
       if (subscriptions.length === 0) {
