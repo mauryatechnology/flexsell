@@ -15,6 +15,7 @@ import {
   TestimonialItem,
   BrandPartner,
   FaqItem,
+  BlogPostItem,
   DropshipPageContent
 } from "@/components/admin/cms/types";
 
@@ -27,6 +28,7 @@ import { TrustStatsTab } from "@/components/admin/cms/tabs/TrustStatsTab";
 import { BusinessSectionTab } from "@/components/admin/cms/tabs/BusinessSectionTab";
 import { TestimonialsTab } from "@/components/admin/cms/tabs/TestimonialsTab";
 import { BrandPartnersTab } from "@/components/admin/cms/tabs/BrandPartnersTab";
+import { BlogsTab } from "@/components/admin/cms/tabs/BlogsTab";
 import { DropshipPageTab } from "@/components/admin/cms/tabs/DropshipPageTab";
 import { FaqsTab } from "@/components/admin/cms/tabs/FaqsTab";
 import { PoliciesTab } from "@/components/admin/cms/tabs/PoliciesTab";
@@ -55,6 +57,7 @@ export default function AdminCmsPage() {
   const [testimonialsDropshipper, setTestimonialsDropshipper] = React.useState<TestimonialItem[]>([]);
   const [testimonialsClient, setTestimonialsClient] = React.useState<TestimonialItem[]>([]);
   const [brandPartners, setBrandPartners] = React.useState<BrandPartner[]>([]);
+  const [blogs, setBlogs] = React.useState<BlogPostItem[]>([]);
   const [faqs, setFaqs] = React.useState<FaqItem[]>([]);
   const [policies, setPolicies] = React.useState<any>({});
   const [dropshipPage, setDropshipPage] = React.useState<DropshipPageContent>({});
@@ -69,6 +72,35 @@ export default function AdminCmsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
   const [deleteIndex, setDeleteIndex] = React.useState<number | null>(null);
   const [seedModalOpen, setSeedModalOpen] = React.useState(false);
+
+  // Check URL Query param ?tab=... and sync tab selection
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab") as CmsTabType;
+      if (tabParam) {
+        if (tabParam === "testimonials") {
+          setActiveTab("testimonials_wholesale");
+        } else {
+          setActiveTab(tabParam);
+        }
+      }
+    }
+  }, []);
+
+  const handleTabSelect = (tab: CmsTabType) => {
+    let targetTab = tab;
+    if (tab === "testimonials") {
+      targetTab = "testimonials_wholesale";
+    }
+    setActiveTab(targetTab);
+
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", targetTab);
+      window.history.pushState(null, "", url.toString());
+    }
+  };
 
   const fetchCmsData = React.useCallback(async () => {
     try {
@@ -86,6 +118,7 @@ export default function AdminCmsPage() {
       setTestimonialsDropshipper(data.testimonials_dropshipper || []);
       setTestimonialsClient(data.testimonials_client || []);
       setBrandPartners(data.brand_partners || []);
+      setBlogs(data.blogs || []);
       setFaqs(data.faqs || []);
       setPolicies(data.policies || {});
       setDropshipPage(data.dropshipping_page_content || {});
@@ -179,6 +212,7 @@ export default function AdminCmsPage() {
     else if (activeTab === "wholesale_biz" || activeTab === "dropship_biz") setFormData({ icon: "package", title: "New Highlight", desc: "Description...", badge: "Feature Badge" });
     else if (activeTab.startsWith("testimonials")) setFormData({ name: "", business: "", location: "", rating: 5, text: "", contentType: "text", mediaUrl: "", avatarUrl: "", isActive: true });
     else if (activeTab === "partners") setFormData({ name: "", logoUrl: "" });
+    else if (activeTab === "blogs") setFormData({ title: "", slug: "", category: "Industry News", author: "Flexsell Editorial", excerpt: "", content: "", coverImage: "", publishedAt: new Date().toISOString(), isActive: true });
     else if (activeTab === "faqs") setFormData({ question: "", answer: "", category: "General" });
     setFormModalOpen(true);
   };
@@ -256,6 +290,12 @@ export default function AdminCmsPage() {
       else copy[editingIndex] = formData;
       setBrandPartners(copy);
       handleSaveCmsKey("brand_partners", copy);
+    } else if (activeTab === "blogs") {
+      const copy = [...blogs];
+      if (editingIndex === null) copy.push({ ...formData, publishedAt: formData.publishedAt || new Date().toISOString() });
+      else copy[editingIndex] = formData;
+      setBlogs(copy);
+      handleSaveCmsKey("blogs", copy);
     } else if (activeTab === "faqs") {
       const copy = [...faqs];
       if (editingIndex === null) copy.push(formData);
@@ -306,6 +346,10 @@ export default function AdminCmsPage() {
       const updated = brandPartners.filter((_, i) => i !== deleteIndex);
       setBrandPartners(updated);
       handleSaveCmsKey("brand_partners", updated);
+    } else if (activeTab === "blogs") {
+      const updated = blogs.filter((_, i) => i !== deleteIndex);
+      setBlogs(updated);
+      handleSaveCmsKey("blogs", updated);
     } else if (activeTab === "faqs") {
       const updated = faqs.filter((_, i) => i !== deleteIndex);
       setFaqs(updated);
@@ -324,14 +368,28 @@ export default function AdminCmsPage() {
     );
   }
 
+  const isTestimonialSection =
+    activeTab === "testimonials" ||
+    activeTab === "testimonials_wholesale" ||
+    activeTab === "testimonials_dropship" ||
+    activeTab === "testimonials_client";
+
+  const currentTestimonialSubTab =
+    activeTab === "testimonials_dropship"
+      ? "testimonials_dropship"
+      : activeTab === "testimonials_client"
+      ? "testimonials_client"
+      : "testimonials_wholesale";
+
   return (
     <div className="space-y-6">
       <CmsHeader onOpenSeedModal={() => setSeedModalOpen(true)} />
 
-      <CmsTabsNav activeTab={activeTab} onSelectTab={(tab) => setActiveTab(tab)} />
+      <CmsTabsNav activeTab={activeTab} onSelectTab={handleTabSelect} />
 
       <Card>
         <CardContent className="p-6 space-y-6">
+          {/* Section Header */}
           <div className="flex justify-between items-center border-b pb-3">
             <h2 className="font-bold text-lg text-foreground uppercase tracking-wider text-xs">
               Tabular Management — {activeTab.replace("_", " ").toUpperCase()}
@@ -343,15 +401,40 @@ export default function AdminCmsPage() {
             )}
           </div>
 
+          {/* Customer Reviews Sub-Tabs Header */}
+          {isTestimonialSection && (
+            <div className="flex border-b text-xs font-bold gap-6 pb-0 mb-4 overflow-x-auto">
+              {[
+                { id: "testimonials_wholesale", label: "Wholesale Reviews" },
+                { id: "testimonials_dropship", label: "Dropship Reviews" },
+                { id: "testimonials_client", label: "Client Reviews" },
+              ].map((sub) => (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onClick={() => handleTabSelect(sub.id as CmsTabType)}
+                  className={`pb-2.5 border-b-2 transition-all cursor-pointer whitespace-nowrap -mb-[2px] ${
+                    currentTestimonialSubTab === sub.id
+                      ? "border-primary text-primary font-bold"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {sub.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {activeTab === "hero" && <BannersTab banners={heroBanners} onView={openViewModal} onEdit={openEditModal} onDelete={openDeleteModal} />}
           {activeTab === "announcements" && <AnnouncementsTab announcements={announcements} onEdit={openEditModal} onDelete={openDeleteModal} />}
           {activeTab === "trust" && <TrustStatsTab trustStats={trustStats} onEdit={openEditModal} onDelete={openDeleteModal} />}
           {activeTab === "wholesale_biz" && <BusinessSectionTab data={wholesaleBiz} setData={setWholesaleBiz} sectionKey="wholesale_business_details" isSaving={isSaving} onSaveHeadings={handleSaveCmsKey} onEditCard={openEditModal} onDeleteCard={openDeleteModal} titleColorClass="text-emerald-600" />}
           {activeTab === "dropship_biz" && <BusinessSectionTab data={dropshipBiz} setData={setDropshipBiz} sectionKey="dropshipping_business_details" isSaving={isSaving} onSaveHeadings={handleSaveCmsKey} onEditCard={openEditModal} onDeleteCard={openDeleteModal} titleColorClass="text-purple-600" />}
-          {activeTab === "testimonials_wholesale" && <TestimonialsTab testimonials={testimonialsWholesale} onView={openViewModal} onEdit={openEditModal} onDelete={openDeleteModal} />}
+          {(activeTab === "testimonials" || activeTab === "testimonials_wholesale") && <TestimonialsTab testimonials={testimonialsWholesale} onView={openViewModal} onEdit={openEditModal} onDelete={openDeleteModal} />}
           {activeTab === "testimonials_dropship" && <TestimonialsTab testimonials={testimonialsDropshipper} onView={openViewModal} onEdit={openEditModal} onDelete={openDeleteModal} />}
           {activeTab === "testimonials_client" && <TestimonialsTab testimonials={testimonialsClient} onView={openViewModal} onEdit={openEditModal} onDelete={openDeleteModal} />}
           {activeTab === "partners" && <BrandPartnersTab brandPartners={brandPartners} onEdit={openEditModal} onDelete={openDeleteModal} />}
+          {activeTab === "blogs" && <BlogsTab blogs={blogs} onEdit={openEditModal} onDelete={openDeleteModal} />}
           {activeTab === "dropship_page" && <DropshipPageTab data={dropshipPage} setData={setDropshipPage} isSaving={isSaving} onSave={handleSaveCmsKey} />}
           {activeTab === "faqs" && <FaqsTab faqs={faqs} onEdit={openEditModal} onDelete={openDeleteModal} />}
           {activeTab === "policies" && <PoliciesTab policies={policies} setPolicies={setPolicies} isSaving={isSaving} onSave={handleSaveCmsKey} />}

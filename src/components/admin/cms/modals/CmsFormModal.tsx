@@ -283,6 +283,113 @@ export function CmsFormModal({
               </div>
             </>
           )}
+
+          {/* Blogs & Articles Fields */}
+          {activeTab === "blogs" && (
+            <>
+              <div className="space-y-1">
+                <label className="font-bold">Article Title *</label>
+                <Input
+                  value={formData.title || ""}
+                  onChange={(e) => {
+                    const title = e.target.value;
+                    const generatedSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+                    setFormData({
+                      ...formData,
+                      title,
+                      slug: formData.slug ? formData.slug : generatedSlug
+                    });
+                  }}
+                  placeholder="e.g. 10 Wholesale Trends in B2B E-commerce for 2026"
+                  className="text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold">URL Slug *</label>
+                  <Input
+                    value={formData.slug || ""}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    placeholder="wholesale-b2b-trends-2026"
+                    className="text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold">Category</label>
+                  <Input
+                    value={formData.category || ""}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="e.g. Industry News"
+                    className="text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold">Author</label>
+                  <Input
+                    value={formData.author || ""}
+                    onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                    placeholder="e.g. Flexsell Editorial Team"
+                    className="text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold">Publication Status</label>
+                  <select
+                    value={formData.isActive !== false ? "published" : "draft"}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "published" })}
+                    className="w-full h-9 rounded border border-input bg-background px-2 text-xs font-semibold"
+                  >
+                    <option value="published">Published</option>
+                    <option value="draft">Draft</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold">Cover Image URL / Upload</label>
+                <div className="flex gap-2">
+                  <Input
+                    value={formData.coverImage || ""}
+                    onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+                    placeholder="https://images.unsplash.com/..."
+                    className="text-xs"
+                  />
+                  <label className="px-3 py-1.5 bg-secondary border rounded cursor-pointer font-bold flex items-center gap-1 shrink-0">
+                    <Upload className="h-3.5 w-3.5" /> Upload
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => onFileUpload(e, "coverImage")} />
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold">Article Summary / Excerpt *</label>
+                <textarea
+                  rows={2}
+                  className="w-full p-2.5 text-xs border rounded bg-background"
+                  placeholder="Brief summary displayed on blog list cards..."
+                  value={formData.excerpt || ""}
+                  onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold">Full Article Content (Markdown or HTML supported) *</label>
+                <textarea
+                  rows={6}
+                  className="w-full p-2.5 text-xs border rounded bg-background font-mono"
+                  placeholder="Write full article body text..."
+                  value={formData.content || ""}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 border-t pt-3">

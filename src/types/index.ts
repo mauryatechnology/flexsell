@@ -270,6 +270,8 @@ export interface Customer {
 
 export interface Review extends BaseDocument {
   productId: string;
+  productTitle?: string;
+  productSlug?: string;
   customerId?: string;
   customerName: string;
   rating: number;

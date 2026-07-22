@@ -1,6 +1,5 @@
-import * as React from "react";
-import { ThemeEditor } from "@/components/admin/ThemeEditor";
+import { redirect } from "next/navigation";
 
 export default function AdminThemeEditorPage() {
-  return <ThemeEditor />;
+  redirect("/admin/settings?tab=theme");
 }

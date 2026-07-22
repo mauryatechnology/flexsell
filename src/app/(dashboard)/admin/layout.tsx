@@ -4,11 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, ShoppingBag, FolderTree, Users, 
-  Settings, Palette, Tags, CreditCard, Menu, Percent, FileText, LogOut,
+import {
+  LayoutDashboard, ShoppingBag, FolderTree, Users,
+  Settings, Tags, CreditCard, Menu, Percent, FileText, LogOut,
   ChevronLeft, ChevronRight, MessageSquare, MessageSquarePlus, Truck, Image as ImageIcon, Layers, Megaphone,
-  BookOpen, Store, BarChart
+  BarChart
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { Avatar } from "@/components/ui/Avatar";
@@ -35,22 +35,19 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
   const sidebarLinks = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+    { name: "Analytics", href: "/admin/analytics", icon: BarChart },
     { name: "Products", href: "/admin/products", icon: ShoppingBag },
     { name: "Categories", href: "/admin/categories", icon: FolderTree },
     { name: "Collections", href: "/admin/collections", icon: Layers },
     { name: "Orders", href: "/admin/orders", icon: CreditCard },
     { name: "Invoices", href: "/admin/invoices", icon: FileText },
     { name: "Customers", href: "/admin/customers", icon: Users },
-    { name: "Vendors", href: "/admin/vendors", icon: Store },
     { name: "Reviews", href: "/admin/reviews", icon: MessageSquare },
     { name: "Inquiries", href: "/admin/inquiries", icon: MessageSquarePlus },
     { name: "HSN Management", href: "/admin/hsn", icon: Percent },
     { name: "Shipping Options", href: "/admin/shipping", icon: Truck },
     { name: "Coupons", href: "/admin/coupons", icon: Tags },
     { name: "Website CMS", href: "/admin/cms", icon: FileText },
-    { name: "Blogs", href: "/admin/blogs", icon: BookOpen },
-    { name: "Theme Editor", href: "/admin/theme", icon: Palette },
-    { name: "Analytics", href: "/admin/analytics", icon: BarChart },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
 
@@ -73,7 +70,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           </Link>
         )}
       </div>
-      
+
       <div className="flex-1 overflow-y-auto py-6 px-3 flex flex-col justify-between">
         <nav className="space-y-1">
           {sidebarLinks.map((link) => {
@@ -83,15 +80,14 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               <Link
                 key={link.name}
                 href={link.href}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md transition-colors relative group ${
-                  isActive 
-                    ? "bg-primary/10 text-primary font-bold" 
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md transition-colors relative group ${isActive
+                    ? "bg-primary/10 text-primary font-bold"
                     : "hover:bg-secondary hover:text-primary text-foreground"
-                }`}
+                  }`}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
                 {!isCollapsed && <span className="transition-opacity duration-300 opacity-100">{link.name}</span>}
-                
+
                 {/* Tooltip on hover when collapsed */}
                 {isCollapsed && (
                   <span className="absolute left-14 bg-popover text-popover-foreground border px-2 py-1 rounded shadow-md text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
@@ -102,15 +98,15 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             );
           })}
         </nav>
- 
+
         <div className="mt-auto pt-4 border-t">
-          <button 
+          <button
             onClick={logout}
             className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md hover:bg-destructive/10 text-destructive transition-colors w-full text-left cursor-pointer relative group"
           >
             <LogOut className="h-5 w-5 flex-shrink-0" />
             {!isCollapsed && <span>Logout</span>}
-            
+
             {/* Tooltip on hover when collapsed */}
             {isCollapsed && (
               <span className="absolute left-14 bg-popover text-destructive border border-destructive/20 px-2 py-1 rounded shadow-md text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
@@ -126,9 +122,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   return (
     <div className="min-h-screen flex bg-secondary/10">
       {/* Desktop Sidebar (Collapsible) */}
-      <aside className={`bg-card border-r hidden md:flex flex-col sticky top-0 h-screen transition-all duration-300 ${
-        isSidebarOpen ? "w-64" : "w-16"
-      }`}>
+      <aside className={`bg-card border-r hidden md:flex flex-col sticky top-0 h-screen transition-all duration-300 ${isSidebarOpen ? "w-64" : "w-16"
+        }`}>
         <SidebarContent isCollapsed={!isSidebarOpen} />
       </aside>
 
@@ -142,13 +137,13 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         {/* Admin Topbar */}
         <header className="h-16 bg-card border-b flex items-center justify-between px-6 sticky top-0 z-10 gap-4">
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={() => setIsMobileMenuOpen(true)}
               className="md:hidden p-1.5 rounded-md hover:bg-secondary text-foreground cursor-pointer"
             >
               <Menu className="h-6 w-6" />
             </button>
-            
+
             {/* Sidebar toggle button (Chevron Right / Chevron Left) */}
             <button
               onClick={handleToggleSidebar}
@@ -162,7 +157,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               )}
             </button>
           </div>
-          
+
           <div className="flex items-center gap-4 ml-auto">
             <Link href="/" target="_blank" className="text-sm font-medium text-primary hover:underline">
               View Storefront &rarr;
@@ -170,7 +165,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             <Avatar initials="A" size="sm" className="bg-primary text-primary-foreground" />
           </div>
         </header>
-        
+
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-6 md:p-8">
           {children}

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToastStore } from "@/stores/toastStore";
+import { ThemeEditor } from "@/components/admin/ThemeEditor";
 
 export default function AdminSettingsPage() {
   const { addToast } = useToastStore();
@@ -32,13 +33,32 @@ export default function AdminSettingsPage() {
   const [enableOnlinePayment, setEnableOnlinePayment] = React.useState(true);
 
   // Active tab and ID Format states
-  const [activeTab, setActiveTab] = React.useState<"general" | "id">("general");
+  const [activeTab, setActiveTab] = React.useState<"general" | "id" | "theme">("general");
   const [customerPrefix, setCustomerPrefix] = React.useState("FSW-");
   const [customerStart, setCustomerStart] = React.useState("1");
   const [orderPrefix, setOrderPrefix] = React.useState("FS-");
   const [orderStart, setOrderStart] = React.useState("10026");
   const [productPrefix, setProductPrefix] = React.useState("");
   const [productStart, setProductStart] = React.useState("1");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "theme" || tabParam === "id" || tabParam === "general") {
+        setActiveTab(tabParam);
+      }
+    }
+  }, []);
+
+  const handleTabSelect = (tab: "general" | "id" | "theme") => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", tab);
+      window.history.pushState(null, "", url.toString());
+    }
+  };
 
   React.useEffect(() => {
     const fetchSettings = async () => {
@@ -127,22 +147,30 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex border-b gap-4">
+      <div className="flex border-b gap-4 overflow-x-auto">
         <button
-          onClick={() => setActiveTab("general")}
-          className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+          onClick={() => handleTabSelect("general")}
+          className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "general" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           General & Bank Settings
         </button>
         <button
-          onClick={() => setActiveTab("id")}
-          className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+          onClick={() => handleTabSelect("id")}
+          className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "id" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           ID Format Manager
+        </button>
+        <button
+          onClick={() => handleTabSelect("theme")}
+          className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "theme" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Theme & Appearance
         </button>
       </div>
 
@@ -250,7 +278,7 @@ export default function AdminSettingsPage() {
             </CardContent>
           </Card>
         </div>
-      ) : (
+      ) : activeTab === "id" ? (
         <div className="space-y-6">
           <Card className="border border-border">
             <CardHeader>
@@ -336,6 +364,8 @@ export default function AdminSettingsPage() {
             </CardContent>
           </Card>
         </div>
+      ) : (
+        <ThemeEditor />
       )}
     </div>
   );
