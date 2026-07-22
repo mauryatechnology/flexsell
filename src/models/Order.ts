@@ -51,8 +51,12 @@ const OrderSchema = new Schema<OrderType & Document>(
     paymentStatus: { type: String, enum: ["Pending", "Paid", "Failed"], default: "Pending" },
     transactionId: { type: String },
     invoiceId: { type: String, ref: "Invoice" },
+    quoteId: { type: String, ref: "Invoice" },
+    salesperson: { type: String },
     couponCode: { type: String },
     couponDiscount: { type: Number },
+    orderType: { type: String, enum: ["B2B", "B2C"], default: "B2C", required: true },
+    origin: { type: String, enum: ["self", "website"], default: "website", required: true },
   },
   { timestamps: true }
 );
@@ -60,6 +64,9 @@ const OrderSchema = new Schema<OrderType & Document>(
 OrderSchema.index({ status: 1 });
 OrderSchema.index({ customerName: 1 });
 OrderSchema.index({ date: -1 });
+OrderSchema.index({ quoteId: 1 }, { unique: true, sparse: true });
+OrderSchema.index({ orderType: 1 });
+OrderSchema.index({ origin: 1 });
 
 if (mongoose.models.Order) {
   mongoose.deleteModel("Order");

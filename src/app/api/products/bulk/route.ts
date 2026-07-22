@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Product from "@/models/Product";
 import Category from "@/models/Category";
-import { generateNextId } from "@/lib/idGenerator";
+import { generateNextId } from "@/lib/idGeneratorServer";
 import HsnRecord from "@/models/HsnRecord";
 import { requireAuth } from "@/lib/authGuard";
 

@@ -61,13 +61,37 @@ const InvoiceSchema = new Schema<InvoiceType & Document>(
     notes: { type: String },
     generatedAt: { type: String, required: true },
     generatedBy: { type: String, required: true, default: "system" },
+    salesperson: { type: String },
+    isArchived: { type: Boolean, default: false, index: true },
     status: {
       type: String,
-      enum: ["draft", "issued", "paid", "cancelled", "void"],
-      default: "issued",
+      required: true,
+      validate: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        validator: function(this: any, val: string) {
+          let type = this.type;
+          if (!type && typeof this.getUpdate === "function") {
+            const update = this.getUpdate();
+            type = update?.$set?.type || update?.type;
+          }
+          if (!type) {
+            return true;
+          }
+          if (type === "quote") {
+            return ["draft", "finalized", "sent", "accepted", "rejected", "expired", "converted", "cancelled"].includes(val);
+          } else if (type === "receipt") {
+            return ["pending", "failed", "cancelled", "refunded", "paid"].includes(val);
+          } else if (type === "invoice") {
+            return ["paid", "void", "archived"].includes(val);
+          }
+          return false;
+        },
+        message: (props: { value: string }) => `Invalid status "${props.value}" for document type.`
+      }
     },
     couponCode: { type: String },
     couponDiscount: { type: Number },
+    customerType: { type: String, enum: ["B2C", "B2B", "Dropshipping"], default: "B2C", required: true },
   },
   { timestamps: true }
 );
@@ -76,7 +100,9 @@ InvoiceSchema.index({ type: 1 });
 InvoiceSchema.index({ orderId: 1 });
 InvoiceSchema.index({ customerId: 1 });
 InvoiceSchema.index({ status: 1 });
+InvoiceSchema.index({ isArchived: 1 });
 InvoiceSchema.index({ createdAt: -1 });
+InvoiceSchema.index({ customerType: 1 });
 
 if (mongoose.models.Invoice) {
   mongoose.deleteModel("Invoice");

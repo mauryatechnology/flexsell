@@ -76,7 +76,7 @@ export function ConfirmDialog() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -93,7 +93,7 @@ export function ConfirmDialog() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", duration: 0.3 }}
-            className="relative z-50 w-full max-w-md bg-card border border-border rounded-xl shadow-xl overflow-hidden p-6 text-foreground"
+            className="relative z-[100] w-full max-w-md bg-card border border-border rounded-xl shadow-xl overflow-hidden p-6 text-foreground"
           >
             {/* Close cross */}
             <button

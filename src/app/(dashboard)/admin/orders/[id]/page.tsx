@@ -12,6 +12,8 @@ import { formatPrice } from "@/lib/utils";
 import { ArrowLeft, Printer, Truck, Calendar, MapPin, CheckCircle, Clock, AlertTriangle, FileText, Edit2, Trash2 } from "lucide-react";
 
 import { InvoiceDocument } from "@/components/documents/InvoiceDocument";
+import { FulfillmentForm } from "@/components/admin/order/FulfillmentForm";
+import { ShipmentDetails } from "@/stores/orderStore";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -56,9 +58,12 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
   const resolvedParams = React.use(params);
   const orderId = resolvedParams.id;
 
-  const { orders, initializeOrders, isLoading } = useOrderStore();
+  const { orders, initializeOrders, updateOrderStatus, shipOrder, isLoading } = useOrderStore();
   const [cmsData, setCmsData] = React.useState<any>(null);
   const [invoice, setInvoice] = React.useState<any>(null);
+
+  // Shipment modal state
+  const [isShipModalOpen, setIsShipModalOpen] = React.useState(false);
 
   // Edit modal states
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
@@ -94,6 +99,27 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
   }, [initializeOrders, orderId]);
 
   const order = React.useMemo(() => orders.find(o => o._id === orderId), [orders, orderId]);
+
+  const handleUpdateStatus = async (newStatus: any) => {
+    try {
+      await updateOrderStatus(orderId, newStatus);
+      addToast(`Order status updated to ${newStatus} successfully!`, "success");
+      initializeOrders();
+    } catch (err: any) {
+      addToast(err.message || "Failed to update order status", "error");
+    }
+  };
+
+  const handleShipSubmit = async (details: ShipmentDetails) => {
+    try {
+      await shipOrder(orderId, details);
+      addToast("Order cargo dispatched successfully!", "success");
+      setIsShipModalOpen(false);
+      initializeOrders();
+    } catch (err: any) {
+      addToast(err.message || "Failed to dispatch cargo", "error");
+    }
+  };
 
   const handleOpenEditModal = () => {
     if (!order) return;
@@ -218,13 +244,50 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
   return (
     <div className="space-y-6 container mx-auto px-4 py-8 text-foreground max-w-5xl">
       {/* Back & Print Bar (Hidden during printing) */}
-      <div className="flex justify-between items-center no-print">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print border-b pb-4">
         <Link href="/admin/orders">
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Orders List
           </Button>
         </Link>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          {/* Order Actions */}
+          {(order.status === "Placed" || order.status === "Pending") && (
+            <Button
+              onClick={() => handleUpdateStatus("Confirmed")}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9"
+            >
+              ✓ Confirm Order
+            </Button>
+          )}
+
+          {order.status === "Confirmed" && (
+            <Button
+              onClick={() => handleUpdateStatus("Processing")}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-9"
+            >
+              ⚙ Mark Processing
+            </Button>
+          )}
+
+          {(order.status === "Processing" || order.status === "Confirmed" || order.status === "Placed") && (
+            <Button
+              onClick={() => setIsShipModalOpen(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs h-9 flex items-center gap-1.5"
+            >
+              <Truck className="h-3.5 w-3.5" /> Configure Shipment
+            </Button>
+          )}
+
+          {order.status === "Shipped" && (
+            <Button
+              onClick={() => handleUpdateStatus("Delivered")}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold text-xs h-9"
+            >
+              ✓ Mark Delivered
+            </Button>
+          )}
+
           {order.status !== "Cancelled" && (
             <>
               <Button onClick={handleOpenEditModal} variant="outline" className="font-bold flex items-center gap-1.5 h-9 text-xs">
@@ -329,9 +392,9 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
                 <p>This order is waiting for warehouse logistics dispatch. No tracking details have been generated yet.</p>
-                <Link href="/admin/orders" className="block mt-4">
-                  <Button size="sm" className="w-full text-xs">Configure Shipment</Button>
-                </Link>
+                <Button onClick={() => setIsShipModalOpen(true)} size="sm" className="w-full text-xs font-bold mt-4">
+                  Configure Shipment
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -478,6 +541,18 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Configure Shipment Modal */}
+      {isShipModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 no-print">
+          <div className="bg-card border rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 text-foreground space-y-4">
+            <FulfillmentForm
+              orderId={orderId}
+              onShip={handleShipSubmit}
+              onCancel={() => setIsShipModalOpen(false)}
+            />
           </div>
         </div>
       )}

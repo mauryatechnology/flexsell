@@ -58,6 +58,19 @@ export interface FaqItem {
   category?: string;
 }
 
+export interface BlogPostItem {
+  id?: string;
+  title: string;
+  slug: string;
+  author?: string;
+  category?: string;
+  excerpt: string;
+  content: string;
+  coverImage?: string;
+  publishedAt?: string;
+  isActive?: boolean;
+}
+
 export interface DropshipPageContent {
   badge?: string;
   heroHeading?: string;
@@ -75,10 +88,12 @@ export type CmsTabType =
   | "trust"
   | "wholesale_biz"
   | "dropship_biz"
+  | "testimonials"
   | "testimonials_wholesale"
   | "testimonials_dropship"
   | "testimonials_client"
   | "partners"
+  | "blogs"
   | "dropship_page"
   | "faqs"
   | "policies"

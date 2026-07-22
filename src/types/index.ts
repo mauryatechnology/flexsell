@@ -131,7 +131,7 @@ export interface ShipmentDetails {
 export interface Order extends BaseDocument {
   date: string;
   amount: number;
-  status: "Processing" | "Shipped" | "Delivered" | "Cancelled";
+  status: "Placed" | "Pending" | "Confirmed" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
   statusClass: string;
   itemsCount: number;
   customerName: string;
@@ -155,8 +155,12 @@ export interface Order extends BaseDocument {
   paymentStatus?: "Pending" | "Paid" | "Failed";
   transactionId?: string;
   invoiceId?: string;
+  quoteId?: string;
+  salesperson?: string;
   couponCode?: string;
   couponDiscount?: number;
+  orderType?: "B2B" | "B2C";
+  origin?: "self" | "website";
 }
 
 export interface HsnSlab {
@@ -205,9 +209,26 @@ export interface Invoice extends BaseDocument {
   notes?: string;
   generatedAt: string;
   generatedBy: string;
-  status: "draft" | "issued" | "paid" | "cancelled" | "void";
+  salesperson?: string;
+  isArchived?: boolean;
+  status:
+    | "draft"
+    | "finalized"
+    | "sent"
+    | "accepted"
+    | "rejected"
+    | "expired"
+    | "converted"
+    | "cancelled"
+    | "pending"
+    | "failed"
+    | "refunded"
+    | "paid"
+    | "void"
+    | "archived";
   couponCode?: string;
   couponDiscount?: number;
+  customerType?: "B2C" | "B2B" | "Dropshipping";
 }
 
 export interface SavedAddress {
@@ -249,6 +270,8 @@ export interface Customer {
 
 export interface Review extends BaseDocument {
   productId: string;
+  productTitle?: string;
+  productSlug?: string;
   customerId?: string;
   customerName: string;
   rating: number;
@@ -276,10 +299,43 @@ export interface Coupon extends BaseDocument {
 
 export interface Notification extends BaseDocument {
   customerId: string;
+  recipientRole?: "customer" | "admin";
   title: string;
   message: string;
-  type: "info" | "order" | "success" | "warning";
+  type: "info" | "order" | "success" | "warning" | "security";
   isRead: boolean;
+  link?: string;
+  actionType?: string;
+  entityId?: string;
+}
+
+export interface NotificationPreferences {
+  userId: string;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  categories: {
+    orders: boolean;
+    shipments: boolean;
+    payments: boolean;
+    quotes: boolean;
+    invoices: boolean;
+    security: boolean;
+    system: boolean;
+  };
+}
+
+export interface PushSubscriptionInfo {
+  _id?: string;
+  userId: string;
+  role: "customer" | "admin";
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+  userAgent?: string;
+  isActive: boolean;
+  lastUsedAt?: string;
 }
 
 export interface ShippingWeightSlab {

@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
 import Customer from "@/models/Customer";
+import InvoiceModel from "@/models/Invoice";
 import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhookDispatcher";
 import { ORDER_STATUS_CLASSES } from "@/lib/constants";
@@ -23,7 +24,7 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const { status } = await request.json();
+    const { status, paymentStatus, paymentMethod, transactionId } = await request.json();
     
     if (!status || !ORDER_STATUS_CLASSES[status as keyof typeof ORDER_STATUS_CLASSES]) {
       return NextResponse.json({ message: "Invalid order status" }, { status: 400 });
@@ -57,9 +58,31 @@ export async function PUT(
 
     order.status = status;
     order.statusClass = ORDER_STATUS_CLASSES[status as keyof typeof ORDER_STATUS_CLASSES];
+    if (paymentStatus) {
+      order.paymentStatus = paymentStatus;
+    }
+    if (paymentMethod) {
+      order.paymentMethod = paymentMethod;
+    }
+    if (transactionId) {
+      order.transactionId = transactionId;
+    }
     order.history.unshift(newEvent); // Add to the beginning of the history logs
 
     await order.save();
+
+    // Sync Invoice details if payment is updated to Paid
+    if (paymentStatus === "Paid") {
+      const linkedInvoice = await InvoiceModel.findOne({ orderId: order._id });
+      if (linkedInvoice) {
+        linkedInvoice.type = "invoice";
+        linkedInvoice.status = "paid";
+        linkedInvoice.paymentStatus = "Paid";
+        if (paymentMethod) linkedInvoice.paymentMethod = paymentMethod;
+        if (transactionId) linkedInvoice.transactionId = transactionId;
+        await linkedInvoice.save();
+      }
+    }
 
     // Dispatch Webhook & Notification asynchronously
     const targetCustomerId = (await Customer.findOne({ email: order.shippingAddress.email.toLowerCase() }).select("_id"))?._id || "";

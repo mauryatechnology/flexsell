@@ -4,7 +4,7 @@ import Customer from "@/models/Customer";
 import bcrypt from "bcryptjs";
 import { signToken, setTokenCookie } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhookDispatcher";
-import { generateNextId } from "@/lib/idGenerator";
+import { generateNextId } from "@/lib/idGeneratorServer";
 import { rateLimit } from "@/lib/rateLimit";
 import { registerSchema } from "@/lib/validators";
 import { ZodError } from "zod";

@@ -4,6 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
 import { Order, CartItem, TaxBreakdown, SellerInfo, HsnSlab } from "@/types";
+import { useProductStore } from "@/stores/productStore";
 
 export interface InvoiceDocumentProps {
   type: "invoice" | "receipt" | "quote";
@@ -83,6 +84,7 @@ export function InvoiceDocument({
   showActions = true,
   customerId,
 }: InvoiceDocumentProps) {
+  const { products } = useProductStore();
   // Extract seller state from address for tax computation
   const sellerStateMatch = sellerInfo.address.match(/(?:,\s*)([A-Za-z\s]+?)(?:\s*-\s*\d|$)/);
   const sellerState = sellerStateMatch ? sellerStateMatch[1].trim() : "Madhya Pradesh";
@@ -229,9 +231,12 @@ export function InvoiceDocument({
                         {/* Dynamic Variant Image Preview */}
                         <div className="w-12 h-12 relative flex-shrink-0 bg-gray-50 border border-gray-200 rounded overflow-hidden">
                           {(() => {
+                            const matchedProduct = products.find(p => p._id === item.productId || p._id === item.product?._id);
+                            const productSource = matchedProduct || item.product;
+                            const colorVariants = productSource?.colorVariants || [];
                             const matchingColor = item.selectedVariants?.["Color"] || item.selectedVariants?.["color"];
-                            const activeVariant = item.product?.colorVariants?.find((cv: any) => cv.color === matchingColor)
-                              || item.product?.colorVariants?.[0];
+                            const activeVariant = colorVariants.find((cv: any) => cv.color === matchingColor)
+                              || colorVariants[0];
                             const firstImg = activeVariant?.images?.[0];
                             const imgUrl = firstImg ? (typeof firstImg === "string" ? firstImg : firstImg.url || "") : "";
                             return (

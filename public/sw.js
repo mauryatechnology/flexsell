@@ -1,80 +1,47 @@
-const CACHE_NAME = "flexsell-pwa-cache-v1";
-const OFFLINE_URL = "/offline.html";
+// FlexSell Wholesale Service Worker for Web Push Notifications
 
-const ASSETS_TO_CACHE = [
-  "/offline.html",
-  "/manifest.json",
-  "/icon.png",
-  "/favicon.ico"
-];
+self.addEventListener("push", function (event) {
+  if (!event.data) return;
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
-  self.skipWaiting();
+  try {
+    const payload = event.data.json();
+    const title = payload.title || "FlexSell Wholesale Alert";
+    const options = {
+      body: payload.body || payload.message || "",
+      icon: payload.icon || "/Flexsell%20Logo.png",
+      badge: payload.badge || "/icon.png",
+      data: {
+        url: payload.url || payload.link || "/",
+        entityId: payload.entityId || "",
+        actionType: payload.actionType || "",
+      },
+      vibrate: [100, 50, 100],
+      requireInteraction: false,
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch (err) {
+    console.error("Error processing web push payload:", err);
+  }
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close();
+
+  const targetUrl = (event.notification.data && event.notification.data.url) || "/";
+
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
-});
-
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
-
-  const url = new URL(event.request.url);
-
-  // Network First for HTML navigation (exclude API routes from caching)
-  if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, response.clone());
-            return response;
-          });
-        })
-        .catch(() => {
-          return caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) return cachedResponse;
-            if (event.request.mode === "navigate") return caches.match(OFFLINE_URL);
-          });
-        })
-    );
-    return;
-  }
-
-  // Skip caching for API routes — they contain authenticated/dynamic data
-  if (url.pathname.startsWith("/api/")) {
-    return;
-  }
-
-  // Stale-While-Revalidate for static assets
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, networkResponse.clone());
-          });
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (clientList) {
+      for (let i = 0; i < clientList.length; i++) {
+        const client = clientList[i];
+        if (client.url.includes(self.location.origin) && "focus" in client) {
+          client.navigate(targetUrl);
+          return client.focus();
         }
-        return networkResponse;
-      }).catch(() => {});
-
-      return cachedResponse || fetchPromise;
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
     })
   );
 });
