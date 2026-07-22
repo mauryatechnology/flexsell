@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/Button";
 import { useToastStore } from "@/stores/toastStore";
 import { pushService } from "@/lib/push/pushService";
-import { Bell, BellOff, CheckCircle2, AlertTriangle, ShieldCheck, Truck, CreditCard, FileText, ShoppingBag, Lock } from "lucide-react";
+import { sendSystemOSNotification } from "@/lib/browserNotifications";
+import { Bell, BellOff, CheckCircle2, AlertTriangle, ShieldCheck, Truck, CreditCard, FileText, ShoppingBag, Lock, Send } from "lucide-react";
 
 interface NotificationPreferencesCardProps {
   userId?: string;
@@ -37,9 +38,25 @@ export function NotificationPreferencesCard({ userId = "current", role = "custom
     setPermissionState(pushService.getPermissionState());
     if (result.success) {
       addToast(result.message, "success");
+      sendSystemOSNotification("FlexSell System Notifications Active!", {
+        body: "You will receive real-time OS popups for order updates, shipments, and security alerts.",
+        link: "/client/notifications",
+      });
     } else {
       addToast(result.message, result.message.includes("blocked") ? "warning" : "error");
     }
+  };
+
+  const handleSendTestOSNotif = () => {
+    if (permissionState !== "granted") {
+      addToast("Please enable system notifications first", "warning");
+      return;
+    }
+    sendSystemOSNotification("FlexSell Test Notification", {
+      body: "System OS notifications are active and working on your device!",
+      link: "/client/notifications",
+    });
+    addToast("Test system OS notification dispatched!", "success");
   };
 
   const handleDisablePush = async () => {
@@ -96,16 +113,34 @@ export function NotificationPreferencesCard({ userId = "current", role = "custom
               </div>
             </div>
 
-            {permissionState === "granted" ? (
-              <Button variant="outline" size="sm" onClick={handleDisablePush} disabled={isLoading} className="text-xs">
-                Disable Push Notifications
-              </Button>
-            ) : (
-              <Button size="sm" onClick={handleEnablePush} disabled={isLoading || permissionState === "unsupported"} className="font-bold cursor-pointer">
-                {isLoading ? "Enabling..." : "Enable Browser Notifications"}
-              </Button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {permissionState === "granted" && (
+                <Button variant="outline" size="sm" onClick={handleSendTestOSNotif} className="text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                  <Send className="h-3.5 w-3.5 text-primary" /> Test System OS Alert
+                </Button>
+              )}
+              {permissionState === "granted" ? (
+                <Button variant="ghost" size="sm" onClick={handleDisablePush} disabled={isLoading} className="text-xs text-muted-foreground hover:text-foreground">
+                  Disable
+                </Button>
+              ) : (
+                <Button size="sm" onClick={handleEnablePush} disabled={isLoading || permissionState === "unsupported"} className="font-bold cursor-pointer">
+                  {isLoading ? "Enabling..." : "Enable System OS Notifications"}
+                </Button>
+              )}
+            </div>
           </div>
+
+          {permissionState === "granted" && (
+            <div className="p-3 bg-primary/5 border border-primary/15 rounded-lg text-[11px] text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground flex items-center gap-1.5">
+                <Bell className="h-3.5 w-3.5 text-primary" /> Windows / Desktop OS Tip
+              </p>
+              <p className="leading-relaxed">
+                If desktop popup alerts do not appear in the bottom-right corner of your monitor, ensure <strong>Windows "Focus Assist / Do Not Disturb"</strong> is turned OFF in your Windows Action Center (Win + N key).
+              </p>
+            </div>
+          )}
 
           {permissionState === "denied" && (
             <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-700 dark:text-amber-300 space-y-1.5 mt-2">

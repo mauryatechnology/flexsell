@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Analytics } from "@vercel/analytics/react";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { NotificationInitializer } from "@/components/common/NotificationInitializer";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -118,6 +119,7 @@ export default function RootLayout({
           <Analytics />
           <ToastContainer />
           <ConfirmDialog />
+          <NotificationInitializer />
         </ThemeProvider>
         <Script
           id="pwa-sw-register"

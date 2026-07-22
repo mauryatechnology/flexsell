@@ -71,7 +71,22 @@ export async function POST(req: Request) {
       .toUpperCase()
       .substring(0, 2) || "C";
 
-    // 7. Create Customer
+    // 7. Auto-populate initial saved address if physical address was provided
+    const initialAddresses = (address && city && state && pinCode) ? [{
+      name: company || name || "Default Address",
+      firstName: name.split(" ")[0] || "",
+      lastName: name.split(" ").slice(1).join(" ") || "",
+      company: company || "",
+      address,
+      city,
+      state,
+      pinCode,
+      phone: phone || "",
+      gstin: gstin || "",
+      isDefault: true
+    }] : [];
+
+    // Create Customer
     const newCustomer = new Customer({
       _id: customerId,
       name,
@@ -79,14 +94,15 @@ export async function POST(req: Request) {
       password: hashedPassword,
       role: "customer",
       company: company || "",
-      address,
-      city,
-      state,
-      pinCode,
+      address: address || "",
+      city: city || "",
+      state: state || "",
+      pinCode: pinCode || "",
       phone,
       initials,
       gstin: gstin || "",
       customerTypes: customerTypes || ["B2C"],
+      addresses: initialAddresses,
     });
 
     await newCustomer.save();

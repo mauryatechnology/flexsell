@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +13,7 @@ import { formatPrice } from "@/lib/utils";
 import { Pagination } from "@/components/ui/Pagination";
 
 export function ClientOrdersView() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const successOrderId = searchParams.get("success");
 
@@ -128,9 +129,13 @@ export function ClientOrdersView() {
                       </tr>
                     ) : (
                       paginatedOrders.map((order) => (
-                        <tr key={order._id} className="hover:bg-secondary/20 transition-colors">
+                        <tr 
+                          key={order._id} 
+                          onClick={() => router.push(`/client/orders/${order._id}`)}
+                          className="hover:bg-secondary/20 transition-colors cursor-pointer"
+                        >
                           <td className="px-6 py-4">
-                            <p className="font-bold">{order._id}</p>
+                            <p className="font-bold font-mono">{order._id}</p>
                             <p className="text-xs text-muted-foreground mt-1">{order.itemsCount} items</p>
                           </td>
                           <td className="px-6 py-4 text-muted-foreground">{order.date}</td>
@@ -140,7 +145,7 @@ export function ClientOrdersView() {
                               {order.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                          <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             <Button 
                               variant="ghost" 
                               size="icon" 

@@ -1,4 +1,5 @@
 import { SystemEventPayload } from "./eventDispatcher";
+import { sendSystemOSNotification } from "../browserNotifications";
 
 const NOTIFICATIONS_STORAGE_KEY = "flexsell-notifications-storage";
 
@@ -26,6 +27,12 @@ function saveClientMockNotification(notifData: {
   } catch (err) {
     console.error("Failed to save mock notification to localStorage:", err);
   }
+
+  // Trigger system OS native desktop popup if allowed
+  sendSystemOSNotification(notifData.title, {
+    body: notifData.message,
+    link: notifData.link,
+  });
 }
 
 export function handleClientMockEvent(event: SystemEventPayload): void {

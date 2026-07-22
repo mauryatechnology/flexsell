@@ -10,12 +10,13 @@ export const registerSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   company: z.string().optional(),
-  address: z.string().min(5, "Address must be at least 5 characters"),
-  city: z.string().min(2, "City must be at least 2 characters"),
-  state: z.string().min(2, "State must be at least 2 characters"),
-  pinCode: z.string().regex(/^\d{6}$/, "Pin code must be exactly 6 digits"),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  pinCode: z.string().optional(),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   gstin: z.string().optional(),
+  skipAddress: z.boolean().optional(),
   customerTypes: z.array(z.enum(["B2C", "B2B", "Dropshipping"]))
     .min(1, "At least one customer type is required")
     .max(3)

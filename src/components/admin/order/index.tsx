@@ -298,74 +298,21 @@ export function AdminOrdersManager() {
         </Card>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-border/80">
-        <button
-          onClick={() => setActiveOrderTab("B2B")}
-          className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
-            activeOrderTab === "B2B"
-              ? "border-primary text-primary font-bold bg-primary/5"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          💼 B2B Business Orders
-        </button>
-        <button
-          onClick={() => setActiveOrderTab("B2C")}
-          className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
-            activeOrderTab === "B2C"
-              ? "border-primary text-primary font-bold bg-primary/5"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          🛍️ B2C Retail Orders
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <OrdersListTable
-            orders={orders}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            startDate={startDate}
-            setStartDate={setStartDate}
-            endDate={endDate}
-            setEndDate={setEndDate}
-            selectedOrderId={selectedOrder?._id || null}
-            onSelectOrder={setSelectedOrder}
-            originFilter={originFilter}
-            setOriginFilter={setOriginFilter}
-          />
-        </div>
-
-        <div>
-          {activeSelectedOrder ? (
-            isFulfilling ? (
-              <FulfillmentForm
-                orderId={activeSelectedOrder._id}
-                onShip={handleShipOrder}
-                onCancel={() => setIsFulfilling(false)}
-              />
-            ) : (
-              <OrderDetailPanel
-                order={activeSelectedOrder}
-                onUpdateStatus={handleUpdateStatus}
-                onToggleFulfill={handleDispatchClick}
-                onClose={() => setSelectedOrder(null)}
-              />
-            )
-          ) : (
-            <Card className="sticky top-24 bg-secondary/10 border-dashed border-2">
-              <CardContent className="py-16 text-center text-muted-foreground flex flex-col items-center">
-                <Info className="h-8 w-8 mb-2 text-muted-foreground" />
-                <p className="text-sm">
-                  Select an order row from the table to manage shipment tracking and toggle dispatch statuses.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+      {/* Main Orders Table (Full Width) */}
+      <div className="w-full">
+        <OrdersListTable
+          orders={orders}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          selectedOrderId={selectedOrder?._id || null}
+          onSelectOrder={(order) => setSelectedOrder(order)}
+          originFilter={originFilter}
+          setOriginFilter={setOriginFilter}
+        />
       </div>
 
       <CreateOrderModal

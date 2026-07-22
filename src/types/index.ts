@@ -131,7 +131,7 @@ export interface ShipmentDetails {
 export interface Order extends BaseDocument {
   date: string;
   amount: number;
-  status: "Processing" | "Shipped" | "Delivered" | "Cancelled";
+  status: "Placed" | "Pending" | "Confirmed" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
   statusClass: string;
   itemsCount: number;
   customerName: string;

@@ -58,12 +58,14 @@ export function FulfillmentForm({ orderId, onShip, onCancel }: FulfillmentFormPr
     }
   };
 
+  const todayStr = new Date().toISOString().split("T")[0];
+
   return (
     <Card className="border border-border">
       <CardHeader className="flex flex-row items-center justify-between border-b p-4">
         <div>
           <CardTitle className="text-sm font-bold uppercase flex items-center gap-1.5 text-primary">
-            <Truck className="h-4.5 w-4.5" /> Fulfill Shipment
+            <Truck className="h-4.5 w-4.5" /> Fulfill Order Shipment
           </CardTitle>
           <CardDescription className="text-[10px] font-mono">{orderId}</CardDescription>
         </div>
@@ -80,7 +82,7 @@ export function FulfillmentForm({ orderId, onShip, onCancel }: FulfillmentFormPr
               onChange={(e) => setShipType(e.target.value as any)}
               className="bg-background text-foreground text-sm w-full px-3 py-2 border rounded-md font-semibold cursor-pointer h-10"
             >
-              <option value="self">FlexSell Self Dispatch (In-House Cargo)</option>
+              <option value="self">FlexSell Self Dispatch (In-House Order)</option>
               <option value="third-party">Third-Party Courier Services</option>
             </select>
           </div>
@@ -128,10 +130,11 @@ export function FulfillmentForm({ orderId, onShip, onCancel }: FulfillmentFormPr
           <div>
             <label className="text-xs font-semibold text-muted-foreground block mb-1">Estimated Delivery Date</label>
             <Input
+              type="date"
+              min={todayStr}
               value={estDelivery}
               onChange={(e) => setEstDelivery(e.target.value)}
-              placeholder="e.g. 25 Jul 2026, 3 Days"
-              className="text-sm"
+              className="text-sm cursor-pointer"
             />
           </div>
 
@@ -150,7 +153,7 @@ export function FulfillmentForm({ orderId, onShip, onCancel }: FulfillmentFormPr
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting} className="font-semibold bg-primary text-primary-foreground">
-              {isSubmitting ? "Confirming Dispatch..." : "Confirm Cargo Dispatch"}
+              {isSubmitting ? "Confirming Dispatch..." : "Confirm Order Dispatch"}
             </Button>
           </div>
         </form>

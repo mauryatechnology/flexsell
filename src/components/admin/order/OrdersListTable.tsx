@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -35,6 +36,7 @@ export function OrdersListTable({
   originFilter,
   setOriginFilter,
 }: OrdersListTableProps) {
+  const router = useRouter();
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = 10;
 
@@ -141,7 +143,11 @@ export function OrdersListTable({
                 paginatedOrders.map((order) => (
                   <tr
                     key={order._id}
-                    className={`hover:bg-secondary/20 transition-colors border-b last:border-0 ${
+                    onClick={() => {
+                      onSelectOrder(order);
+                      router.push(`/admin/orders/${order._id}`);
+                    }}
+                    className={`hover:bg-secondary/20 transition-colors border-b last:border-0 cursor-pointer ${
                       selectedOrderId === order._id ? "bg-primary/5 font-medium" : ""
                     }`}
                   >
@@ -188,10 +194,14 @@ export function OrdersListTable({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => onSelectOrder(order)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectOrder(order);
+                          router.push(`/admin/orders/${order._id}`);
+                        }}
                         className="flex items-center gap-1.5 h-8 text-xs cursor-pointer font-semibold ml-auto"
                       >
-                        <Eye className="h-3.5 w-3.5" /> View
+                        <Eye className="h-3.5 w-3.5" /> View Details
                       </Button>
                     </td>
                   </tr>

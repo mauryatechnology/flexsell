@@ -11,13 +11,7 @@ export async function proxy(request: NextRequest) {
   // CSRF validation for state-changing API routes
   const isApiRoute = pathname.startsWith("/api");
   const isStateChanging = ["POST", "PUT", "DELETE"].includes(request.method);
-  const isExcludedAuth =
-    pathname.startsWith("/api/auth/login") ||
-    pathname.startsWith("/api/auth/register") ||
-    pathname.startsWith("/api/auth/forgot-password") ||
-    pathname.startsWith("/api/auth/reset-password") ||
-    pathname.startsWith("/api/auth/google-login") ||
-    pathname.startsWith("/api/auth/logout");
+  const isExcludedAuth = pathname.startsWith("/api/auth/");
 
   if (isApiRoute && isStateChanging && !isExcludedAuth) {
     if (!validateCsrf(request)) {

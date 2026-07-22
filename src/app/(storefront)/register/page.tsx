@@ -26,6 +26,7 @@ export default function RegisterPage() {
   const [state, setState] = React.useState("");
   const [pinCode, setPinCode] = React.useState("");
   const [gstin, setGstin] = React.useState("");
+  const [skipAddress, setSkipAddress] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [customerTypes, setCustomerTypes] = React.useState<("B2C" | "B2B" | "Dropshipping")[]>(["B2C"]);
@@ -42,17 +43,19 @@ export default function RegisterPage() {
 
   const sendOtpRequest = async (): Promise<boolean> => {
     const fullName = `${firstName} ${lastName}`.trim();
+    const isRetail = customerTypes[0] === "B2C";
     const payload = {
       name: fullName,
       email,
       password,
-      company,
-      address,
-      city,
-      state,
-      pinCode,
+      company: isRetail ? "" : company,
+      address: skipAddress ? "" : address,
+      city: skipAddress ? "" : city,
+      state: skipAddress ? "" : state,
+      pinCode: skipAddress ? "" : pinCode,
       phone,
-      gstin,
+      gstin: isRetail ? "" : gstin,
+      skipAddress,
       customerTypes,
     };
 
@@ -79,8 +82,13 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!firstName || !lastName || !email || !phone || !password || !address || !city || !state || !pinCode) {
-      addToast("Please fill in all required fields", "warning");
+    if (!firstName || !lastName || !email || !phone || !password) {
+      addToast("Please fill in all required personal credentials", "warning");
+      return;
+    }
+
+    if (!skipAddress && (!address || !city || !state || !pinCode)) {
+      addToast("Please fill in your delivery address or click 'Add Address Later' to skip", "warning");
       return;
     }
 
@@ -101,6 +109,41 @@ export default function RegisterPage() {
     router.refresh();
   };
 
+  const selectedType = customerTypes[0] || "B2C";
+
+  const getButtonLabel = () => {
+    if (isSubmitting) return "Creating Account...";
+    if (selectedType === "B2B") return "Create B2B Account";
+    if (selectedType === "Dropshipping") return "Create Dropshipper Account";
+    return "Create Retail Account";
+  };
+
+  const getHeaderTitle = () => {
+    if (selectedType === "B2B") return "Create Wholesale Account";
+    if (selectedType === "Dropshipping") return "Create Dropshipper Account";
+    return "Create Retail Account";
+  };
+
+  const getHeaderSubtitle = () => {
+    if (selectedType === "B2B") return "Register your business to unlock factory pricing and bulk order specs.";
+    if (selectedType === "Dropshipping") return "Join white-label direct delivery partner network from Surat.";
+    return "Sign up for individual order tracking and personal shopping convenience.";
+  };
+
+  const getConsentText = () => {
+    if (selectedType === "B2B" || selectedType === "Dropshipping") {
+      return "I confirm I am registering a legitimate business or reseller account.";
+    }
+    return "I confirm I am registering a personal retail customer account.";
+  };
+
+  const getSection2Header = () => {
+    if (selectedType === "B2B" || selectedType === "Dropshipping") {
+      return "2. Business Details & Shipping Address";
+    }
+    return "2. Delivery Address";
+  };
+
   return (
     <div className="container mx-auto px-4 py-12 flex justify-center items-center text-foreground min-h-[80vh]">
       <motion.div
@@ -113,24 +156,24 @@ export default function RegisterPage() {
         <div className="md:col-span-4 bg-gradient-to-br from-primary via-emerald-600 to-emerald-700 p-8 text-primary-foreground flex flex-col justify-between hidden md:flex">
           <div className="space-y-4">
             <span className="inline-block bg-white/20 backdrop-blur text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
-              Wholesale Registration
+              {selectedType === "B2C" ? "Retail Account" : selectedType === "Dropshipping" ? "Dropshipper Portal" : "Wholesale Registration"}
             </span>
             <h2 className="text-2xl font-black leading-tight">
-              Access Direct Manufacturer Wholesale Rates
+              {selectedType === "B2C" ? "Shop Quality Direct Factory Collection" : selectedType === "Dropshipping" ? "White-Label Direct Fulfillment" : "Access Direct Manufacturer Wholesale Rates"}
             </h2>
             <p className="text-xs text-white/90 leading-relaxed">
-              Join 2,000+ Indian retailers and dropshipper partners accessing factory prices and low MOQs.
+              {selectedType === "B2C" ? "Fast dispatch, buyer protection, and best rates on factory quality goods." : "Join 2,000+ Indian retailers and dropshipper partners accessing factory prices and low MOQs."}
             </p>
           </div>
 
           <div className="space-y-3 pt-6 border-t border-white/20 text-xs">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 shrink-0" />
-              <span>Instant B2B GST Tax Invoicing</span>
+              <span>{selectedType === "B2C" ? "Secure Checkout & Instant Invoice" : "Instant B2B GST Tax Invoicing"}</span>
             </div>
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4 shrink-0" />
-              <span>Bulk Order Pricing Tiers</span>
+              <span>{selectedType === "B2C" ? "Verified Quality Catalog" : "Bulk Order Pricing Tiers"}</span>
             </div>
             <div className="flex items-center gap-2">
               <Truck className="h-4 w-4 shrink-0" />
@@ -142,9 +185,9 @@ export default function RegisterPage() {
         {/* Right Registration Form */}
         <div className="md:col-span-8 p-6 sm:p-8 space-y-6">
           <div className="space-y-1">
-            <h1 className="text-2xl font-black tracking-tight">Create Wholesale Account</h1>
+            <h1 className="text-2xl font-black tracking-tight">{getHeaderTitle()}</h1>
             <p className="text-xs text-muted-foreground">
-              Register your business to unlock factory pricing and dropshipping features.
+              {getHeaderSubtitle()}
             </p>
           </div>
 
@@ -220,49 +263,70 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="border-t pt-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-primary mb-3">2. Business Details & Shipping Address</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="font-bold">Company / Shop Name</label>
-                  <Input placeholder="Doe Enterprises" value={company} onChange={(e) => setCompany(e.target.value)} disabled={isSubmitting} className="text-xs" />
+            <div className="border-t pt-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-primary">{getSection2Header()}</h3>
+                <button
+                  type="button"
+                  onClick={() => setSkipAddress(!skipAddress)}
+                  className="text-xs font-semibold text-primary hover:underline flex items-center gap-1.5 bg-primary/10 px-2.5 py-1 rounded-md transition-colors"
+                >
+                  {skipAddress ? "＋ Add Delivery Address Now" : "⏱ Add Address Later"}
+                </button>
+              </div>
+
+              {selectedType !== "B2C" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-1">
+                  <div className="space-y-1">
+                    <label className="font-bold">Company / Shop Name {selectedType === "B2B" ? "*" : "(Optional)"}</label>
+                    <Input placeholder="Doe Enterprises" value={company} onChange={(e) => setCompany(e.target.value)} required={selectedType === "B2B"} disabled={isSubmitting} className="text-xs" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold">GSTIN (Optional)</label>
+                    <Input placeholder="24AAACD4521D1Z1" value={gstin} onChange={(e) => setGstin(e.target.value)} disabled={isSubmitting} className="text-xs" />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="font-bold">GSTIN (Optional)</label>
-                  <Input placeholder="24AAACD4521D1Z1" value={gstin} onChange={(e) => setGstin(e.target.value)} disabled={isSubmitting} className="text-xs" />
+              )}
+
+              {skipAddress ? (
+                <div className="p-3.5 bg-muted/40 rounded-xl border border-dashed text-xs text-muted-foreground text-center">
+                  🚚 Delivery address skipped for now. You can add your delivery address anytime from your Customer Dashboard or at Checkout.
                 </div>
-                <div className="space-y-1 md:col-span-2">
-                  <label className="font-bold">Street Address *</label>
-                  <Input placeholder="45 Textile Market, Ring Road" value={address} onChange={(e) => setAddress(e.target.value)} required disabled={isSubmitting} className="text-xs" />
-                </div>
-                <div className="space-y-1">
-                  <label className="font-bold">City *</label>
-                  <Input placeholder="Surat" value={city} onChange={(e) => setCity(e.target.value)} required disabled={isSubmitting} className="text-xs" />
-                </div>
-                <div className="space-y-1">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="font-bold">State *</label>
-                      <Input placeholder="Gujarat" value={state} onChange={(e) => setState(e.target.value)} required disabled={isSubmitting} className="text-xs" />
-                    </div>
-                    <div>
-                      <label className="font-bold">Pin Code *</label>
-                      <Input placeholder="395002" value={pinCode} onChange={(e) => setPinCode(e.target.value)} required disabled={isSubmitting} className="text-xs" />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="font-bold">Street Address *</label>
+                    <Input placeholder="45 Textile Market, Ring Road" value={address} onChange={(e) => setAddress(e.target.value)} required={!skipAddress} disabled={isSubmitting} className="text-xs" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold">City *</label>
+                    <Input placeholder="Surat" value={city} onChange={(e) => setCity(e.target.value)} required={!skipAddress} disabled={isSubmitting} className="text-xs" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="font-bold">State *</label>
+                        <Input placeholder="Gujarat" value={state} onChange={(e) => setState(e.target.value)} required={!skipAddress} disabled={isSubmitting} className="text-xs" />
+                      </div>
+                      <div>
+                        <label className="font-bold">Pin Code *</label>
+                        <Input placeholder="395002" value={pinCode} onChange={(e) => setPinCode(e.target.value)} required={!skipAddress} disabled={isSubmitting} className="text-xs" />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="flex items-start gap-2 pt-1">
               <input type="checkbox" id="terms" className="mt-0.5 rounded text-primary focus:ring-primary" required disabled={isSubmitting} />
               <label htmlFor="terms" className="text-[11px] text-muted-foreground">
-                I agree to the <Link href="/policies/terms" className="text-primary hover:underline">Terms of Service</Link> and <Link href="/policies/privacy" className="text-primary hover:underline">Privacy Policy</Link>. I confirm I am registering a legitimate business account.
+                I agree to the <Link href="/policies/terms" className="text-primary hover:underline">Terms of Service</Link> and <Link href="/policies/privacy" className="text-primary hover:underline">Privacy Policy</Link>. {getConsentText()}
               </label>
             </div>
 
             <Button type="submit" className="w-full font-bold" disabled={isSubmitting}>
-              {isSubmitting ? "Creating Account..." : "Create B2B Account"}
+              {getButtonLabel()}
             </Button>
           </form>
 

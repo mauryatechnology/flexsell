@@ -1,5 +1,9 @@
 import dbConnect from "./dbConnect";
 import CmsContent from "@/models/CmsContent";
+import Customer from "@/models/Customer";
+import Order from "@/models/Order";
+import Product from "@/models/Product";
+import Invoice from "@/models/Invoice";
 import mongoose from "mongoose";
 import { DEFAULT_ID_FORMATS, IdFormatConfig, formatIdPreview } from "./idGenerator";
 
@@ -9,6 +13,25 @@ const CounterSchema = new mongoose.Schema({
 });
 
 const Counter = mongoose.models.Counter || mongoose.model("Counter", CounterSchema);
+
+async function isIdTaken(type: string, id: string): Promise<boolean> {
+  try {
+    const modelMap: Record<string, any> = {
+      customer: Customer,
+      order: Order,
+      product: Product,
+      invoice: Invoice,
+    };
+    const targetModel = modelMap[type];
+    if (targetModel) {
+      const doc = await targetModel.findById(id).select("_id").lean();
+      return !!doc;
+    }
+  } catch {
+    // ignore
+  }
+  return false;
+}
 
 export async function generateNextId(type: string): Promise<string> {
   await dbConnect();
@@ -80,11 +103,30 @@ export async function generateNextId(type: string): Promise<string> {
     currentSeq = result.seq;
   }
 
-  return formatIdPreview(
+  let candidateId = formatIdPreview(
     currentSetting.prefix,
     currentSeq,
     currentSetting.padLength,
     currentSetting.suffix,
     !!currentSetting.useHex
   );
+
+  // Auto-advance sequence if ID collision exists in collection
+  while (await isIdTaken(type, candidateId)) {
+    const result = await Counter.findByIdAndUpdate(
+      counterId,
+      { $inc: { seq: 1 } },
+      { new: true }
+    );
+    currentSeq = result ? result.seq : currentSeq + 1;
+    candidateId = formatIdPreview(
+      currentSetting.prefix,
+      currentSeq,
+      currentSetting.padLength,
+      currentSetting.suffix,
+      !!currentSetting.useHex
+    );
+  }
+
+  return candidateId;
 }

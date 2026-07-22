@@ -30,18 +30,55 @@ export function logEmailToStorage(emailOpt: EmailOptions): void {
   }
 }
 
+function getSmtpConfig() {
+  let host = process.env.SMTP_HOST || "smtp.gmail.com";
+  let port = parseInt(process.env.SMTP_PORT || "465", 10);
+  let user = process.env.SMTP_USER || "mauryatech7@gmail.com";
+  let pass = process.env.SMTP_PASS || "qfxgglqfymjhbksy";
+
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const envPath = path.resolve(process.cwd(), ".env");
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf8");
+      const hostMatch = content.match(/^SMTP_HOST=(.*)$/m);
+      if (hostMatch && hostMatch[1]) host = hostMatch[1].trim();
+
+      const portMatch = content.match(/^SMTP_PORT=(.*)$/m);
+      if (portMatch && portMatch[1]) port = parseInt(portMatch[1].trim(), 10);
+
+      const userMatch = content.match(/^SMTP_USER=(.*)$/m);
+      if (userMatch && userMatch[1]) user = userMatch[1].trim();
+
+      const passMatch = content.match(/^SMTP_PASS=(.*)$/m);
+      if (passMatch && passMatch[1]) pass = passMatch[1].trim();
+    }
+  } catch {
+    // fallback
+  }
+
+  const cleanHost = host.replace(/["'\s]/g, "") || "smtp.gmail.com";
+  const cleanPort = isNaN(port) ? 465 : port;
+  const cleanUser = user.replace(/["'\s]/g, "") || "mauryatech7@gmail.com";
+  const cleanPass = pass.replace(/["'\s]/g, "") || "qfxgglqfymjhbksy";
+
+  return { host: cleanHost, port: cleanPort, user: cleanUser, pass: cleanPass };
+}
+
 export const emailService = {
   async sendEmail(options: EmailOptions): Promise<boolean> {
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS?.replace(/"/g, "");
-    const smtpPort = parseInt(process.env.SMTP_PORT || "465", 10);
+    const config = getSmtpConfig();
+    const smtpHost = config.host;
+    const smtpUser = config.user;
+    const smtpPass = config.pass;
+    const smtpPort = config.port;
 
     // Logging for dev / mock environment
     console.log("\n=======================================================");
     console.log(`[EMAIL DISPATCH] To: ${options.to}`);
     console.log(`[SUBJECT]: ${options.subject}`);
-    console.log(`[CATEGORY]: ${options.category || "general"}`);
+    console.log(`[SMTP CONFIG]: host=${smtpHost}, port=${smtpPort}, user=${smtpUser}, passLength=${smtpPass.length}`);
     console.log("=======================================================\n");
 
     logEmailToStorage(options);

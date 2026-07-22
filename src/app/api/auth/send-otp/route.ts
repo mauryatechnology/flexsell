@@ -8,6 +8,7 @@ import { registerSchema } from "@/lib/validators";
 import { ZodError } from "zod";
 import { emailService } from "@/lib/emailService";
 
+// Route handler for sending OTP verification email with updated SMTP config
 export async function POST(req: Request) {
   const forwardedFor = req.headers.get("x-forwarded-for");
   const ip = forwardedFor ? forwardedFor.split(",")[0] : "127.0.0.1";
@@ -66,7 +67,13 @@ export async function POST(req: Request) {
     );
 
     // 6. Dispatch Email
-    await emailService.sendRegisterOtp(lowerEmail, rawOtp, name);
+    const emailSent = await emailService.sendRegisterOtp(lowerEmail, rawOtp, name);
+    if (!emailSent) {
+      return NextResponse.json(
+        { message: `Failed to deliver verification email to ${lowerEmail}. Please check mail server connection.` },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
