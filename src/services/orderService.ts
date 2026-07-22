@@ -1,6 +1,7 @@
 import { Order, ShipmentDetails, CartItem, Invoice } from "@/types";
 import { apiClient, isMockMode } from "@/lib/apiClient";
 import { generateNextClientMockId } from "@/lib/idGenerator";
+import { dispatchEvent } from "@/lib/events/eventDispatcher";
 
 const ORDERS_STORAGE_KEY = "flexsell-orders-storage";
 const INVOICES_STORAGE_KEY = "flexsell-invoices-storage";
@@ -256,6 +257,16 @@ export const orderService = {
 
       orders.unshift(newOrder);
       saveLocalOrders(orders);
+
+      dispatchEvent({
+        eventType: "ORDER_CREATED",
+        category: "orders",
+        actor: { id: "current-user", name: newOrder.customerName, role: "customer" },
+        recipient: { customerId: "current-user", email: shippingAddress.email, name: newOrder.customerName, role: "both" },
+        entity: { type: "order", id },
+        data: newOrder,
+      });
+
       return newOrder;
     }
 
@@ -304,6 +315,16 @@ export const orderService = {
 
       orders[matchIndex] = updatedOrder;
       saveLocalOrders(orders);
+
+      dispatchEvent({
+        eventType: status === "Shipped" ? "ORDER_SHIPPED" : "ORDER_STATUS_CHANGED",
+        category: status === "Shipped" ? "shipments" : "orders",
+        actor: { id: "admin", name: "Admin", role: "admin" },
+        recipient: { customerId: "current-user", email: match.shippingAddress?.email, name: match.customerName, role: "customer" },
+        entity: { type: "order", id },
+        data: updatedOrder,
+      });
+
       return updatedOrder;
     }
     return apiClient.put<Order>(`/orders/${id}/status`, { 
@@ -338,6 +359,21 @@ export const orderService = {
 
       orders[matchIndex] = updatedOrder;
       saveLocalOrders(orders);
+
+      dispatchEvent({
+        eventType: "ORDER_SHIPPED",
+        category: "shipments",
+        actor: { id: "admin", name: "Admin", role: "admin" },
+        recipient: { customerId: "current-user", email: match.shippingAddress?.email, name: match.customerName, role: "customer" },
+        entity: { type: "order", id },
+        data: {
+          order: updatedOrder,
+          carrierName: shipmentDetails.carrierName || "Courier",
+          trackingId: shipmentDetails.trackingId,
+          trackingUrl: shipmentDetails.trackingUrl,
+        },
+      });
+
       return updatedOrder;
     }
     return apiClient.put<Order>(`/orders/${id}/ship`, shipmentDetails);

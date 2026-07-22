@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { customerService } from "@/services/customerService";
 import { Customer } from "@/types";
 import { useToastStore } from "@/stores/toastStore";
+import { NotificationPreferencesCard } from "@/components/common/NotificationPreferencesCard";
 
 const INDIAN_STATES = [
   "Madhya Pradesh", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar",
@@ -220,6 +221,11 @@ export default function ClientProfilePage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Notification & Push Preferences Card */}
+        <div className="lg:col-span-2">
+          <NotificationPreferencesCard userId={activeCustomer?._id || "current"} role="customer" />
+        </div>
       </div>
     </div>
   );

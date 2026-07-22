@@ -299,10 +299,43 @@ export interface Coupon extends BaseDocument {
 
 export interface Notification extends BaseDocument {
   customerId: string;
+  recipientRole?: "customer" | "admin";
   title: string;
   message: string;
-  type: "info" | "order" | "success" | "warning";
+  type: "info" | "order" | "success" | "warning" | "security";
   isRead: boolean;
+  link?: string;
+  actionType?: string;
+  entityId?: string;
+}
+
+export interface NotificationPreferences {
+  userId: string;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  categories: {
+    orders: boolean;
+    shipments: boolean;
+    payments: boolean;
+    quotes: boolean;
+    invoices: boolean;
+    security: boolean;
+    system: boolean;
+  };
+}
+
+export interface PushSubscriptionInfo {
+  _id?: string;
+  userId: string;
+  role: "customer" | "admin";
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+  userAgent?: string;
+  isActive: boolean;
+  lastUsedAt?: string;
 }
 
 export interface ShippingWeightSlab {

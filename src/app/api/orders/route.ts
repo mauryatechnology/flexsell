@@ -8,6 +8,7 @@ import CmsContent from "@/models/CmsContent";
 import Coupon from "@/models/Coupon";
 import { requireAuth } from "@/lib/authGuard";
 import { dispatchWebhook } from "@/lib/webhookDispatcher";
+import { dispatchEvent } from "@/lib/events/eventDispatcher";
 import { generateNextId } from "@/lib/idGeneratorServer";
 import { orderSchema } from "@/lib/validators";
 import { ZodError } from "zod";
@@ -592,54 +593,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fire webhook and in-app notifications asynchronously
+    // Dispatch Centralized System Event (Triggers In-App Notifications, Web Push Banners, and Transactional Emails)
     const targetCustomerId = payload.role === "admin"
       ? (await Customer.findOne({ email: shippingAddress.email.toLowerCase() }).select("_id"))?._id || payload.userId
       : payload.userId;
 
-    dispatchWebhook("order.created", newOrder, targetCustomerId, {
-      title: "Order Placed Successfully",
-      message: `Your wholesale order ${orderId} has been placed. Current status is Processing.`,
-      type: "success"
-    }).catch(console.error);
-
-    // Asynchronously send confirmation email if SMTP is configured
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-      const smtpPass = process.env.SMTP_PASS?.replace(/"/g, "");
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "465", 10),
-        secure: true,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: smtpPass,
-        },
-      });
-
-      const mailOptions = {
-        from: `"FlexSell Wholesale Support" <${process.env.SMTP_USER}>`,
-        to: shippingAddress.email,
-        subject: `FlexSell Wholesale Order Confirmed - ${orderId}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-            <h2 style="color: #10b981; text-align: center;">Order Confirmed!</h2>
-            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
-            <p>Hello ${shippingAddress.firstName},</p>
-            <p>Thank you for sourcing with FlexSell. Your B2B order has been generated successfully.</p>
-            <p><strong>Order ID:</strong> ${orderId}</p>
-            <p><strong>Amount:</strong> ₹${amount.toFixed(2)}</p>
-            <p><strong>Current Status:</strong> Processing</p>
-            <p>Our wholesale team is checking the stock and preparing your packaging details. We will notify you once cargo is dispatched.</p>
-            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
-            <p style="font-size: 12px; color: #9ca3af; text-align: center;">FlexSell Wholesale © 2026. All rights reserved.</p>
-          </div>
-        `
-      };
-
-      transporter.sendMail(mailOptions).catch((mailErr) => {
-        console.error("Nodemailer failed to send order confirmation email:", mailErr.message);
-      });
-    }
+    dispatchEvent({
+      eventType: "ORDER_CREATED",
+      category: "orders",
+      actor: { id: payload.userId, name: payload.email, role: payload.role },
+      recipient: { customerId: targetCustomerId, email: shippingAddress.email, name: `${shippingAddress.firstName} ${shippingAddress.lastName}`, role: "both" },
+      entity: { type: "order", id: orderId },
+      data: newOrder,
+    });
 
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error: any) {

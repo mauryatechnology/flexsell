@@ -1,6 +1,7 @@
 import { Invoice, Order } from "@/types";
 import { apiClient, isMockMode } from "@/lib/apiClient";
 import { generateNextClientMockId } from "@/lib/idGenerator";
+import { dispatchEvent } from "@/lib/events/eventDispatcher";
 
 export interface InvoiceListParams {
   type?: "invoice" | "receipt" | "quote";
@@ -373,6 +374,19 @@ export const invoiceService = {
 
       list.unshift(newDoc);
       saveLocalInvoices(list);
+
+      const evtType = newDoc.type === "invoice" ? "INVOICE_GENERATED" : newDoc.type === "receipt" ? "RECEIPT_GENERATED" : "QUOTE_GENERATED";
+      const catName = newDoc.type === "invoice" ? "invoices" : newDoc.type === "receipt" ? "payments" : "quotes";
+
+      dispatchEvent({
+        eventType: evtType,
+        category: catName as any,
+        actor: { id: "admin", name: "Admin", role: "admin" },
+        recipient: { customerId: customerId || "current-user", email: newDoc.customerEmail, name: newDoc.customerName, role: "both" },
+        entity: { type: newDoc.type, id: newDoc._id },
+        data: newDoc,
+      });
+
       return newDoc;
     }
     return apiClient.post<Invoice>("/invoices", data);

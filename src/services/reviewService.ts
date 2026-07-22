@@ -1,5 +1,6 @@
 import { apiClient, isMockMode } from "@/lib/apiClient";
 import { Review } from "@/types";
+import { dispatchEvent } from "@/lib/events/eventDispatcher";
 
 const REVIEWS_STORAGE_KEY = "flexsell-reviews-storage";
 
@@ -52,6 +53,16 @@ export const reviewService = {
         createdAt: new Date().toISOString()
       };
       saveLocalReviews([newReview, ...reviews]);
+
+      dispatchEvent({
+        eventType: "REVIEW_SUBMITTED",
+        category: "system",
+        actor: { id: "current-user", name: newReview.customerName, role: "customer" },
+        recipient: { customerId: "admin", role: "admin" },
+        entity: { type: "review", id: newReview._id },
+        data: newReview,
+      });
+
       return newReview;
     }
     return apiClient.post<Review>("/reviews", data);

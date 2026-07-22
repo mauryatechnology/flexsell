@@ -11,6 +11,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useToastStore } from "@/stores/toastStore";
 import { motion } from "framer-motion";
 
+import { OtpVerificationModal } from "@/components/auth/OtpVerificationModal";
+
 export default function RegisterPage() {
   const router = useRouter();
   const [firstName, setFirstName] = React.useState("");
@@ -28,24 +30,19 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [customerTypes, setCustomerTypes] = React.useState<("B2C" | "B2B" | "Dropshipping")[]>(["B2C"]);
 
-  const { registerCustomer, error, clearError } = useAuthStore();
+  // OTP Modal State
+  const [isOtpModalOpen, setIsOtpModalOpen] = React.useState(false);
+
+  const { error, clearError, checkSession } = useAuthStore();
   const { addToast } = useToastStore();
 
   React.useEffect(() => {
     clearError();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!firstName || !lastName || !email || !phone || !password || !address || !city || !state || !pinCode) {
-      addToast("Please fill in all required fields", "warning");
-      return;
-    }
-
-    setIsSubmitting(true);
+  const sendOtpRequest = async (): Promise<boolean> => {
     const fullName = `${firstName} ${lastName}`.trim();
-    const success = await registerCustomer({
+    const payload = {
       name: fullName,
       email,
       password,
@@ -57,16 +54,51 @@ export default function RegisterPage() {
       phone,
       gstin,
       customerTypes,
-    });
+    };
+
+    try {
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to send verification code");
+      }
+
+      addToast(data.message || "Verification code sent to your email", "info");
+      return true;
+    } catch (err: any) {
+      addToast(err.message || "Failed to send OTP code", "error");
+      return false;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!firstName || !lastName || !email || !phone || !password || !address || !city || !state || !pinCode) {
+      addToast("Please fill in all required fields", "warning");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const sent = await sendOtpRequest();
     setIsSubmitting(false);
 
-    if (success) {
-      addToast("Wholesale account created successfully!", "success");
-      router.push("/client");
-      router.refresh();
-    } else {
-      addToast(useAuthStore.getState().error || "Registration failed", "error");
+    if (sent) {
+      setIsOtpModalOpen(true);
     }
+  };
+
+  const handleOtpVerified = async (data: any) => {
+    setIsOtpModalOpen(false);
+    addToast("Email verified! Wholesale account created successfully.", "success");
+    await checkSession();
+    router.push("/client");
+    router.refresh();
   };
 
   return (
@@ -242,6 +274,14 @@ export default function RegisterPage() {
           </div>
         </div>
       </motion.div>
+
+      <OtpVerificationModal
+        isOpen={isOtpModalOpen}
+        email={email}
+        onSuccess={handleOtpVerified}
+        onCancel={() => setIsOtpModalOpen(false)}
+        onResendOtp={sendOtpRequest}
+      />
     </div>
   );
 }
