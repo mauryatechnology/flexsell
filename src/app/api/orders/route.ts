@@ -8,7 +8,7 @@ import CmsContent from "@/models/CmsContent";
 import Coupon from "@/models/Coupon";
 import { requireAuth } from "@/lib/authGuard";
 import { dispatchWebhook } from "@/lib/webhookDispatcher";
-import { generateNextId } from "@/lib/idGenerator";
+import { generateNextId } from "@/lib/idGeneratorServer";
 import { orderSchema } from "@/lib/validators";
 import { ZodError } from "zod";
 import { resolveVariantKeys } from "@/lib/variantMatcher";

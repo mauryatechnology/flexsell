@@ -1,121 +1,173 @@
-import dbConnect from "./dbConnect";
-import CmsContent from "@/models/CmsContent";
-import Customer from "@/models/Customer";
-import Order from "@/models/Order";
-import Product from "@/models/Product";
-import mongoose from "mongoose";
+export interface IdFormatConfig {
+  key: string;
+  name: string;
+  description: string;
+  prefix: string;
+  suffix: string;
+  startCount: number;
+  padLength: number;
+  useHex?: boolean;
+  isEnabled: boolean;
+}
 
-const CounterSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  seq: { type: Number, default: 0 }
-});
-
-const Counter = mongoose.models.Counter || mongoose.model("Counter", CounterSchema);
-
-export async function generateNextId(type: "customer" | "order" | "product"): Promise<string> {
-  await dbConnect();
-
-  // 1. Fetch ID Settings from CMS Config
-  const cmsConfig = await CmsContent.findOne({ key: "idSettings" }).lean();
-  const idSettings = (cmsConfig?.value || {}) as any;
-
-  let prefix = "";
-  let defaultPrefix = "";
-  let Model: any = null;
-  let useHex = false;
-  let startCount = 1;
-
-  if (type === "customer") {
-    prefix = idSettings.customerPrefix || "";
-    defaultPrefix = "FSW-";
-    Model = Customer;
-    useHex = prefix !== "" && prefix !== defaultPrefix;
-    startCount = parseInt(idSettings.customerStart, 10) || 1;
-  } else if (type === "order") {
-    prefix = idSettings.orderPrefix || "";
-    defaultPrefix = "FS-";
-    Model = Order;
-    useHex = prefix !== "" && prefix !== defaultPrefix;
-    startCount = parseInt(idSettings.orderStart, 10) || 1;
-  } else if (type === "product") {
-    prefix = idSettings.productPrefix || "";
-    defaultPrefix = "";
-    Model = Product;
-    useHex = prefix !== "";
-    startCount = parseInt(idSettings.productStart, 10) || 1;
+export const DEFAULT_ID_FORMATS: IdFormatConfig[] = [
+  {
+    key: "order",
+    name: "Orders",
+    description: "Unique tracking numbers for B2B buyer orders",
+    prefix: "FS-",
+    suffix: "",
+    startCount: 10026,
+    padLength: 5,
+    isEnabled: true
+  },
+  {
+    key: "invoice",
+    name: "Invoices",
+    description: "Official GST tax invoices generated for orders",
+    prefix: "INV-",
+    suffix: "",
+    startCount: 1001,
+    padLength: 5,
+    isEnabled: true
+  },
+  {
+    key: "receipt",
+    name: "Receipts",
+    description: "Payment confirmation receipts issued to buyers",
+    prefix: "REC-",
+    suffix: "",
+    startCount: 1001,
+    padLength: 5,
+    isEnabled: true
+  },
+  {
+    key: "quote",
+    name: "Proforma Quotes",
+    description: "Wholesale proforma quotes issued to B2B buyers",
+    prefix: "QUO-",
+    suffix: "",
+    startCount: 1001,
+    padLength: 5,
+    isEnabled: true
+  },
+  {
+    key: "customer",
+    name: "Customers",
+    description: "Unique account IDs assigned to B2B buyers",
+    prefix: "FSW-",
+    suffix: "",
+    startCount: 1,
+    padLength: 4,
+    isEnabled: true
+  },
+  {
+    key: "product",
+    name: "Products",
+    description: "Custom stock SKU/product identification numbers",
+    prefix: "PROD-",
+    suffix: "",
+    startCount: 101,
+    padLength: 4,
+    isEnabled: true
+  },
+  {
+    key: "category",
+    name: "Categories",
+    description: "Reference IDs for product categories",
+    prefix: "CAT-",
+    suffix: "",
+    startCount: 1,
+    padLength: 3,
+    isEnabled: true
+  },
+  {
+    key: "collection",
+    name: "Collections",
+    description: "Reference IDs for product collections",
+    prefix: "COL-",
+    suffix: "",
+    startCount: 1,
+    padLength: 3,
+    isEnabled: true
+  },
+  {
+    key: "coupon",
+    name: "Coupons",
+    description: "Discount coupon codes / campaign tracking IDs",
+    prefix: "COUP-",
+    suffix: "",
+    startCount: 1,
+    padLength: 3,
+    isEnabled: true
+  },
+  {
+    key: "inquiry",
+    name: "Inquiries",
+    description: "Contact and custom RFQ inquiry ticket IDs",
+    prefix: "INQ-",
+    suffix: "",
+    startCount: 1001,
+    padLength: 4,
+    isEnabled: true
+  },
+  {
+    key: "review",
+    name: "Reviews",
+    description: "Customer review moderation ticket IDs",
+    prefix: "REV-",
+    suffix: "",
+    startCount: 1001,
+    padLength: 4,
+    isEnabled: true
   }
+];
 
-  // 2. Thread-safe counter incrementing logic
-  if (!useHex) {
-    if (type === "customer") {
-      const counterExist = await Counter.findById("customer");
-      if (!counterExist) {
-        const customersList = await Customer.find({}, { _id: 1 }).lean();
-        let maxNum = 0;
-        for (const c of customersList) {
-          const match = c._id.match(/^FSW-(\d+)$/);
-          if (match) {
-            const num = parseInt(match[1], 10);
-            if (num > maxNum) maxNum = num;
-          }
-        }
-        const initialSeq = Math.max(startCount, maxNum + 1);
-        await Counter.create({ _id: "customer", seq: initialSeq });
-        return `FSW-${String(initialSeq).padStart(4, "0")}`;
-      } else {
-        const result = await Counter.findByIdAndUpdate(
-          "customer",
-          { $inc: { seq: 1 } },
-          { new: true }
-        );
-        return `FSW-${String(result.seq).padStart(4, "0")}`;
-      }
-    } else if (type === "order") {
-      const counterExist = await Counter.findById("order");
-      const defaultStart = startCount + 10025; // legacy base starts at 10026
-      if (!counterExist) {
-        const count = await Order.countDocuments();
-        const initialSeq = Math.max(defaultStart, 10026 + count);
-        await Counter.create({ _id: "order", seq: initialSeq });
-        return `FS-${initialSeq}`;
-      } else {
-        const result = await Counter.findByIdAndUpdate(
-          "order",
-          { $inc: { seq: 1 } },
-          { new: true }
-        );
-        return `FS-${result.seq}`;
-      }
-    } else {
-      // Default product ID: proper ObjectId
-      return new mongoose.Types.ObjectId().toHexString();
-    }
-  }
+export function formatIdPreview(
+  prefix: string = "",
+  count: number = 1,
+  padLength: number = 4,
+  suffix: string = "",
+  useHex: boolean = false
+): string {
+  const num = Math.max(1, count || 1);
+  const seqStr = useHex ? num.toString(16).toUpperCase() : String(num).padStart(padLength || 1, "0");
+  return `${prefix || ""}${seqStr}${suffix || ""}`;
+}
 
-  // Customized Hexadecimal sequential generation logic
-  const counterId = `${type}_hex_${prefix}`;
-  const counterExist = await Counter.findById(counterId);
-  if (!counterExist) {
-    const escapedPrefix = prefix.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const regex = new RegExp(`^${escapedPrefix}`);
-    const items = await Model.find({ _id: regex }, { _id: 1 }).lean();
-    let maxNum = startCount - 1;
-    for (const item of items) {
-      const suffix = item._id.substring(prefix.length);
-      const num = parseInt(suffix, 16);
-      if (!isNaN(num) && num > maxNum) {
-        maxNum = num;
+export function generateNextClientMockId(type: string): string {
+  if (typeof window === "undefined") return `${type.toUpperCase()}-${Date.now()}`;
+  try {
+    const cmsRaw = localStorage.getItem("flexsell-cms-storage") || localStorage.getItem("idFormats");
+    let formats: IdFormatConfig[] = DEFAULT_ID_FORMATS;
+    if (cmsRaw) {
+      const parsed = JSON.parse(cmsRaw);
+      if (Array.isArray(parsed)) formats = parsed;
+      else if (parsed?.idFormats && Array.isArray(parsed.idFormats)) formats = parsed.idFormats;
+      else if (typeof parsed === "object") {
+        formats = DEFAULT_ID_FORMATS.map(def => (parsed[def.key] ? { ...def, ...parsed[def.key] } : def));
       }
     }
-    const initialSeq = maxNum + 1;
-    await Counter.create({ _id: counterId, seq: initialSeq });
-    return `${prefix}${initialSeq.toString(16)}`;
-  } else {
-    const result = await Counter.findByIdAndUpdate(
-      counterId,
-      { $inc: { seq: 1 } },
-      { new: true }
+
+    const currentConfig = formats.find((f) => f.key === type) || DEFAULT_ID_FORMATS.find((f) => f.key === type) || {
+      key: type, name: type, description: "", prefix: `${type.toUpperCase()}-`, suffix: "", startCount: 1001, padLength: 4, isEnabled: true
+    };
+
+    const counterKey = `flexsell_mock_counter_${type}`;
+    let currentSeq = Number(localStorage.getItem(counterKey));
+    if (!currentSeq || isNaN(currentSeq)) {
+      currentSeq = currentConfig.startCount;
+    }
+    localStorage.setItem(counterKey, String(currentSeq + 1));
+
+    return formatIdPreview(
+      currentConfig.prefix,
+      currentSeq,
+      currentConfig.padLength,
+      currentConfig.suffix,
+      !!currentConfig.useHex
     );
-    return `${prefix}${result.seq.toString(16)}`;
+  } catch {
+    return `${type.toUpperCase()}-${Date.now()}`;
   }
 }

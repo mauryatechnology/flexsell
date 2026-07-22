@@ -5,7 +5,7 @@ import Customer from "@/models/Customer";
 import Order from "@/models/Order";
 import CmsContent from "@/models/CmsContent";
 import { requireAuth } from "@/lib/authGuard";
-import { generateNextId } from "@/lib/idGenerator";
+import { generateNextId } from "@/lib/idGeneratorServer";
 import bcrypt from "bcryptjs";
 
 async function getSellerInfo() {
@@ -22,22 +22,7 @@ async function getSellerInfo() {
 }
 
 async function generateInvoiceId(type: "invoice" | "receipt" | "quote"): Promise<string> {
-  const prefix = type === "invoice" ? "INV" : type === "receipt" ? "RCP" : "QUO";
-  const year = new Date().getFullYear();
-  const regex = new RegExp(`^${prefix}-${year}-`);
-  const lastDoc = await InvoiceModel.findOne({ _id: regex })
-    .sort({ _id: -1 })
-    .select("_id")
-    .lean() as any;
-
-  let nextSeq = 1;
-  if (lastDoc) {
-    const parts = (lastDoc._id as string).split("-");
-    const lastSeq = parseInt(parts[2], 10);
-    if (!isNaN(lastSeq)) nextSeq = lastSeq + 1;
-  }
-
-  return `${prefix}-${year}-${String(nextSeq).padStart(5, "0")}`;
+  return generateNextId(type);
 }
 
 function computeOrderTaxDetails(items: any[], buyerState: string, sellerState: string) {

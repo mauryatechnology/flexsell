@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Product from "@/models/Product";
-import { generateNextId } from "@/lib/idGenerator";
+import { generateNextId } from "@/lib/idGeneratorServer";
 import { requireAuth } from "@/lib/authGuard";
 import { productSchema } from "@/lib/validators";
 import { ZodError } from "zod";

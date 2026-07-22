@@ -3,7 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Customer from "@/models/Customer";
 import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 import bcrypt from "bcryptjs";
-import { generateNextId } from "@/lib/idGenerator";
+import { generateNextId } from "@/lib/idGeneratorServer";
 
 // GET: Fetch all customers (restricted to admins)
 export async function GET(request: Request) {

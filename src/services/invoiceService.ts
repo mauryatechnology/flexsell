@@ -1,5 +1,6 @@
 import { Invoice, Order } from "@/types";
 import { apiClient, isMockMode } from "@/lib/apiClient";
+import { generateNextClientMockId } from "@/lib/idGenerator";
 
 export interface InvoiceListParams {
   type?: "invoice" | "receipt" | "quote";
@@ -296,12 +297,11 @@ export const invoiceService = {
   }): Promise<Invoice> {
     if (isMockMode) {
       const list = getLocalInvoices();
-      const prefix = data.type === "invoice" ? "INV" : data.type === "receipt" ? "RCP" : "QUO";
-      const id = `${prefix}-MOCK-${Date.now()}`;
+      const id = generateNextClientMockId(data.type || "quote");
       
       let customerId = data.customerId;
       if (data.newCustomer) {
-        customerId = `MOCK-CUST-${Date.now()}`;
+        customerId = generateNextClientMockId("customer");
         const customersRaw = localStorage.getItem("flexsell-customers-storage");
         const customersList = customersRaw ? JSON.parse(customersRaw) : [];
         customersList.push({

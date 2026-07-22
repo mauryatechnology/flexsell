@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Customer from "@/models/Customer";
 import { signToken, setTokenCookie } from "@/lib/auth";
-import { generateNextId } from "@/lib/idGenerator";
+import { generateNextId } from "@/lib/idGeneratorServer";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 

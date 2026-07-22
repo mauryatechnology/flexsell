@@ -1,5 +1,6 @@
 import { Order, ShipmentDetails, CartItem, Invoice } from "@/types";
 import { apiClient, isMockMode } from "@/lib/apiClient";
+import { generateNextClientMockId } from "@/lib/idGenerator";
 
 const ORDERS_STORAGE_KEY = "flexsell-orders-storage";
 const INVOICES_STORAGE_KEY = "flexsell-invoices-storage";
@@ -168,10 +169,9 @@ export const orderService = {
         }
       }
 
-      const id = `FS-MOCK-${Date.now()}`;
+      const id = generateNextClientMockId("order");
       const docType = paymentDetails?.paymentStatus === "Paid" ? "invoice" : "receipt";
-      const docPrefix = docType === "invoice" ? "INV" : "RCP";
-      const invoiceId = `${docPrefix}-MOCK-${Date.now()}`;
+      const invoiceId = generateNextClientMockId(docType);
 
       // Generate invoice/receipt in local storage
       const invoicesRaw = localStorage.getItem(INVOICES_STORAGE_KEY);
