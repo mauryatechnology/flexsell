@@ -18,6 +18,7 @@ export interface SubVariant {
   id: string;
   size: string;
   weight: string;
+  weightGrams?: number | null;
   mrp: number;
   b2cPrice: number;
   b2bPrice: number;
@@ -38,6 +39,9 @@ export interface ProductImage {
 export interface ColorVariant {
   color: string;
   dimensions: string;
+  lengthCm?: number | null;
+  breadthCm?: number | null;
+  heightCm?: number | null;
   images: (string | ProductImage)[];
   subVariants: SubVariant[];
 }
@@ -117,8 +121,27 @@ export interface HistoryEvent {
   description: string;
 }
 
+export interface ShiprocketOrderDetails {
+  orderId?: number;
+  shipmentId?: number;
+  awbCode?: string;
+  courierId?: number;
+  courierName?: string;
+  labelUrl?: string;
+  manifestUrl?: string;
+  pickupScheduledDate?: string;
+  pickupTokenNumber?: string;
+  currentStatus?: string;
+  currentStatusCode?: number;
+  etd?: string;
+  trackingUrl?: string;
+  fulfillmentStep?: string;
+  failedAt?: string | null;
+  failureReason?: string | null;
+}
+
 export interface ShipmentDetails {
-  type: "self" | "third-party";
+  type: "self" | "third-party" | "shiprocket";
   carrierName?: string;
   trackingId: string;
   trackingUrl?: string;
@@ -126,12 +149,13 @@ export interface ShipmentDetails {
   deliveredAt?: string;
   estimatedDelivery?: string;
   notes?: string;
+  shiprocket?: ShiprocketOrderDetails;
 }
 
 export interface Order extends BaseDocument {
   date: string;
   amount: number;
-  status: "Placed" | "Pending" | "Confirmed" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
+  status: "Placed" | "Pending" | "Confirmed" | "Processing" | "Awaiting Shipment" | "In Transit" | "Shipped" | "Delivered" | "Cancelled";
   statusClass: string;
   itemsCount: number;
   customerName: string;
@@ -345,10 +369,28 @@ export interface ShippingWeightSlab {
   amount: number;
 }
 
+export interface ShiprocketConfig {
+  enabled?: boolean;
+  email?: string;
+  password?: string;
+  webhookToken?: string;
+  channelId?: string;
+  pickupAddress?: {
+    name?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    pinCode?: string;
+    country?: string;
+  };
+}
+
 export interface ShippingConfig {
   _id?: string;
   weightSlabs: ShippingWeightSlab[];
   b2bFixedCharge: number;
+  shiprocket?: ShiprocketConfig;
   updatedAt?: string;
 }
 

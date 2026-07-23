@@ -5,6 +5,7 @@ const SubVariantSchema = new Schema({
   id: { type: String, required: true },
   size: { type: String, required: true },
   weight: { type: String, required: true },
+  weightGrams: { type: Number, default: null },
   mrp: { type: Number, required: true },
   b2cPrice: { type: Number, required: true },
   b2bPrice: { type: Number, default: 0 },
@@ -20,6 +21,9 @@ const SubVariantSchema = new Schema({
 const ColorVariantSchema = new Schema({
   color: { type: String, required: true },
   dimensions: { type: String, required: true },
+  lengthCm: { type: Number, default: null },
+  breadthCm: { type: Number, default: null },
+  heightCm: { type: Number, default: null },
   images: [Schema.Types.Mixed],
   subVariants: [SubVariantSchema],
 });

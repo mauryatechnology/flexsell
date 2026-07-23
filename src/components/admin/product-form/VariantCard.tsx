@@ -75,12 +75,48 @@ export function VariantCard({
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase text-muted-foreground"> Dimensions</label>
+            <label className="text-xs font-semibold uppercase text-muted-foreground"> Dimensions (Label)</label>
             <Input
               placeholder="e.g. 15x12x8 cm"
               value={item.dimensions}
               onChange={(e) => updateVariantField(idx, "dimensions", e.target.value)}
               required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 border-t pt-3">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Length (cm) *</label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0.1"
+              placeholder="15"
+              value={item.lengthCm ?? ""}
+              onChange={(e) => updateVariantField(idx, "lengthCm", e.target.value === "" ? null : Number(e.target.value))}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Breadth (cm) *</label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0.1"
+              placeholder="12"
+              value={item.breadthCm ?? ""}
+              onChange={(e) => updateVariantField(idx, "breadthCm", e.target.value === "" ? null : Number(e.target.value))}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Height (cm) *</label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0.1"
+              placeholder="8"
+              value={item.heightCm ?? ""}
+              onChange={(e) => updateVariantField(idx, "heightCm", e.target.value === "" ? null : Number(e.target.value))}
             />
           </div>
         </div>
@@ -122,6 +158,7 @@ export function VariantCard({
               <thead className="bg-secondary/50 text-xs uppercase">
                 <tr>
                   <th className="px-4 py-3">Size / Weight *</th>
+                  <th className="px-4 py-3">Weight (g) *</th>
                   <th className="px-4 py-3">SKU *</th>
                   <th className="px-4 py-3">MRP (₹) *</th>
                   <th className="px-4 py-3">B2C Price (₹) *</th>
@@ -137,6 +174,9 @@ export function VariantCard({
                   <tr key={sv.id} className="border-b bg-background">
                     <td className="px-4 py-2 font-medium">
                       {sv.size} - {sv.weight}
+                    </td>
+                    <td className="px-4 py-2">
+                      <Input type="number" min="1" className="h-8 text-xs w-20" placeholder="250" value={sv.weightGrams ?? ""} onChange={e => updateSubVariantField(idx, sv.id, "weightGrams", e.target.value === "" ? null : Number(e.target.value))} />
                     </td>
                     <td className="px-4 py-2">
                       <Input className="h-8 text-xs" value={sv.sku} onChange={e => updateSubVariantField(idx, sv.id, "sku", e.target.value)} required />

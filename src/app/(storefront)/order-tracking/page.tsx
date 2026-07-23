@@ -54,8 +54,11 @@ export default function OrderTrackingPage() {
     setHasSearched(false);
   };
 
-  // Determine active steps for stepper
-  const steps = ["Placed", "Processing", "Shipped", "Delivered"];
+  // Determine active steps for stepper [UPDATED-4]
+  const isShiprocket = trackedOrder?.shipmentDetails?.type === "shiprocket";
+  const steps = isShiprocket
+    ? ["Placed", "Processing", "Awaiting Shipment", "In Transit", "Delivered"]
+    : ["Placed", "Processing", "Shipped", "Delivered"];
   const currentStepIdx = trackedOrder ? steps.indexOf(trackedOrder.status) : -1;
   const isCancelled = trackedOrder?.status === "Cancelled";
 
@@ -177,18 +180,20 @@ export default function OrderTrackingPage() {
                     <div className="space-y-3">
                       <div>
                         <span className="text-muted-foreground">Logistics Type:</span>
-                        <p className="font-bold capitalize mt-0.5">{trackedOrder.shipmentDetails.type === "self" ? "FlexSell Cargo (Self)" : "Third-Party Courier"}</p>
+                        <p className="font-bold capitalize mt-0.5">
+                          {trackedOrder.shipmentDetails.type === "shiprocket" ? "🚀 Shiprocket Cargo API" : trackedOrder.shipmentDetails.type === "self" ? "FlexSell Cargo (Self)" : "Third-Party Courier"}
+                        </p>
                       </div>
-                      {trackedOrder.shipmentDetails.carrierName && (
+                      {(trackedOrder.shipmentDetails.carrierName || trackedOrder.shipmentDetails.shiprocket?.courierName) && (
                         <div>
                           <span className="text-muted-foreground">Carrier Provider:</span>
-                          <p className="font-bold">{trackedOrder.shipmentDetails.carrierName}</p>
+                          <p className="font-bold">{trackedOrder.shipmentDetails.shiprocket?.courierName || trackedOrder.shipmentDetails.carrierName}</p>
                         </div>
                       )}
                       <div className="border-t pt-2">
                         <span className="text-muted-foreground">Tracking ID / AWB:</span>
                         <p className="font-mono font-bold mt-1 text-foreground bg-secondary/45 px-2 py-0.5 rounded inline-block">
-                          {trackedOrder.shipmentDetails.trackingId}
+                          {trackedOrder.shipmentDetails.shiprocket?.awbCode || trackedOrder.shipmentDetails.trackingId}
                         </p>
                       </div>
                       {trackedOrder.shipmentDetails.trackingUrl && (

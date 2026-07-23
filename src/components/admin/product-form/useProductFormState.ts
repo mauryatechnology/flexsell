@@ -129,11 +129,15 @@ export function useProductFormState(
     {
       color: "Default",
       dimensions: "15x12x8 cm",
+      lengthCm: 15,
+      breadthCm: 12,
+      heightCm: 8,
       images: [""],
       subVariants: [{
         id: "sv-default",
         size: "Standard",
         weight: "250g",
+        weightGrams: 250,
         mrp: 0,
         b2cPrice: 0,
         b2bPrice: 0,
@@ -221,11 +225,15 @@ export function useProductFormState(
       {
         color: `New Color ${prev.length + 1}`,
         dimensions: "15x12x8 cm",
+        lengthCm: 15,
+        breadthCm: 12,
+        heightCm: 8,
         images: [""],
         subVariants: [{
           id: `sv-${Date.now()}`,
           size: "Standard",
           weight: "250g",
+          weightGrams: 250,
           mrp: 0,
           b2cPrice: 0,
           b2bPrice: 0,
@@ -279,10 +287,16 @@ export function useProductFormState(
           if (existing) {
             newSubVariants.push(existing);
           } else {
+            const parsedWeightGrams = parseFloat(weight.replace(/[^0-9.]/g, ""));
+            const calcGrams = !isNaN(parsedWeightGrams) 
+              ? (weight.toLowerCase().includes("kg") ? Math.round(parsedWeightGrams * 1000) : Math.round(parsedWeightGrams))
+              : (item.subVariants[0]?.weightGrams || 250);
+
             newSubVariants.push({
               id: `sv-${Date.now()}-${counter}`,
               size,
               weight,
+              weightGrams: calcGrams,
               mrp: item.subVariants[0]?.mrp || 0,
               b2cPrice: item.subVariants[0]?.b2cPrice || 0,
               b2bPrice: item.subVariants[0]?.b2bPrice || 0,

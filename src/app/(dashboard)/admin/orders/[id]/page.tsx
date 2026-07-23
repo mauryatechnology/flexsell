@@ -279,7 +279,59 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
             </Button>
           )}
 
-          {order.status === "Shipped" && (
+          {/* Shiprocket Actions & Labels */}
+          {order.shipmentDetails?.type === "shiprocket" && (
+            <>
+              <Button
+                variant="outline"
+                className="font-bold flex items-center gap-1.5 h-9 text-xs border-primary/40 text-primary hover:bg-primary/10"
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`/api/shiprocket/label/${orderId}`);
+                    const data = await res.json();
+                    if (data.labelUrl) {
+                      window.open(data.labelUrl, "_blank");
+                    } else {
+                      addToast(data.message || "Label not yet available from Shiprocket.", "warning");
+                    }
+                  } catch (err: any) {
+                    addToast(err.message || "Failed to fetch label", "error");
+                  }
+                }}
+              >
+                <FileText className="h-3.5 w-3.5" /> Download Label
+              </Button>
+              {order.status !== "Delivered" && order.status !== "Cancelled" && (
+                <Button
+                  variant="outline"
+                  className="font-bold text-destructive hover:bg-destructive/10 h-9 text-xs"
+                  onClick={async () => {
+                    if (!confirm("Are you sure you want to cancel this Shiprocket booking?")) return;
+                    try {
+                      const res = await fetch("/api/shiprocket/cancel", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ orderId })
+                      });
+                      if (res.ok) {
+                        addToast("Shiprocket order cancelled successfully", "success");
+                        initializeOrders();
+                      } else {
+                        const d = await res.json();
+                        addToast(d.message || "Failed to cancel Shiprocket order", "error");
+                      }
+                    } catch (err: any) {
+                      addToast(err.message || "Cancel failed", "error");
+                    }
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Cancel Shiprocket Booking
+                </Button>
+              )}
+            </>
+          )}
+
+          {order.status === "Shipped" && order.shipmentDetails?.type !== "shiprocket" && (
             <Button
               onClick={() => handleUpdateStatus("Delivered")}
               className="bg-green-600 hover:bg-green-700 text-white font-bold text-xs h-9"
@@ -303,6 +355,45 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
           </Button>
         </div>
       </div>
+
+      {/* Partial Failure Warning Banner [UPDATED-5] */}
+      {order.shipmentDetails?.shiprocket?.failedAt && (
+        <Card className="border border-destructive/30 bg-destructive/10 p-4 flex items-center justify-between no-print">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-6 w-6 text-destructive shrink-0" />
+            <div className="text-xs">
+              <p className="font-bold text-destructive">
+                Shiprocket fulfillment stalled at step: "{order.shipmentDetails.shiprocket.failedAt.toUpperCase()}"
+              </p>
+              <p className="text-muted-foreground mt-0.5">{order.shipmentDetails.shiprocket.failureReason}</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            className="bg-destructive text-destructive-foreground font-bold text-xs shrink-0"
+            onClick={async () => {
+              try {
+                const res = await fetch("/api/shiprocket/fulfill", {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ orderId })
+                });
+                const d = await res.json();
+                if (d.success) {
+                  addToast("Fulfillment step retried successfully!", "success");
+                  initializeOrders();
+                } else {
+                  addToast(d.error || "Retry failed", "error");
+                }
+              } catch (err: any) {
+                addToast(err.message || "Retry failed", "error");
+              }
+            }}
+          >
+            Retry Fulfillment Step
+          </Button>
+        </Card>
+      )}
 
       {/* Invoice Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -342,18 +433,20 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <span className="text-muted-foreground">Courier Type:</span>
-                    <p className="font-bold capitalize mt-0.5">{order.shipmentDetails.type}</p>
+                    <p className="font-bold capitalize mt-0.5">
+                      {order.shipmentDetails.type === "shiprocket" ? "🚀 Shiprocket API" : order.shipmentDetails.type}
+                    </p>
                   </div>
-                  {order.shipmentDetails.carrierName && (
+                  {(order.shipmentDetails.carrierName || order.shipmentDetails.shiprocket?.courierName) && (
                     <div>
                       <span className="text-muted-foreground">Carrier:</span>
-                      <p className="font-bold mt-0.5">{order.shipmentDetails.carrierName}</p>
+                      <p className="font-bold mt-0.5">{order.shipmentDetails.shiprocket?.courierName || order.shipmentDetails.carrierName}</p>
                     </div>
                   )}
                   <div className="col-span-2 border-t pt-2">
                     <span className="text-muted-foreground">Tracking ID / AWB:</span>
                     <p className="font-mono font-bold mt-1 text-foreground bg-secondary/40 px-2 py-0.5 rounded inline-block">
-                      {order.shipmentDetails.trackingId}
+                      {order.shipmentDetails.shiprocket?.awbCode || order.shipmentDetails.trackingId}
                     </p>
                   </div>
                   {order.shipmentDetails.trackingUrl && (
@@ -550,6 +643,7 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
           <div className="bg-card border rounded-xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 text-foreground space-y-4">
             <FulfillmentForm
               orderId={orderId}
+              orderPinCode={order.shippingAddress?.pinCode || "395003"}
               onShip={handleShipSubmit}
               onCancel={() => setIsShipModalOpen(false)}
             />
