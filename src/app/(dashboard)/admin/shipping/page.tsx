@@ -183,15 +183,36 @@ export default function AdminShippingPage() {
     }
   };
 
-  const webhookUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/api/shiprocket/webhook`
-    : "http://localhost:3000/api/shiprocket/webhook";
+  const originUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
 
-  const copyWebhookUrl = () => {
-    navigator.clipboard.writeText(webhookUrl);
-    setCopiedWebhook(true);
-    setTimeout(() => setCopiedWebhook(false), 2000);
-    addToast("Webhook URL copied to clipboard!", "info");
+  const webhookEndpoints = [
+    {
+      id: "current",
+      label: "Current Active Environment",
+      badge: "Current Origin",
+      url: `${originUrl}/api/shiprocket/webhook`,
+    },
+    {
+      id: "production",
+      label: "Production Primary Domain",
+      badge: "flexsellwholesale.com",
+      url: "https://flexsellwholesale.com/api/shiprocket/webhook",
+    },
+    {
+      id: "vercel",
+      label: "Vercel Cloud Deployment",
+      badge: "flexsell.vercel.app",
+      url: "https://flexsell.vercel.app/api/shiprocket/webhook",
+    },
+  ];
+
+  const [copiedId, setCopiedId] = React.useState<string | null>(null);
+
+  const copyEndpointUrl = (url: string, id: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+    addToast("Webhook listener URL copied to clipboard!", "info");
   };
 
   if (isLoading) {
@@ -531,15 +552,39 @@ export default function AdminShippingPage() {
                 )}
               </div>
 
-              {/* Webhook URL display */}
-              <div className="p-4 border rounded-xl bg-card space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-primary">Webhook Listener Endpoint</h4>
-                <p className="text-[11px] text-muted-foreground">Copy and paste this URL into your Shiprocket Dashboard under Settings → API → Webhooks:</p>
-                <div className="flex items-center gap-2">
-                  <Input readOnly value={webhookUrl} className="font-mono text-xs bg-secondary/30" />
-                  <Button type="button" variant="outline" onClick={copyWebhookUrl} className="shrink-0 cursor-pointer">
-                    {copiedWebhook ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-                  </Button>
+              {/* Webhook URLs display */}
+              <div className="p-4 border rounded-xl bg-card space-y-4">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-primary">Shiprocket Webhook Listener Endpoints</h4>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Copy and paste the URL matching your deployment environment into your Shiprocket Dashboard under <strong>Settings ➔ API ➔ Webhooks</strong>:
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {webhookEndpoints.map((ep) => (
+                    <div key={ep.id} className="p-3 bg-secondary/15 rounded-lg border space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-foreground">{ep.label}</span>
+                        <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary">
+                          {ep.badge}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input readOnly value={ep.url} className="font-mono text-xs bg-background" />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyEndpointUrl(ep.url, ep.id)}
+                          className="shrink-0 font-semibold cursor-pointer h-9 px-3"
+                        >
+                          {copiedId === ep.id ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                          <span className="ml-1.5 text-xs">{copiedId === ep.id ? "Copied" : "Copy"}</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
