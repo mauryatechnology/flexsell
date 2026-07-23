@@ -24,6 +24,7 @@ export function VariantEditor() {
     removeSubVariant,
     updateVariantField,
     handleVariantImageUpload,
+    handleSubVariantBarcodeImageUpload,
     handleAddImageUrl,
     title
   } = useProductForm();
@@ -180,6 +181,7 @@ export function VariantEditor() {
                     updateSubVariantField={updateSubVariantField}
                     removeSubVariant={removeSubVariant}
                     handleVariantImageUpload={handleVariantImageUpload}
+                    handleSubVariantBarcodeImageUpload={handleSubVariantBarcodeImageUpload}
                     handleAddImageUrl={handleAddImageUrl}
                     addToast={addToast}
                   />

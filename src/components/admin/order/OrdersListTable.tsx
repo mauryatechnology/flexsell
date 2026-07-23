@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Search, Eye } from "lucide-react";
+import { Search, Eye, FileText } from "lucide-react";
 import { Order } from "@/stores/orderStore";
 import { formatPrice } from "@/lib/utils";
+import { ShippingLabelDocument } from "@/components/documents/ShippingLabelDocument";
 
 interface OrdersListTableProps {
   orders: Order[];
@@ -38,6 +39,7 @@ export function OrdersListTable({
 }: OrdersListTableProps) {
   const router = useRouter();
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [selectedLabelOrder, setSelectedLabelOrder] = React.useState<Order | null>(null);
   const ITEMS_PER_PAGE = 10;
 
   React.useEffect(() => {
@@ -191,18 +193,42 @@ export function OrdersListTable({
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectOrder(order);
-                          router.push(`/admin/orders/${order._id}`);
-                        }}
-                        className="flex items-center gap-1.5 h-8 text-xs cursor-pointer font-semibold ml-auto"
-                      >
-                        <Eye className="h-3.5 w-3.5" /> View Details
-                      </Button>
+                      <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        {order.shipmentDetails && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              if (order.shipmentDetails?.type === "shiprocket") {
+                                try {
+                                  const res = await fetch(`/api/shiprocket/label/${order._id}`);
+                                  const data = await res.json();
+                                  if (data.labelUrl) {
+                                    window.open(data.labelUrl, "_blank");
+                                    return;
+                                  }
+                                } catch {}
+                              }
+                              setSelectedLabelOrder(order);
+                            }}
+                            className="flex items-center gap-1 h-8 text-xs cursor-pointer font-semibold border-primary/30 text-primary hover:bg-primary/10"
+                            title="Print Package Shipping Label"
+                          >
+                            <FileText className="h-3.5 w-3.5" /> Label
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            onSelectOrder(order);
+                            router.push(`/admin/orders/${order._id}`);
+                          }}
+                          className="flex items-center gap-1.5 h-8 text-xs cursor-pointer font-semibold"
+                        >
+                          <Eye className="h-3.5 w-3.5" /> View Details
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -236,6 +262,18 @@ export function OrdersListTable({
           </div>
         )}
       </CardContent>
+
+      {/* Shipping Label Modal */}
+      {selectedLabelOrder && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 no-print">
+          <div className="bg-card border rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-4 text-foreground">
+            <ShippingLabelDocument
+              order={selectedLabelOrder}
+              onClose={() => setSelectedLabelOrder(null)}
+            />
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

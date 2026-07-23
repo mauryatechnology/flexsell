@@ -1,8 +1,27 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { Order as OrderType } from "@/types";
 
+const ShiprocketOrderSchema = new Schema({
+  orderId: { type: Number },
+  shipmentId: { type: Number },
+  awbCode: { type: String },
+  courierId: { type: Number },
+  courierName: { type: String },
+  labelUrl: { type: String },
+  manifestUrl: { type: String },
+  pickupScheduledDate: { type: String },
+  pickupTokenNumber: { type: String },
+  currentStatus: { type: String },
+  currentStatusCode: { type: Number },
+  etd: { type: String },
+  trackingUrl: { type: String },
+  fulfillmentStep: { type: String },
+  failedAt: { type: String },
+  failureReason: { type: String },
+}, { _id: false });
+
 const ShipmentDetailsSchema = new Schema({
-  type: { type: String, enum: ["self", "third-party"], required: true },
+  type: { type: String, enum: ["self", "third-party", "shiprocket"], required: true },
   carrierName: { type: String },
   trackingId: { type: String, required: true },
   trackingUrl: { type: String },
@@ -10,6 +29,7 @@ const ShipmentDetailsSchema = new Schema({
   deliveredAt: { type: String },
   estimatedDelivery: { type: String },
   notes: { type: String },
+  shiprocket: { type: ShiprocketOrderSchema },
 });
 
 const HistoryEventSchema = new Schema({
@@ -25,7 +45,7 @@ const OrderSchema = new Schema<OrderType & Document>(
     amount: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
+      enum: ["Placed", "Pending", "Confirmed", "Processing", "Awaiting Shipment", "In Transit", "Shipped", "Delivered", "Cancelled"],
       default: "Processing",
     },
     statusClass: { type: String, required: true },

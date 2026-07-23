@@ -5,6 +5,7 @@ const SubVariantSchema = new Schema({
   id: { type: String, required: true },
   size: { type: String, required: true },
   weight: { type: String, required: true },
+  weightGrams: { type: Number, default: null },
   mrp: { type: Number, required: true },
   b2cPrice: { type: Number, required: true },
   b2bPrice: { type: Number, default: 0 },
@@ -14,12 +15,17 @@ const SubVariantSchema = new Schema({
   stock: { type: Number, required: true },
   sku: { type: String, required: true },
   barcode: { type: String },
+  barcodeSource: { type: String, enum: ["auto", "manual", "image"], default: "auto" },
+  barcodeImage: { type: String, default: null },
   isActive: { type: Boolean, default: true },
 });
 
 const ColorVariantSchema = new Schema({
   color: { type: String, required: true },
   dimensions: { type: String, required: true },
+  lengthCm: { type: Number, default: null },
+  breadthCm: { type: Number, default: null },
+  heightCm: { type: Number, default: null },
   images: [Schema.Types.Mixed],
   subVariants: [SubVariantSchema],
 });
@@ -64,6 +70,9 @@ const ProductSchema = new Schema<ProductType & Document>(
       showDimensions: { type: Boolean, default: true },
       showImages: { type: Boolean, default: true },
     },
+    barcode: { type: String, default: null },
+    barcodeSource: { type: String, enum: ["auto", "manual", "image"], default: "auto" },
+    barcodeImage: { type: String, default: null },
   },
   { timestamps: true }
 );

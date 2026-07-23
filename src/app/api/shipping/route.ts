@@ -6,13 +6,17 @@ import { verifyToken, getTokenFromCookie } from "@/lib/auth";
 export async function GET() {
   try {
     await dbConnect();
-    let config = await ShippingConfig.findOne({ _id: "shipping-config" });
+    let config = await ShippingConfig.findOne({ _id: "shipping-config" }).lean() as any;
     if (!config) {
       config = await ShippingConfig.create({
         _id: "shipping-config",
         weightSlabs: [],
         b2bFixedCharge: 150,
       });
+      config = config.toObject();
+    }
+    if (config.shiprocket) {
+      config.shiprocket.password = config.shiprocket.password ? "••••••••" : "";
     }
     return NextResponse.json(config);
   } catch (error: any) {
@@ -34,7 +38,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { weightSlabs, b2bFixedCharge } = body;
+    const { weightSlabs, b2bFixedCharge, shiprocket } = body;
 
     let config = await ShippingConfig.findOne({ _id: "shipping-config" });
     if (!config) {
@@ -43,9 +47,19 @@ export async function PUT(request: Request) {
 
     if (weightSlabs !== undefined) config.weightSlabs = weightSlabs;
     if (b2bFixedCharge !== undefined) config.b2bFixedCharge = b2bFixedCharge;
+    if (shiprocket !== undefined) {
+      config.shiprocket = {
+        ...config.shiprocket,
+        ...shiprocket,
+      };
+    }
 
     await config.save();
-    return NextResponse.json(config);
+    const resp = config.toObject();
+    if (resp.shiprocket) {
+      resp.shiprocket.password = resp.shiprocket.password ? "••••••••" : "";
+    }
+    return NextResponse.json(resp);
   } catch (error: any) {
     return NextResponse.json({ message: error.message || "Failed to update shipping configuration" }, { status: 500 });
   }
