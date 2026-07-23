@@ -28,6 +28,8 @@ export interface SubVariant {
   stock: number;
   sku: string;
   barcode?: string;
+  barcodeSource?: "auto" | "manual" | "image";
+  barcodeImage?: string | null;
   isActive?: boolean;
 }
 
@@ -93,6 +95,11 @@ export interface Product extends BaseDocument {
     showDimensions: boolean;
     showImages: boolean;
   };
+
+  // Product-level Barcode Configuration
+  barcode?: string;
+  barcodeSource?: "auto" | "manual" | "image";
+  barcodeImage?: string | null;
 }
 
 export interface Banner extends BaseDocument {

@@ -120,7 +120,9 @@ export const subVariantSchema = z.object({
   discount: z.number().nonnegative(),
   stock: z.number().int().nonnegative(),
   sku: z.string().min(1, "SKU is required"),
-  barcode: z.string().optional(),
+  barcode: z.string().optional().nullable(),
+  barcodeSource: z.enum(["auto", "manual", "image"]).optional().default("auto"),
+  barcodeImage: z.string().optional().nullable(),
   isActive: z.boolean().default(true),
 });
 
@@ -170,6 +172,9 @@ export const productSchema = z.object({
     showDimensions: z.boolean().default(true),
     showImages: z.boolean().default(true),
   }).optional(),
+  barcode: z.string().optional().nullable(),
+  barcodeSource: z.enum(["auto", "manual", "image"]).optional().default("auto"),
+  barcodeImage: z.string().optional().nullable(),
 });
 
 export const collectionConditionSchema = z.object({

@@ -170,24 +170,37 @@ export function ShippingLabelDocument({ order, sellerInfo, onClose }: ShippingLa
                 <tr>
                   <th className="p-1.5">Item Description</th>
                   <th className="p-1.5 text-center">Variant</th>
+                  <th className="p-1.5 text-center">Barcode</th>
                   <th className="p-1.5 text-right">Qty</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-300 font-medium">
-                {order.items.slice(0, 4).map((item, i) => (
-                  <tr key={i}>
-                    <td className="p-1.5 font-bold truncate max-w-[180px]">
-                      {item.product?.title || "Product Item"}
-                    </td>
-                    <td className="p-1.5 text-center text-gray-700">
-                      {item.selectedVariants?.Color || ""} {item.selectedVariants?.Size || ""}
-                    </td>
-                    <td className="p-1.5 text-right font-extrabold">{item.quantity}</td>
-                  </tr>
-                ))}
+                {order.items.slice(0, 4).map((item, i) => {
+                  const prodBarcodeImg = item.product?.barcodeImage || (item as any).subVariant?.barcodeImage;
+                  const prodBarcodeVal = item.product?.barcode || (item as any).subVariant?.barcode || (item as any).subVariant?.sku || item.product?.slug || "-";
+
+                  return (
+                    <tr key={i}>
+                      <td className="p-1.5 font-bold truncate max-w-[150px]">
+                        {item.product?.title || "Product Item"}
+                      </td>
+                      <td className="p-1.5 text-center text-gray-700">
+                        {item.selectedVariants?.Color || ""} {item.selectedVariants?.Size || ""}
+                      </td>
+                      <td className="p-1.5 text-center">
+                        {prodBarcodeImg ? (
+                          <img src={prodBarcodeImg} alt="Barcode" className="h-6 mx-auto object-contain" />
+                        ) : (
+                          <span className="font-mono text-[9px] text-gray-700">{prodBarcodeVal}</span>
+                        )}
+                      </td>
+                      <td className="p-1.5 text-right font-extrabold">{item.quantity}</td>
+                    </tr>
+                  );
+                })}
                 {order.items.length > 4 && (
                   <tr>
-                    <td colSpan={3} className="p-1 text-center italic text-gray-600 bg-gray-50">
+                    <td colSpan={4} className="p-1 text-center italic text-gray-600 bg-gray-50">
                       + {order.items.length - 4} additional SKU items listed in commercial invoice
                     </td>
                   </tr>

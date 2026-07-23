@@ -15,6 +15,8 @@ const SubVariantSchema = new Schema({
   stock: { type: Number, required: true },
   sku: { type: String, required: true },
   barcode: { type: String },
+  barcodeSource: { type: String, enum: ["auto", "manual", "image"], default: "auto" },
+  barcodeImage: { type: String, default: null },
   isActive: { type: Boolean, default: true },
 });
 
@@ -68,6 +70,9 @@ const ProductSchema = new Schema<ProductType & Document>(
       showDimensions: { type: Boolean, default: true },
       showImages: { type: Boolean, default: true },
     },
+    barcode: { type: String, default: null },
+    barcodeSource: { type: String, enum: ["auto", "manual", "image"], default: "auto" },
+    barcodeImage: { type: String, default: null },
   },
   { timestamps: true }
 );

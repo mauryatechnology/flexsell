@@ -60,6 +60,15 @@ export interface ProductFormContextProps {
   aPlusBlocks: APlusBlock[];
   setAPlusBlocks: React.Dispatch<React.SetStateAction<APlusBlock[]>>;
   isSaving: boolean;
+
+  // Product-level Barcode
+  barcode: string;
+  setBarcode: (b: string) => void;
+  barcodeSource: "auto" | "manual" | "image";
+  setBarcodeSource: (s: "auto" | "manual" | "image") => void;
+  barcodeImage: string | null;
+  setBarcodeImage: (img: string | null) => void;
+  handleProductBarcodeImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   
   // Handlers
   addVariant: () => void;
@@ -71,6 +80,7 @@ export interface ProductFormContextProps {
   autoGenerateSEO: () => void;
   handleSave: (e: React.FormEvent) => void;
   handleVariantImageUpload: (e: React.ChangeEvent<HTMLInputElement>, variantIndex: number) => Promise<void>;
+  handleSubVariantBarcodeImageUpload: (e: React.ChangeEvent<HTMLInputElement>, colorIdx: number, subId: string) => Promise<void>;
   handleAddImageUrl: (variantIndex: number) => Promise<void>;
   addAPlusBlock: () => void;
   moveAPlusBlock: (index: number, direction: "up" | "down") => void;
@@ -116,6 +126,11 @@ export function useProductFormState(
   const [seoDescription, setSeoDescription] = React.useState("");
   const [seoKeywords, setSeoKeywords] = React.useState("");
   const [isSaving, setIsSaving] = React.useState(false);
+
+  // Product-level Barcode States
+  const [barcode, setBarcode] = React.useState("");
+  const [barcodeSource, setBarcodeSource] = React.useState<"auto" | "manual" | "image">("auto");
+  const [barcodeImage, setBarcodeImage] = React.useState<string | null>(null);
 
   const [fieldVisibility, setFieldVisibility] = React.useState({
     showDescription: true,
@@ -171,6 +186,10 @@ export function useProductFormState(
       setSeoTitle(existingProduct.seoTitle || "");
       setSeoDescription(existingProduct.seoDescription || "");
       setSeoKeywords(existingProduct.seoKeywords || "");
+
+      setBarcode(existingProduct.barcode || "");
+      setBarcodeSource(existingProduct.barcodeSource || (existingProduct.barcodeImage ? "image" : existingProduct.barcode ? "manual" : "auto"));
+      setBarcodeImage(existingProduct.barcodeImage || null);
 
       setFieldVisibility(existingProduct.fieldVisibility || {
         showDescription: true,
@@ -521,6 +540,94 @@ export function useProductFormState(
     }
   };
 
+  const handleSubVariantBarcodeImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    colorIdx: number,
+    subId: string
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      addToast("Please select a valid image file (JPEG, PNG, WebP, SVG) for the variant barcode.", "error");
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to upload barcode image");
+      }
+
+      const { url } = await res.json();
+
+      setVariantsList(prev => prev.map((item, idx) => {
+        if (idx !== colorIdx) return item;
+        const updatedSubVariants = item.subVariants.map(sv => {
+          if (sv.id !== subId) return sv;
+          return {
+            ...sv,
+            barcodeImage: url,
+            barcodeSource: "image" as const,
+          };
+        });
+        return { ...item, subVariants: updatedSubVariants };
+      }));
+
+      addToast("Custom variant barcode image uploaded successfully!", "success");
+    } catch (err: unknown) {
+      console.error(err);
+      addToast(err instanceof Error ? err.message : "Failed to upload barcode image.", "error");
+    } finally {
+      e.target.value = "";
+    }
+  };
+
+  const handleProductBarcodeImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      addToast("Please select a valid image file (JPEG, PNG, WebP, SVG) for the barcode.", "error");
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to upload product barcode image");
+      }
+
+      const { url } = await res.json();
+      setBarcodeImage(url);
+      setBarcodeSource("image");
+      addToast("Product barcode image uploaded and validated successfully!", "success");
+    } catch (err: unknown) {
+      console.error(err);
+      addToast(err instanceof Error ? err.message : "Failed to upload barcode image.", "error");
+    } finally {
+      e.target.value = "";
+    }
+  };
+
   const autoGenerateSEO = () => {
     if (!title) {
       addToast("Please enter a product title first.", "warning");
@@ -549,7 +656,13 @@ export function useProductFormState(
       const validImages = (item.images || []).filter((img: any) => img.url && img.url.trim() !== "");
       return {
         ...item,
-        images: validImages.length > 0 ? validImages : [{ url: "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80", alt: `${title || 'Product'} Default Image` }]
+        images: validImages.length > 0 ? validImages : [{ url: "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80", alt: `${title || 'Product'} Default Image` }],
+        subVariants: (item.subVariants || []).map((sv: any) => ({
+          ...sv,
+          barcode: sv.barcode || null,
+          barcodeSource: sv.barcodeSource || (sv.barcodeImage ? "image" : sv.barcode ? "manual" : "auto"),
+          barcodeImage: sv.barcodeImage || null,
+        }))
       };
     });
 
@@ -590,7 +703,10 @@ export function useProductFormState(
       seoTitle,
       seoDescription,
       seoKeywords,
-      fieldVisibility
+      fieldVisibility,
+      barcode,
+      barcodeSource,
+      barcodeImage,
     };
 
     setIsSaving(true);
@@ -662,10 +778,19 @@ export function useProductFormState(
     autoGenerateSEO,
     handleSave,
     handleVariantImageUpload,
+    handleSubVariantBarcodeImageUpload,
+    handleProductBarcodeImageUpload,
     handleAddImageUrl,
     addAPlusBlock,
     moveAPlusBlock,
     removeAPlusBlock,
-    handleBlockImageUpload
+    handleBlockImageUpload,
+
+    barcode,
+    setBarcode,
+    barcodeSource,
+    setBarcodeSource,
+    barcodeImage,
+    setBarcodeImage
   };
 }
