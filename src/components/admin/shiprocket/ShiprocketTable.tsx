@@ -22,6 +22,7 @@ import {
   Clock,
   ChevronRight
 } from "lucide-react";
+import { ShippingLabelDocument } from "@/components/documents/ShippingLabelDocument";
 
 export function ShiprocketTable() {
   const { orders, initializeOrders } = useOrderStore();
@@ -30,8 +31,9 @@ export function ShiprocketTable() {
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [isLoading, setIsLoading] = React.useState(false);
 
-  // Modal tracking state
+  // Modal states
   const [selectedTrackingOrder, setSelectedTrackingOrder] = React.useState<Order | null>(null);
+  const [selectedLabelOrder, setSelectedLabelOrder] = React.useState<Order | null>(null);
   const [liveTrackingData, setLiveTrackingData] = React.useState<any>(null);
   const [isLoadingTracking, setIsLoadingTracking] = React.useState(false);
 
@@ -74,17 +76,19 @@ export function ShiprocketTable() {
   }, [orders, searchTerm, statusFilter]);
 
   // Action Handlers
-  const handleDownloadLabel = async (orderId: string) => {
-    try {
-      const res: any = await shiprocketService.getLabelUrl(orderId);
-      if (res?.labelUrl) {
-        window.open(res.labelUrl, "_blank");
-      } else {
-        addToast(res?.message || "Label URL not yet available from Shiprocket.", "warning");
+  const handleDownloadLabel = async (order: Order) => {
+    if (order.shipmentDetails?.type === "shiprocket") {
+      try {
+        const res: any = await shiprocketService.getLabelUrl(order._id);
+        if (res?.labelUrl) {
+          window.open(res.labelUrl, "_blank");
+          return;
+        }
+      } catch (err: any) {
+        // Fallback to in-house printable label
       }
-    } catch (err: any) {
-      addToast(err.message || "Failed to fetch shipping label", "error");
     }
+    setSelectedLabelOrder(order);
   };
 
   const handleRetryStep = async (orderId: string) => {
@@ -282,9 +286,9 @@ export function ShiprocketTable() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleDownloadLabel(order._id)}
+                            onClick={() => handleDownloadLabel(order)}
                             className="h-7 text-[10px] font-bold px-2 border-primary/30 text-primary hover:bg-primary/10 flex items-center gap-1 cursor-pointer"
-                            title="Download Shipping Label PDF"
+                            title="Download / Print Shipping Label"
                           >
                             <FileText className="h-3 w-3" /> Label
                           </Button>
@@ -375,6 +379,18 @@ export function ShiprocketTable() {
                 No active tracking timeline returned from Shiprocket API yet.
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Shipping Label Preview Modal */}
+      {selectedLabelOrder && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 no-print">
+          <div className="bg-card border rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-4 text-foreground">
+            <ShippingLabelDocument
+              order={selectedLabelOrder}
+              onClose={() => setSelectedLabelOrder(null)}
+            />
           </div>
         </div>
       )}

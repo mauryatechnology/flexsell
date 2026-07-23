@@ -12,6 +12,7 @@ import { formatPrice } from "@/lib/utils";
 import { ArrowLeft, Printer, Truck, Calendar, MapPin, CheckCircle, Clock, AlertTriangle, FileText, Edit2, Trash2 } from "lucide-react";
 
 import { InvoiceDocument } from "@/components/documents/InvoiceDocument";
+import { ShippingLabelDocument } from "@/components/documents/ShippingLabelDocument";
 import { FulfillmentForm } from "@/components/admin/order/FulfillmentForm";
 import { ShipmentDetails } from "@/stores/orderStore";
 
@@ -64,6 +65,7 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
 
   // Shipment modal state
   const [isShipModalOpen, setIsShipModalOpen] = React.useState(false);
+  const [showLabelModal, setShowLabelModal] = React.useState(false);
 
   // Edit modal states
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
@@ -474,6 +476,28 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
                     <p className="italic text-muted-foreground mt-0.5">{order.shipmentDetails.notes}</p>
                   </div>
                 )}
+                <div className="border-t pt-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={async () => {
+                      if (order.shipmentDetails?.type === "shiprocket") {
+                        try {
+                          const res = await fetch(`/api/shiprocket/label/${order._id}`);
+                          const data = await res.json();
+                          if (data.labelUrl) {
+                            window.open(data.labelUrl, "_blank");
+                            return;
+                          }
+                        } catch {}
+                      }
+                      setShowLabelModal(true);
+                    }}
+                    className="w-full font-bold flex items-center justify-center gap-2 text-xs border-primary/30 text-primary hover:bg-primary/10 cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4" /> Print Cargo Shipping Label
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ) : (
@@ -646,6 +670,18 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
               orderPinCode={order.shippingAddress?.pinCode || "395003"}
               onShip={handleShipSubmit}
               onCancel={() => setIsShipModalOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Printable Shipping Label Modal */}
+      {showLabelModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 no-print">
+          <div className="bg-card border rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-4 text-foreground">
+            <ShippingLabelDocument
+              order={order}
+              onClose={() => setShowLabelModal(false)}
             />
           </div>
         </div>
